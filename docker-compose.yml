@@ -1,0 +1,19 @@
+networks:
+  db-net:
+    name: amazon-db
+    driver: bridge
+
+services:
+  mysql:
+    container_name: "amazon-db"
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=application
+      - MYSQL_PASSWORD=application
+    volumes:
+      - ./infra/mysql:/var/lib/mysql
+    networks:
+      - db-net
+    ports:
+      - "3306:3306"
