@@ -37,3 +37,6 @@ out/
 .vscode/
 
 infra/
+
+### Local development configuration ###
+application-local.yml
