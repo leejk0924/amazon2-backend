@@ -50,3 +50,29 @@
 ## 6. API 명세서 (Swagger)
 [API 명세서](http://localhost:8080/swagger-ui/index.html)
 [API 문서](http://localhost:8080/v3/api-docs)
+
+## 7. 사전 요구사항
+- Java 21
+- MySQL 8.x
+
+## 8. 로컬 환경 세팅 절차
+
+### 8.1 프로파일 기반 설정
+```
+application.yml              → 공통 설정 (운영 기본값)
+application-local.yml        → 로컬 개발 환경
+application-local.yml.example → 로컬 설정 예시 (커밋 대상)
+```
+
+### 8.2 로컬환경 세팅
+```markdown
+1. `application-local.yml.example` 을 복사하여 `application-local.yml` 생성
+2. DB 접속 정보 입력
+3. `spring.profiles.active=local` 설정 후 실행
+```
+
+### 8.3 실행 방법
+```shell
+# Gradle 빌드 및 실행
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
