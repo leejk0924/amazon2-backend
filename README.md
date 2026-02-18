@@ -46,3 +46,7 @@
 ## 5. 문서
 - [요구사항 명세서](/docs/Requirements.md)
 - [ERD 다이어그램](/docs/ERD.md)
+
+## 6. API 명세서 (Swagger)
+[API 명세서](http://localhost:8080/swagger-ui/index.html)
+[API 문서](http://localhost:8080/v3/api-docs)
