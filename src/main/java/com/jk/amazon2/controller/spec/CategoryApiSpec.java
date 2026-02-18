@@ -2,8 +2,6 @@ package com.jk.amazon2.controller.spec;
 
 import com.jk.amazon2.controller.dto.CategoryRequest;
 import com.jk.amazon2.controller.dto.CategoryResponse;
-import com.jk.amazon2.controller.dto.MemberRequest;
-import com.jk.amazon2.controller.dto.MemberResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;

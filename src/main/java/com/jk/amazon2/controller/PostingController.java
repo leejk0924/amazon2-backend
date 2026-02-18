@@ -3,7 +3,6 @@ package com.jk.amazon2.controller;
 import com.jk.amazon2.controller.dto.PostingRequest;
 import com.jk.amazon2.controller.dto.PostingResponse;
 import com.jk.amazon2.controller.spec.PostingApiSpec;
-import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
