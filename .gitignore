@@ -40,3 +40,7 @@ infra/
 
 ### Local development configuration ###
 application-local.yml
+
+### Claude Code (로컬 전용) ###
+.bkit*
+.pdca*
