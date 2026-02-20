@@ -40,6 +40,46 @@ Docs: API 명세 확인 링크 README.md에 추가
 - 로컬 환경 접속 정보 명시
 ```
 
+### 복잡한 변경사항 작성 예시
+
+여러 변경사항이 있을 때는 본문(body)에 구체적으로 나열하여 변경 내용을 명확하게 표현합니다.
+
+#### 본문에서 사용하는 변경 키워드
+
+| 키워드 | 의미 | 사용 예시 |
+|--------|------|-----------|
+| `add` | 새로운 파일/기능/의존성 추가 | `add: spring-boot-testcontainers` |
+| `remove` | 파일/기능/의존성 제거 | `remove: H2 database dependency` |
+| `update` | 기존 항목 수정/업데이트 | `update: application-local.yml 환경별 설정 유지` |
+| `refactor` | 코드 구조 개선 (동작 변경 없음) | `refactor: 의존성 그룹화 및 주석 추가` |
+| `extract` | 기존 코드에서 로직/클래스 추출 | `extract: 중복 검증 로직을 Validator로 분리` |
+| `move` | 코드/파일 위치 이동 | `move: 조회 메서드들을 QueryService로 이동` |
+| `rename` | 이름 변경 | `rename: MemberService → MemberCommandService` |
+| `docs` | 문서화 (JavaDoc, 주석 등) | `docs: MemberService 메서드 JavaDoc 추가` |
+| `deprecate` | 기능 사용 중단 표시 | `deprecate: legacy API endpoint` |
+| `revert` | 이전 상태로 되돌림 | `revert: 잘못된 캐시 로직 제거` |
+
+**의존성 변경 예시:**
+```
+Build: Testcontainers 기반 테스트 환경 구성
+
+- remove: H2 database dependency
+- add: spring-boot-testcontainers
+- add: testcontainers-mysql 2.0.2
+- add: Lombok test scope dependencies
+- refactor: 의존성 그룹화 및 주석 추가
+```
+
+**코드 리팩토링 예시:**
+```
+Refactor: 회원 서비스 계층 구조 개선
+
+- extract: 중복 검증 로직을 Validator로 분리
+- rename: MemberService → MemberCommandService
+- add: MemberQueryService 신규 생성
+- move: 조회 메서드들을 QueryService로 이동
+```
+
 ---
 
 ## 2. 브랜치 전략
