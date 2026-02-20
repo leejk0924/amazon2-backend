@@ -1,0 +1,18 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  sql:
+    init:
+      mode: never
+
+testcontainers:
+  mysql:
+    docker-image: mysql:8.0.45
+    database-name: amazon
+    username: test
+    password: test
+    init-script: db/schema.sql
+    commands:
+      - "--lower-case-table-names=1"
