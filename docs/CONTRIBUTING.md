@@ -61,7 +61,7 @@ docs/#8-api-documentation
 - `fix/` : 버그 수정
 - `refactor/` : 코드 리팩터링
 - `docs/` : 문서 작업
-- `chore/` : 설정, 의존성 정리
+- `config/` : 설정 작업
 
 ---
 
