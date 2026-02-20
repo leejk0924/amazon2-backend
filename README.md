@@ -62,6 +62,8 @@
 application.yml              → 공통 설정 (운영 기본값)
 application-local.yml        → 로컬 개발 환경
 application-local.yml.example → 로컬 설정 예시 (커밋 대상)
+application-prod.yml         → 프로덕션 환경 (환경 변수 사용)
+application-test.yml         → 테스트 환경 (src/test/resources/)
 ```
 
 ### 8.2 로컬환경 세팅
@@ -76,3 +78,60 @@ application-local.yml.example → 로컬 설정 예시 (커밋 대상)
 # Gradle 빌드 및 실행
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
+
+### 8.4 프로덕션 환경 세팅
+
+#### 환경 변수 설정
+프로덕션 환경에서는 민감한 정보를 환경 변수로 주입합니다.
+
+**필수 환경 변수:**
+```shell
+DB_URL=jdbc:mysql://<host>:<port>/amazon?characterEncoding=UTF-8&serverTimezone=UTC
+DB_USERNAME=<username>
+DB_PASSWORD=<password>
+```
+
+#### 실행 방법
+```shell
+# 환경 변수 설정 후 실행
+export DB_URL="jdbc:mysql://prod-db:3306/amazon?characterEncoding=UTF-8&serverTimezone=UTC"
+export DB_USERNAME="prod_user"
+export DB_PASSWORD="prod_password"
+
+# 프로덕션 프로파일로 실행
+./gradlew bootRun --args='--spring.profiles.active=prod'
+```
+
+또는 Docker/Docker Compose 사용 시:
+```yaml
+# docker-compose.yml
+services:
+  app:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://db:3306/amazon?characterEncoding=UTF-8&serverTimezone=UTC
+      - DB_USERNAME=prod_user
+      - DB_PASSWORD=prod_password
+```
+
+### 8.5 테스트 환경
+
+테스트 환경은 **Testcontainers**를 사용하여 실제 MySQL 환경과 동일하게 테스트합니다.
+
+#### 특징
+- Docker 기반 MySQL 컨테이너 자동 생성/삭제
+- `db/schema.sql` 초기화 스크립트 자동 실행
+- 로컬 DB 설정 불필요
+
+#### 실행 방법
+```shell
+# 테스트 실행 (Testcontainers 자동 시작)
+./gradlew test
+
+# Docker가 실행 중이어야 합니다
+docker ps
+```
+
+**주의사항:**
+- Docker Desktop 또는 Docker Engine이 실행 중이어야 합니다
+- 첫 실행 시 MySQL 이미지 다운로드로 시간이 소요될 수 있습니다
