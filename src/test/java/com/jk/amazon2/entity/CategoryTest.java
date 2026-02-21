@@ -45,7 +45,7 @@ class CategoryTest {
         assertThat(saved.getCreatedBy())
                 .as("createdBy 검증")
                 .isEqualTo(user);
-        assertThat(saved.getCreateAt())
+        assertThat(saved.getCreatedAt())
                 .as("createdAt 검증")
                 .isNotNull();
     }
@@ -68,7 +68,7 @@ class CategoryTest {
         assertThat(found.getCreatedBy())
                 .as("createdBy 검증")
                 .isEqualTo(user);
-        assertThat(found.getCreateAt())
+        assertThat(found.getCreatedAt())
                 .as("createdAt 검증").isNotNull();
         assertThat(found.getCode())
                 .as("code 값 검증")

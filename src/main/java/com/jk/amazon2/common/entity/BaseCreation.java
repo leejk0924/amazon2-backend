@@ -18,7 +18,7 @@ public abstract class BaseCreation {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     @Column(name = "created_at", updatable = false, nullable = false)
     @CreatedDate
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "created_by", updatable = false, nullable = false)
     @CreatedBy
