@@ -4,8 +4,7 @@ CREATE TABLE blog_category
     name        VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(50),
     created_at      DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by      VARCHAR(50) NOT NULL DEFAULT 'admin',
-    INDEX idx_category_code (code)
+    created_by      VARCHAR(50) NOT NULL DEFAULT 'admin'
 );
 
 CREATE TABLE member
