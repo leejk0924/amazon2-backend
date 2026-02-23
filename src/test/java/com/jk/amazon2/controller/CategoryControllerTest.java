@@ -57,7 +57,7 @@ class CategoryControllerTest {
                 code, name, description
         );
 
-        CategoryResult.Detail mockResult = new CategoryResult.Detail(
+        CategoryResult.Detail mockResult = CategoryResult.Detail.of(
                 code, name, description,
                 LocalDateTime.now(), "admin"
         );
@@ -83,13 +83,13 @@ class CategoryControllerTest {
         verify(categoryService).create(commandCaptor.capture());
         CategoryCommand.Create capturedCommand = commandCaptor.getValue();
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(capturedCommand.code())
+            softly.assertThat(capturedCommand.getCode())
                     .as("DTO의 code가 Command의 code 검증")
                     .isEqualTo(code);
-            softly.assertThat(capturedCommand.name())
+            softly.assertThat(capturedCommand.getName())
                     .as("DTO의 name이 Command로 정확히 매핑되었는가")
                     .isEqualTo(name);
-            softly.assertThat(capturedCommand.description())
+            softly.assertThat(capturedCommand.getDescription())
                     .as("DTO의 description이 Command로 정확히 매핑되었는가")
                     .isEqualTo(description);
         });

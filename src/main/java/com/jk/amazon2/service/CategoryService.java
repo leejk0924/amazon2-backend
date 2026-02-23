@@ -17,13 +17,13 @@ public class CategoryService {
 
     @Transactional
     public CategoryResult.Detail create(CategoryCommand.Create command) {
-        if (categoryRepository.existsById(command.code())) {
+        if (categoryRepository.existsById(command.getCode())) {
             throw new RestApiException(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
         }
         Category category = Category.of(
-                command.code(),
-                command.name(),
-                command.description()
+                command.getCode(),
+                command.getName(),
+                command.getDescription()
         );
         return CategoryResult.Detail.from(categoryRepository.save(category));
     }

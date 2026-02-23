@@ -12,7 +12,7 @@ public class CategoryResponse {
             String description
     ) {
         public static CategoryCreateDto from(CategoryResult.Detail detail) {
-            return new CategoryCreateDto(detail.code(), detail.name(), detail.description());
+            return new CategoryCreateDto(detail.getCode(), detail.getName(), detail.getDescription());
         }
     }
 
