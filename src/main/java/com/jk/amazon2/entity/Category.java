@@ -7,12 +7,14 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Persistable;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "blog_category")
 @Entity
-public class Category extends BaseCreation {
+public class Category extends BaseCreation implements Persistable<String> {
     @Id
     private String code;
     private String name;
@@ -24,5 +26,15 @@ public class Category extends BaseCreation {
         category.name = name;
         category.description = description;
         return category;
+    }
+
+    @Override
+    public @Nullable String getId() {
+        return this.code;
+    }
+
+    @Override
+    public boolean isNew() {
+        return getCreatedAt() == null;
     }
 }
