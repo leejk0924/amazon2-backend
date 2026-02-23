@@ -27,6 +27,7 @@ public class CategoryCommand {
 
             if (description.length() > 50) {
                 log.warn("[VALIDATION_FAILED] CategoryCommand.Create - Invalid description. description={}", description);
+                throw new RestApiException(CategoryErrorCode.CATEGORY_DESCRIPTION_INVALID);
             }
         }
     }
