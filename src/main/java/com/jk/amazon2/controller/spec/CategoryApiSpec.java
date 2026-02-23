@@ -21,7 +21,7 @@ CategoryApiSpec {
     );
     @Operation(summary = "카테고리 추가")
     @ApiResponse(responseCode = "201", description = "카테고리 추가 성공")
-    ResponseEntity<CategoryResponse.CategoryDto> createCategory(CategoryRequest.CategoryDto categoryDto);
+    ResponseEntity<CategoryResponse.CategoryCreateDto> createCategory(CategoryRequest.CategoryCreateDto categoryDto);
     @Operation(summary = "카테고리 수정")
     @ApiResponse(responseCode = "200", description = "카테고리 수정 성공")
     ResponseEntity<CategoryResponse.CategoryDto> updateCategory(Long id, CategoryRequest.CategoryDto categoryDto);

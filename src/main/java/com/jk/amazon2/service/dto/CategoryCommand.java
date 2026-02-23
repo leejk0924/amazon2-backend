@@ -1,5 +1,6 @@
 package com.jk.amazon2.service.dto;
 
+import com.jk.amazon2.controller.dto.CategoryRequest;
 import com.jk.amazon2.exception.CategoryErrorCode;
 import com.jk.amazon2.exception.RestApiException;
 import lombok.AccessLevel;
@@ -14,6 +15,10 @@ public class CategoryCommand {
             String name,
             String description
     ) {
+        public static Create from(CategoryRequest.CategoryCreateDto dto) {
+            return new Create(dto.code(), dto.name(), dto.description());
+        }
+
         public Create{
             if(code == null || code.isBlank() || code.length()>10) {
                 log.warn("[VALIDATION_FAILED] CategoryCommand.Create - Invalid code. code={}", code);

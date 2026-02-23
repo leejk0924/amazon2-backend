@@ -3,6 +3,10 @@ package com.jk.amazon2.controller;
 import com.jk.amazon2.controller.dto.CategoryRequest;
 import com.jk.amazon2.controller.dto.CategoryResponse;
 import com.jk.amazon2.controller.spec.CategoryApiSpec;
+import com.jk.amazon2.service.CategoryService;
+import com.jk.amazon2.service.dto.CategoryCommand;
+import com.jk.amazon2.service.dto.CategoryResult;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -17,6 +21,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class CategoryController implements CategoryApiSpec {
+    private final CategoryService categoryService;
 
     @Override
     @GetMapping("/categories")
@@ -43,16 +48,16 @@ public class CategoryController implements CategoryApiSpec {
 
     @Override
     @PostMapping("/categories")
-    public ResponseEntity<CategoryResponse.CategoryDto> createCategory(
-            @RequestBody CategoryRequest.CategoryDto categoryDto
+    public ResponseEntity<CategoryResponse.CategoryCreateDto> createCategory(
+            @Valid @RequestBody CategoryRequest.CategoryCreateDto categoryDto
     ) {
-        CategoryResponse.CategoryDto savedCategory = new CategoryResponse.CategoryDto(
-                categoryDto.code(),
-                categoryDto.name()
-        );
+        var categoryCommand = CategoryCommand.Create.from(categoryDto);
+
+        CategoryResult.Detail result = categoryService.create(categoryCommand);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(savedCategory);
+                .body(CategoryResponse.CategoryCreateDto.from(result));
     }
 
     @Override
