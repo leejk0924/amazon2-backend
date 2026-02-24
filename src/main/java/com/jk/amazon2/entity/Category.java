@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Persistable;
 
+import java.util.Objects;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "blog_category")
@@ -26,6 +28,18 @@ public class Category extends BaseCreation implements Persistable<String> {
         category.name = name;
         category.description = description;
         return category;
+    }
+
+    public void updateNameCategory(String name) {
+        if (!Objects.equals(this.name, name)) {
+            this.name = name;
+        }
+    }
+
+    public void updateDescription(String description) {
+        if(!Objects.equals(this.description, description)) {
+            this.description = description;
+        }
     }
 
     @Override
