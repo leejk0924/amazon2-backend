@@ -47,4 +47,20 @@ public class CategoryCommand {
             this.description = description;
         }
     }
+
+    @Getter
+    public static class Update {
+        private String code;
+        private String name;
+        private String description;
+        public static Update of(String code, String name, String description) {
+            Update update = new Update();
+            update.code = code;
+            update.name = name;
+            update.description = description;
+            return update;
+        }
+
+        private Update() {}
+    }
 }

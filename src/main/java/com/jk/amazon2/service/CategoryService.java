@@ -27,4 +27,15 @@ public class CategoryService {
         );
         return CategoryResult.Detail.from(categoryRepository.save(category));
     }
+
+    @Transactional
+    public CategoryResult.Detail update(CategoryCommand.Update inputCategory) {
+        Category category = categoryRepository
+                .findById(inputCategory.getCode())
+                .orElseThrow(() -> new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+        category.updateNameCategory(inputCategory.getName());
+        category.updateDescription(inputCategory.getDescription());
+
+        return CategoryResult.Detail.from(category);
+    }
 }
