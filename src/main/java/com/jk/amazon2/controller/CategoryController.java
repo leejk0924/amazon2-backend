@@ -61,18 +61,19 @@ public class CategoryController implements CategoryApiSpec {
     }
 
     @Override
-    @PutMapping("/categories/{id}")
-    public ResponseEntity<CategoryResponse.CategoryDto> updateCategory(
-            @PathVariable Long id,
-            @RequestBody CategoryRequest.CategoryDto categoryDto
+    @PutMapping("/categories/{code}")
+    public ResponseEntity<CategoryResponse.CategoryUpdateDto> updateCategory(
+            @PathVariable String code,
+            @Valid @RequestBody CategoryRequest.CategoryUpdateDto categoryUpdateDto
     ) {
-        CategoryResponse.CategoryDto updatedCategory = new CategoryResponse.CategoryDto(
-                categoryDto.code(),
-                categoryDto.name()
+        CategoryResult.Detail updatedCategory = categoryService.update(
+                CategoryCommand.Update.of(code,
+                        categoryUpdateDto.name(),
+                        categoryUpdateDto.description())
         );
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(updatedCategory);
+                .body(CategoryResponse.CategoryUpdateDto.from(updatedCategory));
     }
 
     @Override

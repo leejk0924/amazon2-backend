@@ -24,7 +24,7 @@ CategoryApiSpec {
     ResponseEntity<CategoryResponse.CategoryCreateDto> createCategory(CategoryRequest.CategoryCreateDto categoryDto);
     @Operation(summary = "카테고리 수정")
     @ApiResponse(responseCode = "200", description = "카테고리 수정 성공")
-    ResponseEntity<CategoryResponse.CategoryDto> updateCategory(Long id, CategoryRequest.CategoryDto categoryDto);
+    ResponseEntity<CategoryResponse.CategoryUpdateDto> updateCategory(String id, CategoryRequest.CategoryUpdateDto categoryUpdateDto);
     @Operation(summary = "카테고리 삭제")
     @ApiResponse(responseCode = "204", description = "카테고리 삭제 성공")
     ResponseEntity<Void> deleteCategory(Long memberId);
