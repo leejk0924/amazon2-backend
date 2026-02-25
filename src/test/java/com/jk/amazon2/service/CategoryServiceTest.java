@@ -21,7 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -172,15 +171,12 @@ class CategoryServiceTest {
                 softly.assertThat(resultPage.getSize()).as("페이지 크기").isEqualTo(10);
 
                 // 2. 컨텐츠 내용 및 순서 검증
-                CategoryResult.Info firstItem = resultPage.getContent().getFirst();
-                softly.assertThat(firstItem.getCode()).isEqualTo("TECH");
-                softly.assertThat(firstItem.getName()).isEqualTo("Technology");
-                softly.assertThat(firstItem.getDescription()).isEqualTo("Desc1");
-
-                CategoryResult.Info secondItem = resultPage.getContent().get(1);
-                softly.assertThat(secondItem.getCode()).isEqualTo("FASHION");
-                softly.assertThat(secondItem.getName()).isEqualTo("Fashion");
-                softly.assertThat(secondItem.getDescription()).isEqualTo("Desc2");
+                softly.assertThat(resultPage.getContent())
+                        .extracting(CategoryResult.Info::getCode, CategoryResult.Info::getName, CategoryResult.Info::getDescription)
+                        .containsExactly(
+                                tuple("TECH", "Technology", "Desc1"),
+                                tuple("FASHION", "Fashion", "Desc2")
+                        );
             });
 
             verify(categoryRepository, times(1)).findAll(any(Pageable.class));
@@ -199,15 +195,13 @@ class CategoryServiceTest {
             Page<CategoryResult.Info> resultPage = categoryService.getCategories(pageable);
 
             // then
-            assertThat(Objects.requireNonNull(resultPage)).isNotNull();
+            assertThat(resultPage).as("결과 페이지 객체").isNotNull();
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(resultPage.getContent()).isEmpty();
-                softly.assertThat(resultPage.getTotalElements()).isZero();
-                softly.assertThat(resultPage.getTotalPages()).isZero();
+                softly.assertThat(resultPage.getContent()).as("결과 목록").isEmpty();
+                softly.assertThat(resultPage.getTotalElements()).as("전체 요소 수").isZero();
+                softly.assertThat(resultPage.getTotalPages()).as("전체 페이지 수").isZero();
             });
-            assertThat(resultPage.getTotalElements()).isZero();
-            assertThat(resultPage.getContent()).isEmpty();
         }
     }
 }
