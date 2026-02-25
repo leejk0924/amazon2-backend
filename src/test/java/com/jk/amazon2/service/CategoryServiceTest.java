@@ -2,7 +2,6 @@ package com.jk.amazon2.service;
 
 import com.jk.amazon2.entity.Category;
 import com.jk.amazon2.exception.CategoryErrorCode;
-import com.jk.amazon2.exception.RestApiException;
 import com.jk.amazon2.repository.CategoryRepository;
 import com.jk.amazon2.service.dto.CategoryCommand;
 import com.jk.amazon2.service.dto.CategoryResult;
@@ -12,6 +11,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.AdditionalAnswers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,7 +37,7 @@ class CategoryServiceTest {
     class CreateCategory{
         @DisplayName("카테고리 생성 시, 입력된 정보가 엔티티로 변환되어 저장 [success]")
         @Test
-        void category_create_success_test() throws Exception {
+        void category_create_success_test() {
             // given
             String code = faker.regexify("[A-Z]{5,10}");
             String name = faker.company().industry();
@@ -44,14 +45,14 @@ class CategoryServiceTest {
 
             var inputCategory = CategoryCommand.Create.of(code, name, description);
 
-            var mockCategory = Category.of(code, name, description);
             given(categoryRepository.save(any(Category.class)))
-                    .willReturn(mockCategory);
+                    .will(AdditionalAnswers.returnsFirstArg());
 
             // when
             CategoryResult.Detail savedCategory = categoryService.create(inputCategory);
 
             // then
+            // 1. 반환값 검증
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(savedCategory.getCode())
                         .as("code 검증")
@@ -63,11 +64,21 @@ class CategoryServiceTest {
                         .as("description 검증")
                         .isEqualTo(description);
             });
+
+            // 2. Repository에 전달된 실제 엔티티 캡처 및 검증
+            ArgumentCaptor<Category> categoryCaptor = ArgumentCaptor.forClass(Category.class);
+            verify(categoryRepository).save(categoryCaptor.capture());
+            Category capturedCategory = categoryCaptor.getValue();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(capturedCategory.getCode()).isEqualTo(code);
+                softly.assertThat(capturedCategory.getName()).isEqualTo(name);
+                softly.assertThat(capturedCategory.getDescription()).isEqualTo(description);
+            });
         }
 
         @DisplayName("카테고리 생성 시, 이미 존재하는 카테고리인 경우 [fail]")
         @Test
-        void category_create_fail_test() throws Exception {
+        void category_create_fail_test() {
             // given
             String code = faker.regexify("[A-Z]{5,10}");
             String name = faker.company().industry();
@@ -80,8 +91,8 @@ class CategoryServiceTest {
 
             // when & then
             assertThatThrownBy(() -> categoryService.create(inputCategory))
-                    .isInstanceOf(RestApiException.class)
-                    .hasMessageContaining(CategoryErrorCode.CATEGORY_ALREADY_EXISTS.getMessage());
+                    .extracting("errorCode")
+                    .isEqualTo(CategoryErrorCode.CATEGORY_ALREADY_EXISTS);
 
             verify(categoryRepository, never()).save(any(Category.class));
         }
