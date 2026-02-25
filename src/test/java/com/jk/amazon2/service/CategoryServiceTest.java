@@ -15,10 +15,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -134,6 +140,74 @@ class CategoryServiceTest {
             assertThatThrownBy(() -> categoryService.update(inputCategory))
                     .extracting("errorCode")
                     .isEqualTo(CategoryErrorCode.CATEGORY_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("Category 조회 - 단위 테스트")
+    class ReadCategory {
+        @DisplayName("검색 조건으로 카테고리 목록 페이징 조회 성공")
+        @Test
+        void searchCategories_Success() {
+            // given
+            Category category1 = Category.of("TECH", "Technology", "Desc1");
+            Category category2 = Category.of("FASHION", "Fashion", "Desc2");
+            List<Category> categories = List.of(category1, category2);
+
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Category> categoryPage = new PageImpl<>(categories, pageable, categories.size());
+
+            given(categoryRepository.findAll(any(Pageable.class)))
+                    .willReturn(categoryPage);
+
+            // when
+            Page<CategoryResult.Info> resultPage = categoryService.getCategories(pageable);
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                // 1. 페이징 메타데이터 검증
+                softly.assertThat(resultPage.getTotalElements()).as("전체 요소 수").isEqualTo(2);
+                softly.assertThat(resultPage.getTotalPages()).as("전체 페이지 수").isEqualTo(1);
+                softly.assertThat(resultPage.getNumber()).as("현재 페이지 번호").isEqualTo(0);
+                softly.assertThat(resultPage.getSize()).as("페이지 크기").isEqualTo(10);
+
+                // 2. 컨텐츠 내용 및 순서 검증
+                CategoryResult.Info firstItem = resultPage.getContent().getFirst();
+                softly.assertThat(firstItem.getCode()).isEqualTo("TECH");
+                softly.assertThat(firstItem.getName()).isEqualTo("Technology");
+                softly.assertThat(firstItem.getDescription()).isEqualTo("Desc1");
+
+                CategoryResult.Info secondItem = resultPage.getContent().get(1);
+                softly.assertThat(secondItem.getCode()).isEqualTo("FASHION");
+                softly.assertThat(secondItem.getName()).isEqualTo("Fashion");
+                softly.assertThat(secondItem.getDescription()).isEqualTo("Desc2");
+            });
+
+            verify(categoryRepository, times(1)).findAll(any(Pageable.class));
+        }
+
+        @DisplayName("검색 결과가 없을 경우 빈 페이지 반환")
+        @Test
+        void searchCategories_Success_EmptyResult() {
+            // given
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(categoryRepository.findAll(any(Pageable.class)))
+                    .willReturn(Page.empty(pageable));
+
+            // when
+            Page<CategoryResult.Info> resultPage = categoryService.getCategories(pageable);
+
+            // then
+            assertThat(Objects.requireNonNull(resultPage)).isNotNull();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(resultPage.getContent()).isEmpty();
+                softly.assertThat(resultPage.getTotalElements()).isZero();
+                softly.assertThat(resultPage.getTotalPages()).isZero();
+            });
+            assertThat(resultPage.getTotalElements()).isZero();
+            assertThat(resultPage.getContent()).isEmpty();
         }
     }
 }

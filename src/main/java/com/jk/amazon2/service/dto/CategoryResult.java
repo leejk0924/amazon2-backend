@@ -2,6 +2,7 @@ package com.jk.amazon2.service.dto;
 
 import com.jk.amazon2.entity.Category;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -49,6 +50,22 @@ public class CategoryResult {
                     entity.getDescription(),
                     entity.getCreatedAt(),
                     entity.getCreatedBy()
+            );
+        }
+    }
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    @AllArgsConstructor(staticName = "of")
+    public static class Info {
+        private String code;
+        private String name;
+        private String description;
+
+        public static Info from(Category entity) {
+            return new Info(
+                    entity.getCode(),
+                    entity.getName(),
+                    entity.getDescription()
             );
         }
     }

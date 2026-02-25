@@ -7,6 +7,8 @@ import com.jk.amazon2.repository.CategoryRepository;
 import com.jk.amazon2.service.dto.CategoryCommand;
 import com.jk.amazon2.service.dto.CategoryResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,5 +39,10 @@ public class CategoryService {
         category.updateDescription(inputCategory.getDescription());
 
         return CategoryResult.Detail.from(category);
+    }
+
+    public Page<CategoryResult.Info> getCategories(Pageable pageable) {
+        Page<Category> allCategory = categoryRepository.findAll(pageable);
+        return allCategory.map(CategoryResult.Info::from);
     }
 }
