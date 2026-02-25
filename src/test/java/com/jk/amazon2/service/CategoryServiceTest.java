@@ -5,7 +5,6 @@ import com.jk.amazon2.exception.CategoryErrorCode;
 import com.jk.amazon2.repository.CategoryRepository;
 import com.jk.amazon2.service.dto.CategoryCommand;
 import com.jk.amazon2.service.dto.CategoryResult;
-import net.datafaker.Faker;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Locale;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,8 +28,6 @@ class CategoryServiceTest {
     @InjectMocks
     private CategoryService categoryService;
 
-    private final Faker faker = new Faker(Locale.of("ko"));
-
     @Nested
     @DisplayName("Category 생성 - 단위 테스트")
     class CreateCategory{
@@ -39,9 +35,9 @@ class CategoryServiceTest {
         @Test
         void category_create_success_test() {
             // given
-            String code = faker.regexify("[A-Z]{5,10}");
-            String name = faker.company().industry();
-            String description = faker.lorem().sentence();
+            String code = "TECH";
+            String name = "Technology";
+            String description = "Electronic devices and gadgets";
 
             var inputCategory = CategoryCommand.Create.of(code, name, description);
 
@@ -80,9 +76,9 @@ class CategoryServiceTest {
         @Test
         void category_create_fail_test() {
             // given
-            String code = faker.regexify("[A-Z]{5,10}");
-            String name = faker.company().industry();
-            String description = faker.lorem().sentence();
+            String code = "TECH";
+            String name = "Technology";
+            String description = "Electronic devices and gadgets";
 
             CategoryCommand.Create inputCategory = CategoryCommand.Create.of(code, name, description);
 

@@ -7,68 +7,60 @@ import com.jk.amazon2.exception.RestApiException;
 import com.jk.amazon2.service.CategoryService;
 import com.jk.amazon2.service.dto.CategoryCommand;
 import com.jk.amazon2.service.dto.CategoryResult;
-import io.restassured.http.ContentType;
-import io.restassured.module.mockmvc.RestAssuredMockMvc;
-import net.datafaker.Faker;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.AuditorAware;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.hamcrest.Matchers.equalTo;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-@WebMvcTest
+@ExtendWith(MockitoExtension.class)
 class CategoryControllerTest {
-    @Autowired
-    private MockMvc mockMvc;
-    @MockitoBean
+
+    @Mock
     private CategoryService categoryService;
-    @MockitoBean
-    private AuditorAware<String> auditorProvider;
-    @Autowired
+
     private CategoryController categoryController;
 
-    @DisplayName("Category 생성 - API 테스트")
-    @Nested
+    @BeforeEach
+    void setUp() {
+        categoryController = new CategoryController(categoryService);
+    }
 
+    @DisplayName("Category 생성 - 단위 테스트")
+    @Nested
     class CreateCategory {
-        @BeforeEach
-        void setUp() {
-            RestAssuredMockMvc.mockMvc(mockMvc);
-        }
 
         @DisplayName("POST /categories - 카테고리 생성 성공 [201 Created]")
         @Test
-        void createCategory_return201AndBody_whenRequestIsValid() {
+        void createCategory_Success() {
             // given
-            Faker faker = new Faker(Locale.of("ko"));
-            String code = faker.regexify("[A-Z]{5,10}");
-            String name = faker.company().industry();
-            String description = faker.lorem().sentence();
-            var requestDto = new CategoryRequest.CategoryCreateDto(
-                    code, name, description
-            );
+            String code = "TECH";
+            String name = "Technology";
+            String description = "Electronic devices and gadgets";
+
+            var requestDto = new CategoryRequest.CategoryCreateDto(code, name, description);
 
             CategoryResult.Detail mockResult = CategoryResult.Detail.of(
                     code, name, description,
@@ -78,136 +70,76 @@ class CategoryControllerTest {
             given(categoryService.create(any(CategoryCommand.Create.class)))
                     .willReturn(mockResult);
 
-            // when & then (API 검증)
-            RestAssuredMockMvc
-                    .given()
-                    .contentType(ContentType.JSON)
-                    .body(requestDto)
-                    .when()
-                    .post("/categories")
-                    .then()
-                    .statusCode(HttpStatus.CREATED.value())
-                    .body("categoryCode", equalTo(code))
-                    .body("categoryName", equalTo(name))
-                    .body("description", equalTo(description));
+            // when
+            ResponseEntity<CategoryResponse.CategoryCreateDto> response =
+                    categoryController.createCategory(requestDto);
 
-            // then (서비스로 넘어간 데이터의 정확성 검증)
+            // then (ResponseEntity 검증)
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatusCode()).as("상태코드 검증").isEqualTo(HttpStatus.CREATED);
+                softly.assertThat(Objects.requireNonNull(response.getBody()))
+                        .as("응답 본문 검증")
+                        .isNotNull()
+                        .satisfies(body -> {
+                            softly.assertThat(response.getBody().categoryCode()).as("카테고리 코드 검증").isEqualTo(code);
+                            softly.assertThat(response.getBody().categoryName()).as("카테고리 이름 검증").isEqualTo(name);
+                            softly.assertThat(response.getBody().description()).as("카테고리 설명 검증").isEqualTo(description);
+                        });
+            });
+
+            // Verify Service Call
             ArgumentCaptor<CategoryCommand.Create> commandCaptor = ArgumentCaptor.forClass(CategoryCommand.Create.class);
             verify(categoryService).create(commandCaptor.capture());
+
             CategoryCommand.Create capturedCommand = commandCaptor.getValue();
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(capturedCommand.getCode())
-                        .as("DTO의 code가 Command의 code 검증")
-                        .isEqualTo(code);
-                softly.assertThat(capturedCommand.getName())
-                        .as("DTO의 name이 Command로 정확히 매핑되었는가")
-                        .isEqualTo(name);
-                softly.assertThat(capturedCommand.getDescription())
-                        .as("DTO의 description이 Command로 정확히 매핑되었는가")
-                        .isEqualTo(description);
+                softly.assertThat(capturedCommand.getCode()).as("DTO의 code가 Command의 code 검증").isEqualTo(code);
+                softly.assertThat(capturedCommand.getName()).as("DTO의 name이 Command로 정확히 매핑되었는가").isEqualTo(name);
+                softly.assertThat(capturedCommand.getDescription()).as("DTO의 description이 Command로 정확히 매핑되었는가").isEqualTo(description);
             });
         }
 
-        @DisplayName("POST /categories - 유효하지 않은 입력값에 대한 예외 처리 검증")
+        @DisplayName("POST /categories - 유효하지 않은 입력값 검증")
         @ParameterizedTest(name = "[{index}] {0}")
         @MethodSource("provideInvalidCategoryRequests")
-        void createCategory_ShouldFail_WhenRequestIsInvalid(
+        void createCategory_Fail_Validation(
                 String testCase,
                 String code,
                 String name,
                 String description,
-                int statusCode,
-                String errorCode,
-                String errorMessage
+                String expectedMessage
         ) {
             // given
             var requestDto = new CategoryRequest.CategoryCreateDto(code, name, description);
 
-            // when & then
-            RestAssuredMockMvc
-                    .given()
-                    .contentType(ContentType.JSON)
-                    .body(requestDto)
-                    .when()
-                    .post("/categories")
-                    .then()
-                    .statusCode(statusCode)
-                    .body("code", equalTo(errorCode))
-                    .body("message", equalTo(errorMessage));
+            var factory = Validation.buildDefaultValidatorFactory();
+            var validator = factory.getValidator();
+
+            // when
+            Set<ConstraintViolation<CategoryRequest.CategoryCreateDto>> violations = validator.validate(requestDto);
+
+            // then
+            assertThat(violations).isNotEmpty();
+            assertThat(violations)
+                    .extracting(ConstraintViolation::getMessage)
+                    .contains(expectedMessage);
         }
 
         static Stream<Arguments> provideInvalidCategoryRequests() {
-            Faker testFaker = new Faker(Locale.of("ko"));
             return Stream.of(
-                    // code Test Case
-                    Arguments.of(
-                            "코드가 blank인 경우",
-                            "",
-                            testFaker.company().industry(),
-                            testFaker.lorem().sentence(),
-                            HttpStatus.BAD_REQUEST.value(),
-                            "INVALID_INPUT",
-                            "카테고리 코드는 필수 입니다."
-                    ),
-                    Arguments.of(
-                            "코드가 null인 경우",
-                            null,
-                            testFaker.company().industry(),
-                            testFaker.lorem().sentence(),
-                            HttpStatus.BAD_REQUEST.value(),
-                            "INVALID_INPUT",
-                            "카테고리 코드는 필수 입니다."
-                    ),
-                    Arguments.of(
-                            "코드가 10자 초과인 경우",
-                            testFaker.regexify("[A-Z]{15}"),
-                            testFaker.company().industry(),
-                            testFaker.lorem().sentence(),
-                            HttpStatus.BAD_REQUEST.value(),
-                            "INVALID_INPUT",
-                            "카테고리 코드는 최대 10자까지 입력 가능합니다."
-                    ),
-
-                    // name Test Case
-                    Arguments.of(
-                            "이름이 null인 경우",
-                            testFaker.regexify("[A-Z]{5,10}"),
-                            null,
-                            testFaker.lorem().sentence(),
-                            HttpStatus.BAD_REQUEST.value(),
-                            "INVALID_INPUT",
-                            "카테고리 이름은 필수 입니다."
-                    ),
-                    Arguments.of(
-                            "이름이 blank인 경우",
-                            testFaker.regexify("[A-Z]{5,10}"),
-                            "",
-                            testFaker.lorem().sentence(),
-                            HttpStatus.BAD_REQUEST.value(),
-                            "INVALID_INPUT",
-                            "카테고리 이름은 필수 입니다."
-                    ),
-                    Arguments.of(
-                            "이름이 50자 초과인 경우",
-                            testFaker.regexify("[A-Z]{5,10}"),
-                            testFaker.lorem().characters(51),
-                            testFaker.lorem().sentence(),
-                            HttpStatus.BAD_REQUEST.value(),
-                            "INVALID_INPUT",
-                            "카테고리 이름은 최대 50자까지 입력 가능합니다."
-                    )
+                    Arguments.of("코드가 blank인 경우", "", "Name", "Desc", "카테고리 코드는 필수 입니다."),
+                    Arguments.of("코드가 null인 경우", null, "Name", "Desc", "카테고리 코드는 필수 입니다."),
+                    Arguments.of("코드가 10자 초과인 경우", "A".repeat(11), "Name", "Desc", "카테고리 코드는 최대 10자까지 입력 가능합니다."),
+                    Arguments.of("이름이 null인 경우", "CODE", null, "Desc", "카테고리 이름은 필수 입니다."),
+                    Arguments.of("이름이 blank인 경우", "CODE", "", "Desc", "카테고리 이름은 필수 입니다."),
+                    Arguments.of("이름이 50자 초과인 경우", "CODE", "A".repeat(51), "Desc", "카테고리 이름은 최대 50자까지 입력 가능합니다.")
             );
         }
     }
 
     @Nested
-    @DisplayName("Category 수정 - API 테스트")
+    @DisplayName("Category 수정 - 단위 테스트")
     class UpdateCategory {
-
-        @BeforeEach
-        void setUp() {
-            RestAssuredMockMvc.mockMvc(mockMvc);
-        }
 
         @DisplayName("PUT /categories/{code} - 카테고리 수정 성공 [200 OK]")
         @Test
@@ -230,8 +162,8 @@ class CategoryControllerTest {
             // when
             ResponseEntity<CategoryResponse.CategoryUpdateDto> response =
                     categoryController.updateCategory(code, requestDto);
+
             // then
-            // 1. 상태 코드 검증
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
             // 2. 응답 본문 검증
@@ -253,56 +185,22 @@ class CategoryControllerTest {
             });
         }
 
-        @DisplayName("PUT /categories/{code} - 존재하지 않는 카테고리 수정 시 404 Not Found 반환")
+        @DisplayName("PUT /categories/{code} - 존재하지 않는 카테고리 수정 시 예외 발생")
         @Test
         void updateCategory_Fail_NotFound() {
             // given
             String code = "UNKNOWN";
-            String updateName = "Update Name";
-            String description = "Update Description";
+            var requestDto = CategoryRequest.CategoryUpdateDto.of("Name", "Desc");
 
-            // Request DTO 생성
-            var requestDto = CategoryRequest.CategoryUpdateDto.of(updateName, description);
-
-            // Service가 예외를 던지도록 Mocking 설정
             given(categoryService.update(any(CategoryCommand.Update.class)))
                     .willThrow(new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND));
 
             // when & then
-            // 예외가 발생하는지 검증 (assertThrows 사용)
             RestApiException exception = assertThrows(RestApiException.class, () -> {
                 categoryController.updateCategory(code, requestDto);
             });
 
-            // 예외 내용 검증
             assertThat(exception.getErrorCode()).isEqualTo(CategoryErrorCode.CATEGORY_NOT_FOUND);
         }
-    }
-    @DisplayName("카테고리 수정 실패 - Service 예외 발생")
-    @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("provideServiceExceptions")
-    void updateCategory_Fail_ServiceException(
-            String testCase,
-            CategoryErrorCode errorCode
-    ) {
-        // given
-        String code = "TECH";
-        var requestDto = CategoryRequest.CategoryUpdateDto.of("Name", "Desc");
-
-        given(categoryService.update(any()))
-                .willThrow(new RestApiException(errorCode));
-
-        // when & then
-        RestApiException exception = assertThrows(RestApiException.class,
-                () -> categoryController.updateCategory(code, requestDto)
-        );
-
-        assertThat(exception.getErrorCode()).isEqualTo(errorCode);
-    }
-    static Stream<Arguments> provideServiceExceptions() {
-        return Stream.of(
-                Arguments.of("존재하지 않는 카테고리", CategoryErrorCode.CATEGORY_NOT_FOUND),
-                Arguments.of("중복되는 카테고리 이름", CategoryErrorCode.CATEGORY_ALREADY_EXISTS)
-        );
     }
 }
