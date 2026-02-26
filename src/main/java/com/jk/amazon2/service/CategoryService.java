@@ -1,14 +1,17 @@
 package com.jk.amazon2.service;
 
+import com.jk.amazon2.controller.dto.CategoryRequest;
 import com.jk.amazon2.entity.Category;
 import com.jk.amazon2.exception.CategoryErrorCode;
 import com.jk.amazon2.exception.RestApiException;
 import com.jk.amazon2.repository.CategoryRepository;
+import com.jk.amazon2.repository.spec.CategorySpecification;
 import com.jk.amazon2.service.dto.CategoryCommand;
 import com.jk.amazon2.service.dto.CategoryResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +44,9 @@ public class CategoryService {
         return CategoryResult.Detail.from(category);
     }
 
-    public Page<CategoryResult.Info> getCategories(Pageable pageable) {
-        Page<Category> allCategory = categoryRepository.findAll(pageable);
-        return allCategory.map(CategoryResult.Info::from);
+    @Transactional(readOnly = true)
+    public Page<CategoryResult.Info> getCategories(CategoryRequest.CategorySearchCondition condition, Pageable pageable) {
+        Specification<Category> spec = CategorySpecification.searchWith(condition);
+        return categoryRepository.findAll(spec, pageable).map(CategoryResult.Info::from);
     }
 }

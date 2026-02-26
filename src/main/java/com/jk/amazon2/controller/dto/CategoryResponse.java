@@ -32,6 +32,16 @@ public class CategoryResponse {
         }
     }
 
+    public record Info(
+            String categoryCode,
+            String categoryName,
+            String description
+    ){
+        public static Info from(CategoryResult.Info info) {
+            return new Info(info.getCode(), info.getName(), info.getDescription());
+        }
+    }
+
     @Deprecated
     public record CategoryDto(
             String code,

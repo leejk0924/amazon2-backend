@@ -36,8 +36,15 @@ public class CategoryRequest {
     ) {}
 
     public record CategorySearchCondition(
+            @NotBlank(message = "카테고리 코드는 필수 입니다.")
+            @Size(max = 10, message = "카테고리 코드는 최대 10자까지 입력 가능합니다.")
             String code,
+            @NotBlank(message = "카테고리 이름은 필수 입니다.")
+            @Size(max = 50, message = "카테고리 이름은 최대 50자까지 입력 가능합니다.")
             String name
     ) {
+        public static CategorySearchCondition of(String code, String name) {
+            return new CategorySearchCondition(code, name);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.jk.amazon2.service;
 
+import com.jk.amazon2.controller.dto.CategoryRequest;
 import com.jk.amazon2.entity.Category;
 import com.jk.amazon2.exception.CategoryErrorCode;
 import com.jk.amazon2.repository.CategoryRepository;
@@ -10,15 +11,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.AdditionalAnswers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -145,22 +144,27 @@ class CategoryServiceTest {
     @Nested
     @DisplayName("Category 조회 - 단위 테스트")
     class ReadCategory {
+
+        @Captor
+        ArgumentCaptor<Specification<Category>> specCaptor;
+
         @DisplayName("검색 조건으로 카테고리 목록 페이징 조회 성공")
         @Test
-        void searchCategories_Success() {
+        void searchCategories_Success_WithCondition() {
             // given
             Category category1 = Category.of("TECH", "Technology", "Desc1");
             Category category2 = Category.of("FASHION", "Fashion", "Desc2");
             List<Category> categories = List.of(category1, category2);
 
+            var condition = CategoryRequest.CategorySearchCondition.of(null, "Tech");
             Pageable pageable = PageRequest.of(0, 10);
-            Page<Category> categoryPage = new PageImpl<>(categories, pageable, categories.size());
 
-            given(categoryRepository.findAll(any(Pageable.class)))
+            Page<Category> categoryPage = new PageImpl<>(categories, pageable, categories.size());
+            given(categoryRepository.findAll(ArgumentMatchers.<Specification<Category>>any(), any(Pageable.class)))
                     .willReturn(categoryPage);
 
             // when
-            Page<CategoryResult.Info> resultPage = categoryService.getCategories(pageable);
+            Page<CategoryResult.Info> resultPage = categoryService.getCategories(condition, pageable);
 
             // then
             SoftAssertions.assertSoftly(softly -> {
@@ -179,7 +183,11 @@ class CategoryServiceTest {
                         );
             });
 
-            verify(categoryRepository, times(1)).findAll(any(Pageable.class));
+            verify(categoryRepository, times(1)).findAll(ArgumentMatchers.<Specification<Category>>any(), any(Pageable.class));
+            verify(categoryRepository).findAll(specCaptor.capture(), eq(pageable));
+
+            Specification<Category> capturedSpec = specCaptor.getValue();
+            assertThat(capturedSpec).isNotNull();
         }
 
         @DisplayName("검색 결과가 없을 경우 빈 페이지 반환")
@@ -188,11 +196,11 @@ class CategoryServiceTest {
             // given
             Pageable pageable = PageRequest.of(0, 10);
 
-            given(categoryRepository.findAll(any(Pageable.class)))
+            given(categoryRepository.findAll(ArgumentMatchers.<Specification<Category>>any(), any(Pageable.class)))
                     .willReturn(Page.empty(pageable));
 
             // when
-            Page<CategoryResult.Info> resultPage = categoryService.getCategories(pageable);
+            Page<CategoryResult.Info> resultPage = categoryService.getCategories(null, pageable);
 
             // then
             assertThat(resultPage).as("결과 페이지 객체").isNotNull();
