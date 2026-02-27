@@ -21,10 +21,15 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -201,6 +206,116 @@ class CategoryControllerTest {
             });
 
             assertThat(exception.getErrorCode()).isEqualTo(CategoryErrorCode.CATEGORY_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("Category 조회 - 단위 테스트")
+    class ReadCategory {
+
+        @DisplayName("GET /categories - 카테고리 목록 페이징 조회 성공 [200 OK]")
+        @Test
+        void getCategories_Success() {
+            // given
+            CategoryResult.Info info1 = CategoryResult.Info.of("TECH", "Technology", "Desc1");
+            CategoryResult.Info info2 = CategoryResult.Info.of("BEAUTY", "Beauty", "Desc2");
+            List<CategoryResult.Info> content = List.of(info1, info2);
+
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<CategoryResult.Info> resultPage = new PageImpl<>(content, pageable, content.size());
+
+            given(categoryService.getCategories(any(), any(Pageable.class)))
+                    .willReturn(resultPage);
+
+            // when
+            ResponseEntity<Page<CategoryResponse.Info>> response =
+                    categoryController.getCategories(null, pageable);
+
+            // then
+            assertThat(response.getBody()).isNotNull();
+
+            SoftAssertions.assertSoftly(softly -> {
+                // 1. 상태 코드 검증
+                softly.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+                // 2. 페이징 메타데이터 검증
+                var body = response.getBody();
+                softly.assertThat(body.getTotalElements()).isEqualTo(2);
+                softly.assertThat(body.getNumber()).isEqualTo(0);
+                softly.assertThat(body.getSize()).isEqualTo(10);
+
+                // 3. 컨텐츠 내용 검증
+                softly.assertThat(body.getContent()).hasSize(2);
+
+                var firstItem = body.getContent().getFirst();
+                softly.assertThat(firstItem.categoryCode()).isEqualTo("TECH");
+                softly.assertThat(firstItem.categoryName()).isEqualTo("Technology");
+            });
+        }
+
+        @DisplayName("GET /categories - 데이터가 없을 경우 빈 페이지 반환 [200 OK]")
+        @Test
+        void getCategories_Success_Empty() {
+            // given
+            Pageable pageable = PageRequest.of(0, 10);
+            given(categoryService.getCategories(any(), any(Pageable.class)))
+                    .willReturn(Page.empty(pageable));
+
+            // when
+            ResponseEntity<Page<CategoryResponse.Info>> response =
+                    categoryController.getCategories(null, pageable);
+
+            // then
+            assertThat(response.getBody()).isNotNull();
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+                Page<CategoryResponse.Info> body = response.getBody();
+                softly.assertThat(body.getTotalElements()).isZero();
+                softly.assertThat(body.getContent()).isEmpty();
+            });
+        }
+
+        @DisplayName("GET /categories/{code} - 카테고리 단건 조회 성공 [200 OK]")
+        @Test
+        void getCategory_Success() {
+            // given
+            String code = "TECH";
+            String name = "Technology";
+            String description = "Desc";
+            CategoryResult.Info mockResult = CategoryResult.Info.of(code, name, description);
+
+            given(categoryService.getCategory(code)).willReturn(mockResult);
+
+            // when
+            ResponseEntity<CategoryResponse.Info> response = categoryController.getCategory(code);
+
+            // then
+            assertThat(response.getBody()).as("응답 본문").isNotNull();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(response.getStatusCode()).as("상태").isEqualTo(HttpStatus.OK);
+                var body = response.getBody();
+                softly.assertThat(body.categoryCode()).as("카테고리 코드").isEqualTo(code);
+                softly.assertThat(body.categoryName()).as("카테고리 이름").isEqualTo(name);
+                softly.assertThat(body.description()).as("카테고리 설명").isEqualTo(description);
+            });
+            verify(categoryService).getCategory(code);
+        }
+
+        @DisplayName("GET /categories/{code} - 존재하지 않는 카테고리 조회 시 예외 발생")
+        @Test
+        void getCategory_Fail_NotFound() {
+            // given
+            String code = "NOT_EXIST";
+            given(categoryService.getCategory(code))
+                    .willThrow(new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+
+            // when & then
+            RestApiException exception = assertThrows(RestApiException.class,
+                    () -> categoryController.getCategory(code));
+            assertThat(exception.getErrorCode()).isEqualTo(CategoryErrorCode.CATEGORY_NOT_FOUND);
+            verify(categoryService).getCategory(code);
         }
     }
 }

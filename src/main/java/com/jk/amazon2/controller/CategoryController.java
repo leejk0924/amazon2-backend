@@ -9,14 +9,11 @@ import com.jk.amazon2.service.dto.CategoryResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,26 +21,29 @@ public class CategoryController implements CategoryApiSpec {
     private final CategoryService categoryService;
 
     @Override
-    @GetMapping("/categories")
-    public ResponseEntity<Page<CategoryResponse.CategoryDto>> getCategories(
-            CategoryRequest.CategorySearchCondition searchCondition,
-            @PageableDefault(size = 10, sort = "name") Pageable pageable
+    @GetMapping("/categories/{code}")
+    public ResponseEntity<CategoryResponse.Info> getCategory(
+            @PathVariable String code
     ) {
-        List<CategoryResponse.CategoryDto> content = List.of(
-                new CategoryResponse.CategoryDto("ELECTRONIC", "전자기기"),
-                new CategoryResponse.CategoryDto("BEAUTY", "뷰티"),
-                new CategoryResponse.CategoryDto("FASHION", "패션")
-        );
+        CategoryResult.Info result = categoryService.getCategory(code);
+        var response = CategoryResponse.Info.from(result);
 
-        Page<CategoryResponse.CategoryDto> data = new PageImpl<>(
-                content,
-                pageable,
-                content.size()
-        ).map(c -> new CategoryResponse.CategoryDto(c.code(), c.name()));
+        return ResponseEntity.
+                status(HttpStatus.OK)
+                .body(response);
+    }
+
+    @Override
+    @GetMapping("/categories")
+    public ResponseEntity<Page<CategoryResponse.Info>> getCategories(
+            CategoryRequest.CategorySearchCondition searchCondition,
+            @PageableDefault(size = 10, sort = "code") Pageable pageable
+    ) {
+        Page<CategoryResponse.Info> result = categoryService.getCategories(searchCondition, pageable).map(CategoryResponse.Info::from);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(data);
+                .body(result);
     }
 
     @Override
