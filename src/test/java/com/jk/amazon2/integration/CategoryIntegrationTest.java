@@ -183,4 +183,145 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
             );
         }
     }
+
+    @Nested
+    @DisplayName("Category 조회 통합 테스트")
+    class GetCategory {
+
+        @BeforeEach
+        void setUp() {
+            RestAssuredMockMvc.mockMvc(mockMvc);
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=0");
+            jdbcTemplate.execute("TRUNCATE TABLE blog_category");
+            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=1");
+        }
+
+        @DisplayName("[통합] GET /categories/{code} - 단건 조회 성공 [200 OK]")
+        @Test
+        void getCategory_Integration_Success() {
+            // given
+            String code = "READ_TEST";
+            String name = "Read Name";
+            String description = "Read Desc";
+
+            String insertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
+            jdbcTemplate.update(insertSql, code, name, description);
+
+            // when & then
+            RestAssuredMockMvc
+                    .given()
+                    .when()
+                    .get("/categories/{code}", code)
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("categoryCode", equalTo(code))
+                    .body("categoryName", equalTo(name))
+                    .body("description", equalTo(description));
+        }
+
+        @DisplayName("[통합] GET /categories/{code} - 존재하지 않는 카테고리 조회 시 실패 [404 Not Found]")
+        @Test
+        void getCategory_Integration_Fail_NotFound() {
+            // given
+            String unknownCode = "UNKNOWN_ID";
+
+            // when & then
+            RestAssuredMockMvc
+                    .given()
+                    .when()
+                    .get("/categories/{code}", unknownCode)
+                    .then()
+                    .statusCode(HttpStatus.NOT_FOUND.value())
+                    .body("code", equalTo(CategoryErrorCode.CATEGORY_NOT_FOUND.name()))
+                    .body("message", equalTo(CategoryErrorCode.CATEGORY_NOT_FOUND.getMessage()));
+        }
+
+        @DisplayName("[통합] GET /categories - 목록 조회 및 검색 성공")
+        @Test
+        void getCategories_Integration_Success() {
+            // given
+            String insertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
+            jdbcTemplate.update(insertSql, "SEARCH_1", "Search Target 1", "Desc 1");
+            jdbcTemplate.update(insertSql, "SEARCH_2", "Search Target 2", "Desc 2");
+            jdbcTemplate.update(insertSql, "OTHER_3", "Other Category", "Desc 3");
+
+            // when & then
+            RestAssuredMockMvc
+                    .given()
+                    .param("page", 0)
+                    .param("size", 10)
+                    .param("name", "Search")
+                    .when()
+                    .get("/categories")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("content.size()", equalTo(2)) // 2개만 조회되어야 함
+                    .body("content[0].categoryCode", equalTo("SEARCH_1"))
+                    .body("content[1].categoryCode", equalTo("SEARCH_2"))
+                    .body("totalElements", equalTo(2));
+        }
+
+        @DisplayName("[통합] GET /categories - 페이징 및 정렬 동작 확인 [200 OK]")
+        @Test
+        void getCategories_Integration_PagingAndSorting() {
+            // given
+            //테스트 데이터 15개
+            String insertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
+            for (int i = 1; i <= 15; i++) {
+                String suffix = String.format("%02d", i);
+                jdbcTemplate.update(insertSql, "CODE" + suffix, "Name" + suffix,"Desc" + suffix);
+            }
+            // when & then
+            // 첫 번째 페이지 조회 (size=10, name 역순 정렬)
+            RestAssuredMockMvc
+                    .given()
+                    .param("page", 0)
+                    .param("size", 10)
+                    .param("sort", "name,desc")
+                    .when()
+                    .get("/categories")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("content.size()", equalTo(10))
+                    .body("totalElements", equalTo(15))
+                    .body("totalPages", equalTo(2))
+                    .body("first", equalTo(true))
+                    .body("last", equalTo(false))
+                    .body("content[0].categoryName", equalTo("Name15"))
+                    .body("content[9].categoryName", equalTo("Name06"));
+
+            RestAssuredMockMvc
+                    .given()
+                    .param("page", 1)
+                    .param("size", 10)
+                    .param("sort", "name,desc")
+                    .when()
+                    .get("/categories")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("content.size()", equalTo(5))
+                    .body("first", equalTo(false))
+                    .body("last", equalTo(true))
+                    .body("content[0].categoryName", equalTo("Name05"))
+                    .body("content[4].categoryName", equalTo("Name01"));
+        }
+
+        @DisplayName("[통합] GET /categories - 검색 결과가 없을 경우 빈 목록 반환 [200 OK]")
+        @Test
+        void getCategories_Integration_EmptyResult() {
+            // given
+            // 데이터가 없는 상태 (또는 검색 조건에 맞지 않는 데이터만 있는 상태)
+
+            // when & then
+            RestAssuredMockMvc
+                    .given()
+                    .param("name", "NonExistentName") // 존재하지 않는 이름으로 검색
+                    .when()
+                    .get("/categories")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("content.size()", equalTo(0))
+                    .body("totalElements", equalTo(0));
+        }
+    }
 }
