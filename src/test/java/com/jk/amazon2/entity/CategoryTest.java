@@ -1,6 +1,7 @@
 package com.jk.amazon2.entity;
 
 import com.jk.amazon2.config.JpaAuditingConfig;
+import com.jk.amazon2.config.QueryDslConfig;
 import com.jk.amazon2.repository.CategoryRepository;
 import com.jk.amazon2.testsupport.TestContainerConfig;
 import org.assertj.core.api.SoftAssertions;
@@ -26,7 +27,7 @@ import static org.mockito.BDDMockito.given;
 
 @DataJpaTest
 @ActiveProfiles("test")
-@Import({TestContainerConfig.class, JpaAuditingConfig.class})
+@Import({TestContainerConfig.class, JpaAuditingConfig.class, QueryDslConfig.class})
 class CategoryTest {
     @Autowired
     private CategoryRepository categoryRepository;

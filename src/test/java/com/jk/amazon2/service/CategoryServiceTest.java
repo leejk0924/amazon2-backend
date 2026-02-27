@@ -11,13 +11,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.AdditionalAnswers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -145,10 +147,7 @@ class CategoryServiceTest {
     @DisplayName("Category 조회 - 단위 테스트")
     class ReadCategory {
 
-        @Captor
-        ArgumentCaptor<Specification<Category>> specCaptor;
-
-        @DisplayName("검색 조건으로 카테고리 목록 페이징 조회 성공")
+        @DisplayName("검색 조건(코드)으로 카테고리 목록 페이징 조회 성공")
         @Test
         void searchCategories_Success_WithCondition() {
             // given
@@ -156,11 +155,13 @@ class CategoryServiceTest {
             Category category2 = Category.of("FASHION", "Fashion", "Desc2");
             List<Category> categories = List.of(category1, category2);
 
-            var condition = CategoryRequest.CategorySearchCondition.of(null, "Tech");
+            // 검색 조건 (code)
+            var condition = CategoryRequest.CategorySearchCondition.of("TECH", null);
             Pageable pageable = PageRequest.of(0, 10);
 
             Page<Category> categoryPage = new PageImpl<>(categories, pageable, categories.size());
-            given(categoryRepository.findAll(ArgumentMatchers.<Specification<Category>>any(), any(Pageable.class)))
+
+            given(categoryRepository.search(any(CategoryRequest.CategorySearchCondition.class), any(Pageable.class)))
                     .willReturn(categoryPage);
 
             // when
@@ -183,11 +184,8 @@ class CategoryServiceTest {
                         );
             });
 
-            verify(categoryRepository, times(1)).findAll(ArgumentMatchers.<Specification<Category>>any(), any(Pageable.class));
-            verify(categoryRepository).findAll(specCaptor.capture(), eq(pageable));
-
-            Specification<Category> capturedSpec = specCaptor.getValue();
-            assertThat(capturedSpec).isNotNull();
+//            verify(categoryRepository.search(eq(condition), eq(pageable)));
+            verify(categoryRepository).search(eq(condition), eq(pageable));
         }
 
         @DisplayName("검색 결과가 없을 경우 빈 페이지 반환")
@@ -195,12 +193,13 @@ class CategoryServiceTest {
         void searchCategories_Success_EmptyResult() {
             // given
             Pageable pageable = PageRequest.of(0, 10);
+            var emptyCondition = CategoryRequest.CategorySearchCondition.of(null, null);
 
-            given(categoryRepository.findAll(ArgumentMatchers.<Specification<Category>>any(), any(Pageable.class)))
+            given(categoryRepository.search(any(CategoryRequest.CategorySearchCondition.class), any(Pageable.class)))
                     .willReturn(Page.empty(pageable));
 
             // when
-            Page<CategoryResult.Info> resultPage = categoryService.getCategories(null, pageable);
+            Page<CategoryResult.Info> resultPage = categoryService.getCategories(emptyCondition, pageable);
 
             // then
             assertThat(resultPage).as("결과 페이지 객체").isNotNull();
@@ -210,7 +209,9 @@ class CategoryServiceTest {
                 softly.assertThat(resultPage.getTotalElements()).as("전체 요소 수").isZero();
                 softly.assertThat(resultPage.getTotalPages()).as("전체 페이지 수").isZero();
             });
+            verify(categoryRepository, times(1)).search(any(CategoryRequest.CategorySearchCondition.class), any(Pageable.class));
         }
+
         @DisplayName("카테고리 단건 조회 성공")
         @Test
         void getCategory_Success() {
