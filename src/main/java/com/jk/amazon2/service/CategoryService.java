@@ -49,4 +49,11 @@ public class CategoryService {
         Specification<Category> spec = CategorySpecification.searchWith(condition);
         return categoryRepository.findAll(spec, pageable).map(CategoryResult.Info::from);
     }
+
+    @Transactional(readOnly = true)
+    public CategoryResult.Info getCategory(String code) {
+        return categoryRepository.findById(code)
+                .map(CategoryResult.Info::from)
+                .orElseThrow(() -> new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+    }
 }

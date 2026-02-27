@@ -211,5 +211,41 @@ class CategoryServiceTest {
                 softly.assertThat(resultPage.getTotalPages()).as("전체 페이지 수").isZero();
             });
         }
+        @DisplayName("카테고리 단건 조회 성공")
+        @Test
+        void getCategory_Success() {
+            // given
+            String code = "TECH";
+            String name = "Technology";
+            String description = "Desc";
+            Category category = Category.of(code, name, description);
+            given(categoryRepository.findById(code)).willReturn(Optional.of(category));
+
+            // when
+            CategoryResult.Info result = categoryService.getCategory(code);
+
+            // then
+            assertThat(result).isNotNull();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.getCode()).as("카테고리 코드").isEqualTo(code);
+                softly.assertThat(result.getName()).as("카테고리 이름").isEqualTo(name);
+                softly.assertThat(result.getDescription()).as("카테고리 설명").isEqualTo(description);
+            });
+            verify(categoryRepository, times(1)).findById(code);
+        }
+
+        @DisplayName("카테고리 단건 조회 - 존재하지 않는 경우 [fail]")
+        @Test
+        void getCategory_NotFound_fail() {
+            // given
+            String code = "NOT_EXIST";
+            given(categoryRepository.findById(anyString())).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> categoryService.getCategory(code))
+                    .extracting("errorCode")
+                    .isEqualTo(CategoryErrorCode.CATEGORY_NOT_FOUND);
+            verify(categoryRepository, times(1)).findById(code);
+        }
     }
 }
