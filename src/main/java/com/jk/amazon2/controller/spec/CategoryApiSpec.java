@@ -29,5 +29,5 @@ CategoryApiSpec {
     ResponseEntity<CategoryResponse.CategoryUpdateDto> updateCategory(String id, CategoryRequest.CategoryUpdateDto categoryUpdateDto);
     @Operation(summary = "카테고리 삭제")
     @ApiResponse(responseCode = "204", description = "카테고리 삭제 성공")
-    ResponseEntity<Void> deleteCategory(Long memberId);
+    ResponseEntity<Void> deleteCategory(String code);
 }

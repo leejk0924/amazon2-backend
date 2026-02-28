@@ -34,7 +34,7 @@ public class CategoryService {
     @Transactional
     public CategoryResult.Detail update(CategoryCommand.Update inputCategory) {
         Category category = categoryRepository
-                .findById(inputCategory.getCode())
+                .findByCodeAndDeletedFalse(inputCategory.getCode())
                 .orElseThrow(() -> new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND));
         category.updateNameCategory(inputCategory.getName());
         category.updateDescription(inputCategory.getDescription());
@@ -49,8 +49,17 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public CategoryResult.Info getCategory(String code) {
-        return categoryRepository.findById(code)
+        return categoryRepository
+                .findByCodeAndDeletedFalse(code)
                 .map(CategoryResult.Info::from)
                 .orElseThrow(() -> new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+    }
+
+    @Transactional
+    public void delete(String code) {
+        Category category = categoryRepository
+                .findByCodeAndDeletedFalse(code)
+                .orElseThrow(() -> new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+        category.delete();
     }
 }

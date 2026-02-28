@@ -3,6 +3,7 @@ CREATE TABLE blog_category
     code        VARCHAR(10) PRIMARY KEY,
     name        VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(50),
+    deleted BOOLEAN NOT NULL DEFAULT false,
     created_at      DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by      VARCHAR(50) NOT NULL DEFAULT 'admin'
 );

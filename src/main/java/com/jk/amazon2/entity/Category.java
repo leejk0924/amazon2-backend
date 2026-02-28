@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Persistable;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 @Getter
@@ -21,6 +23,7 @@ public class Category extends BaseCreation implements Persistable<String> {
     private String code;
     private String name;
     private String description;
+    private boolean deleted = Boolean.FALSE;
 
     public static Category of(String code, String name, String description) {
         Category category = new Category();
@@ -40,6 +43,15 @@ public class Category extends BaseCreation implements Persistable<String> {
         if(!Objects.equals(this.description, description)) {
             this.description = description;
         }
+    }
+
+    public void delete() {
+        this.deleted = true;
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String prefix = "del_" + now + "_";
+
+        String newName = prefix + this.name;
+        this.name = newName.length() > 50 ? newName.substring(0, 50) : newName;
     }
 
     @Override

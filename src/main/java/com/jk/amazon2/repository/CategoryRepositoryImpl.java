@@ -30,7 +30,8 @@ public class CategoryRepositoryImpl implements CategoryQueryRepository{
                 .selectFrom(category)
                 .where(
                         nameContains(condition.name()),
-                        codeContains(condition.code())
+                        codeContains(condition.code()),
+                        category.deleted.isFalse()
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -42,7 +43,8 @@ public class CategoryRepositoryImpl implements CategoryQueryRepository{
                 .from(category)
                 .where(
                         nameContains(condition.name()),
-                        codeContains(condition.code())
+                        codeContains(condition.code()),
+                        category.deleted.isFalse()
                 );
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
@@ -55,14 +57,21 @@ public class CategoryRepositoryImpl implements CategoryQueryRepository{
         return StringUtils.hasText(code) ? category.code.contains(code) : null;
     }
 
-    private OrderSpecifier[] getOrderSpecifier(Sort sort) {
-        var orders = new ArrayList<>();
+    private OrderSpecifier<?>[] getOrderSpecifier(Sort sort) {
+        if (sort.isUnsorted()) {
+            return new OrderSpecifier[0];
+        }
 
-        sort.stream().forEach(order -> {
+        List<OrderSpecifier<?>> orders = new ArrayList<>();
+        PathBuilder<Category> pathBuilder = new PathBuilder<>(category.getType(), category.getMetadata());
+
+        sort.forEach(order -> {
             Order direction = order.isAscending() ? Order.ASC : Order.DESC;
             String prop = order.getProperty();
-            PathBuilder pathBuilder = new PathBuilder(category.getType(), category.getMetadata());
-            orders.add(new OrderSpecifier(direction, pathBuilder.get(prop)));
+
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            OrderSpecifier orderSpecifier = new OrderSpecifier(direction, pathBuilder.get(prop));
+            orders.add(orderSpecifier);
         });
         return orders.toArray(OrderSpecifier[]::new);
     }

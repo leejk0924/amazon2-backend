@@ -16,10 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -112,7 +109,7 @@ class CategoryServiceTest {
             String description = "전자기기 등";
 
             Category initCategory = Category.of(code, initName, description);
-            given(categoryRepository.findById(anyString())
+            given(categoryRepository.findByCodeAndDeletedFalse(anyString())
             ).willReturn(Optional.of(initCategory));
 
             CategoryCommand.Update inputCategory = CategoryCommand.Update.of(code, updateName, description);
@@ -133,7 +130,7 @@ class CategoryServiceTest {
             // given
             CategoryCommand.Update inputCategory = CategoryCommand.Update.of("NOTEXIST", "전자기기", "설명");
 
-            given(categoryRepository.findById(anyString()))
+            given(categoryRepository.findByCodeAndDeletedFalse(anyString()))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -184,7 +181,29 @@ class CategoryServiceTest {
                         );
             });
 
-//            verify(categoryRepository.search(eq(condition), eq(pageable)));
+            verify(categoryRepository).search(eq(condition), eq(pageable));
+        }
+
+        @DisplayName("정렬 조건이 포함된 페이징 조회 시 Repository에 정렬 정보가 그대로 전달된다")
+        @Test
+        void searchCategories_Success_Sorted() {
+            // given
+            Category category = Category.of("TECH", "Technology", "Desc");
+            List<Category> categories = List.of(category);
+
+            var condition = CategoryRequest.CategorySearchCondition.of(null, null);
+            // 정렬 조건 추가 (name 내림차순)
+            Pageable pageable = PageRequest.of(0, 10, Sort.by("name").descending());
+
+            Page<Category> categoryPage = new PageImpl<>(categories, pageable, categories.size());
+
+            given(categoryRepository.search(any(), any())).willReturn(categoryPage);
+
+            // when
+            categoryService.getCategories(condition, pageable);
+
+            // then
+            // Service가 정렬 정보가 담긴 pageable을 Repository에 정확히 전달했는지 검증
             verify(categoryRepository).search(eq(condition), eq(pageable));
         }
 
@@ -220,7 +239,7 @@ class CategoryServiceTest {
             String name = "Technology";
             String description = "Desc";
             Category category = Category.of(code, name, description);
-            given(categoryRepository.findById(code)).willReturn(Optional.of(category));
+            given(categoryRepository.findByCodeAndDeletedFalse(code)).willReturn(Optional.of(category));
 
             // when
             CategoryResult.Info result = categoryService.getCategory(code);
@@ -232,7 +251,7 @@ class CategoryServiceTest {
                 softly.assertThat(result.getName()).as("카테고리 이름").isEqualTo(name);
                 softly.assertThat(result.getDescription()).as("카테고리 설명").isEqualTo(description);
             });
-            verify(categoryRepository, times(1)).findById(code);
+            verify(categoryRepository, times(1)).findByCodeAndDeletedFalse(code);
         }
 
         @DisplayName("카테고리 단건 조회 - 존재하지 않는 경우 [fail]")
@@ -240,13 +259,49 @@ class CategoryServiceTest {
         void getCategory_NotFound_fail() {
             // given
             String code = "NOT_EXIST";
-            given(categoryRepository.findById(anyString())).willReturn(Optional.empty());
+            given(categoryRepository.findByCodeAndDeletedFalse(anyString())).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> categoryService.getCategory(code))
                     .extracting("errorCode")
                     .isEqualTo(CategoryErrorCode.CATEGORY_NOT_FOUND);
-            verify(categoryRepository, times(1)).findById(code);
+            verify(categoryRepository, times(1)).findByCodeAndDeletedFalse(code);
         }
     }
+
+    @Nested
+    @DisplayName("Category 삭제 - 단위 테스트")
+    class DeleteCategory {
+
+        @DisplayName("카테고리 삭제 성공 [success]")
+        @Test
+        void category_delete_success_test() {
+            // given
+            String code = "TECH";
+            Category category = Category.of(code, "Technology", "Desc");
+            given(categoryRepository.findByCodeAndDeletedFalse(code)).willReturn(Optional.of(category));
+
+            // when
+            categoryService.delete(code);
+
+            // then
+            verify(categoryRepository, times(1)).findByCodeAndDeletedFalse(code);
+        }
+
+        @DisplayName("카테고리 삭제 시, 존재하지 않는 카테고리인 경우 [fail]")
+        @Test
+        void category_delete_notFound_fail_test() {
+            // given
+            String code = "NOT_EXIST";
+            given(categoryRepository.findByCodeAndDeletedFalse(anyString())).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> categoryService.delete(code))
+                    .extracting("errorCode")
+                    .isEqualTo(CategoryErrorCode.CATEGORY_NOT_FOUND);
+            verify( categoryRepository, times(1)).findByCodeAndDeletedFalse(code);
+            verify(categoryRepository, never()).deleteById(anyString());
+        }
+    }
+
 }

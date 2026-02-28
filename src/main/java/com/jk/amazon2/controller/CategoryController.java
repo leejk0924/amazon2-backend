@@ -77,10 +77,11 @@ public class CategoryController implements CategoryApiSpec {
     }
 
     @Override
-    @DeleteMapping("/categories/{id}")
+    @DeleteMapping("/categories/{code}")
     public ResponseEntity<Void> deleteCategory(
-            @PathVariable Long id
+            @PathVariable String code
     ) {
+        categoryService.delete(code);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
