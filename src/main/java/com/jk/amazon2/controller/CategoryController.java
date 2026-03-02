@@ -36,7 +36,7 @@ public class CategoryController implements CategoryApiSpec {
     @Override
     @GetMapping("/categories")
     public ResponseEntity<Page<CategoryResponse.Info>> getCategories(
-            CategoryRequest.CategorySearchCondition searchCondition,
+            @Valid @ModelAttribute CategoryRequest.CategorySearchCondition searchCondition,
             @PageableDefault(size = 10, sort = "code") Pageable pageable
     ) {
         Page<CategoryResponse.Info> result = categoryService.getCategories(searchCondition, pageable).map(CategoryResponse.Info::from);
