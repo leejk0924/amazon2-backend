@@ -3,106 +3,72 @@
 
 ---
 ## 1.프로젝트 개요
-기존에 프로토타입으로 운영했으나, 성능 이슈 및 설계 미스로 인해 프로젝트를 리뉴얼하고자 한다.
-아래는 이전에 경험했던 한계점들이다.
-- DB 없이 파일 시스템으로 관리 인원을 저장하여 변경이 어러움
-- 관리 인원 수가 점차 증가하여 응답의 지연이 점차 늘어남
-- 라즈베리파이 단일 서버 운영으로 인해 불안정한 서비스
-
-본 프로젝트는 위 문제를 해결하기 위해 재설계된 프로젝트이다.
+기존 프로토타입의 성능 이슈와 설계 한계를 극복하기 위해 진행되는 리뉴얼 프로젝트입니다.
+- **데이터 관리**: 파일 시스템 기반 관리에서 RDBMS(MySQL)으로 전환
+- **성능 개선**: 관리 인원 증가에 따른 응답 지연 해결 및 속도 최적화
+- **안정성**: 라즈베리파이 단일 서버에서 클라우드 기반 확장 가능 구조로 재설계
 
 ---
 ## 2. 목표
-- 관리 인원의 포스팅 수를 확인 응답 속도 개선
-- 인원 관리 편의성 개선
-- 장애 발생 시 복구 가능한 구조 설계 및 모니터링 시스템 구축
-- AWS 이전을 고려한 확장 가능한 구조
+- 포스팅 수 확인 및 인원 관리 응답 속도 대폭 개선
+- 장애 복구 시나리오 확보 및 실시간 모니터링 체계 구축
+- AWS 이전을 고려한 컨테이너 기반 인프라 확장성 확보
 
 ---
 ## 3. 기술 스택
-### Backend
-- SpringBoot
-- JPA
-
-### Database
-- MySQL
+### Backend / Database
+- Java 21, SpringBoot 3.x
+- JPA (Hibernate 6), MySQL 8.x
 
 ### Frontend
-현재 :
-- HTML / CSS / JS
-- Nginx 통한 정적 파일 제공 (Backend의 REST API 기능에 집중을 위해)
-
-향후 :
-- AWS 이전하면서 React 기반 SPA로 전환할 예정
-- CloudFront + S3를 통한 정적 배포 예정
+- 현재: HTML/CSS/JS (Nginx 정적 제공)
+- 향후: React 기반 SPA 전환 및 AWS CloudFront/S3 배포 예정
 
 ### Infra
-- Docker / Docker Compose
-- Nginx
+- Docker, Docker Compose, Nginx
 
 ## 4. 시스템 아키텍처
 (추후 다이어그램으로 추가 예정)
 
-## 5. 문서
+## 5. 문서 및 API 명세
 - [요구사항 명세서](/docs/Requirements.md)
 - [ERD 다이어그램](/docs/ERD.md)
+- [API 명세서](http://localhost:8080/swagger-ui/index.html)
+- [API 문서](http://localhost:8080/v3/api-docs)
 
-## 6. API 명세서 (Swagger)
-[API 명세서](http://localhost:8080/swagger-ui/index.html)
-[API 문서](http://localhost:8080/v3/api-docs)
+## 6. 로컬(Local) 환경 세팅 절차
+### 6.1 프로파일 전략
+애플리케이션은 실행 환경에 따라 설정을 분리하여 관리한다.
+- `application.yml`: 공통 기본 설정
+- `application-local.yml`: 로컬 개발 전용 (DB 접속 등)
+- `application-test.yml`: 통합 테스트용 (Testcontainers 활용)
+- `application-prod.yml`: 운영 환경 (환경 변수 주입 방식)
 
-## 7. 사전 요구사항
-- Java 21
-- MySQL 8.x
+### 6.2 로컬 개발 환경 실행
+1. `application-local.yml.example`을 복사하여 `application-local.yml`을 생성한다.
+2. 로컬 DB 접속 정보를 입력한다.
+3. 아래 명령어를 실행한다.
 
-## 8. 로컬 환경 세팅 절차
-
-### 8.1 프로파일 기반 설정
-```
-application.yml              → 공통 설정 (운영 기본값)
-application-local.yml        → 로컬 개발 환경
-application-local.yml.example → 로컬 설정 예시 (커밋 대상)
-application-prod.yml         → 프로덕션 환경 (환경 변수 사용)
-application-test.yml         → 테스트 환경 (src/test/resources/)
-```
-
-### 8.2 로컬환경 세팅
-```markdown
-1. `application-local.yml.example` 을 복사하여 `application-local.yml` 생성
-2. DB 접속 정보 입력
-3. `spring.profiles.active=local` 설정 후 실행
-```
-
-### 8.3 실행 방법
 ```shell
-# Gradle 빌드 및 실행
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
-### 8.4 프로덕션 환경 세팅
-
-#### 환경 변수 설정
-프로덕션 환경에서는 민감한 정보를 환경 변수로 주입합니다.
-
-**필수 환경 변수:**
-```shell
+## 7. 운영(Prod) 환경 세팅 절차
+### 7.1 운영 환경 실행
+1. `application-prod.yml`에 아래와 같이 DB 접속 정보를 등록한다.
+```text
+// 예시
 DB_URL=jdbc:mysql://<host>:<port>/amazon?characterEncoding=UTF-8&serverTimezone=UTC
 DB_USERNAME=<username>
 DB_PASSWORD=<password>
 ```
-
-#### 실행 방법
+2. 아래 명령어를 실행한다.
 ```shell
-# 환경 변수 설정 후 실행
-export DB_URL="jdbc:mysql://prod-db:3306/amazon?characterEncoding=UTF-8&serverTimezone=UTC"
-export DB_USERNAME="prod_user"
-export DB_PASSWORD="prod_password"
-
-# 프로덕션 프로파일로 실행
 ./gradlew bootRun --args='--spring.profiles.active=prod'
 ```
 
-또는 Docker/Docker Compose 사용 시:
+### 7.2 Docker / Docker Compose 실행 시
+1. 아래와 같이 DB 접속 정보를 추가한다.
 ```yaml
 # docker-compose.yml
 services:
@@ -113,34 +79,42 @@ services:
       - DB_USERNAME=prod_user
       - DB_PASSWORD=prod_password
 ```
-
-### 8.5 테스트 환경
-
-테스트 환경은 **Testcontainers**를 사용하여 실제 MySQL 환경과 동일하게 테스트합니다.
-
-#### 특징
-- Docker 기반 MySQL 컨테이너 자동 생성/삭제
-- `db/schema.sql` 초기화 스크립트 자동 실행
-- 로컬 DB 설정 불필요
-
-#### 실행 방법
+2. 애플리케이션 빌드 
 ```shell
-# 테스트 실행 (Testcontainers 자동 시작)
-./gradlew test
+./gradlew clean bootJar
+```
+3. 컨테이너 실행
+```shell
+docker compose up -d
+```
+4. 실행 상태 및 로그 확인
+```shell
+# 전체 서비스 로그 확인
+docker compose logs -f
 
-# Docker가 실행 중이어야 합니다
-docker ps
+# 특정 서비스(app) 로그만 확인
+docker compose logs -f app
+```
+5. 컨테이너 중지 및 제거
+```shell
+docker compose down
 ```
 
+## 8. 테스트 환경
+### 8.1 Testcontainers 기반의 테스트 환경
+Testcontainers를 사용하여 실제 MySQL 환경에서 독립적인 테스트를 수행한다.
+- `Docker` 기반 컨테이너 자동 생명주기 관리
+- `db/schema.sql`을 통한 스키마 자동 초기화
+- 실행: `./gradlew test` (Docker 실행 필수)
+
 **주의사항:**
-- Docker Desktop 또는 Docker Engine이 실행 중이어야 합니다
-- 첫 실행 시 MySQL 이미지 다운로드로 시간이 소요될 수 있습니다
+- Docker Desktop 또는 Docker Engine이 실행 중이어야 합니다.
+- 첫 실행 시 MySQL 이미지 다운로드로 시간이 소요될 수 있습니다.
 
-### 8.6 SQL 로깅 설정
-데이터 정합성 검증이 중요한 Local 및 Test 프로파일에서만 상세 로깅이 활성화됩니다. 
-운영 환경(Prod)은 성능을 위해 해당 설정이 제외되어 있습니다.
+### 8.2 SQL 로깅 및 가시성
+데이터 정합성 검증이 중요한 Local 및 Test 프로파일에서만 상세 로깅이 활성화한다. 
+운영 환경(Prod)은 성능을 위해 해당 설정이 제외한다.
 
-#### 활성화된 기능
 - **SQL 포맷팅 & 하이라이트**: ANSI 컬러를 적용한 SQL 키워드 강조로 가독성을 극대화했습니다.
 - **파라미터 바인딩 확인**: ?에 주입되는 실제 값을 TRACE 레벨 로그로 출력합니다. (JPA 및 JdbcTemplate 모두 적용)
 - **실행 출처 표시**: 하이버네이트 주석을 통해 쿼리를 발생시킨 소스 코드를 추적할 수 있습니다.
