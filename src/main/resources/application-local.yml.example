@@ -3,10 +3,18 @@ spring:
     url: jdbc:mysql://<DB_HOST>:3306/amazon?characterEncoding=UTF-8&serverTimezone=UTC
     username: <DB_USERNAME>
     password: <DB_PASSWORD>
-  jpa:
-    show-sql: true
-    properties:
-      hibernate.hibernate.format_sql: true
+    jpa:
+      properties:
+        hibernate:
+          format_sql: true
+          use_sql_comments: true
+          highlight_sql: true
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.jdbc.core.JdbcTemplate: DEBUG
+    org.springframework.jdbc.core.StatementCreatorUtils: TRACE
 springdoc:
   api-docs:
     enabled: true

@@ -1,0 +1,78 @@
+package com.jk.amazon2.repository;
+
+import com.jk.amazon2.controller.dto.CategoryRequest;
+import com.jk.amazon2.entity.Category;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.jk.amazon2.entity.QCategory.category;
+
+@RequiredArgsConstructor
+public class CategoryRepositoryImpl implements CategoryQueryRepository{
+    private final JPAQueryFactory queryFactory;
+
+    @Override
+    public Page<Category> search(CategoryRequest.CategorySearchCondition condition, Pageable pageable) {
+        List<Category> content = queryFactory
+                .selectFrom(category)
+                .where(
+                        nameContains(condition.name()),
+                        codeContains(condition.code()),
+                        category.deleted.isFalse()
+                )
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(getOrderSpecifier(pageable.getSort()))
+                .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(category.count())
+                .from(category)
+                .where(
+                        nameContains(condition.name()),
+                        codeContains(condition.code()),
+                        category.deleted.isFalse()
+                );
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression nameContains(String name) {
+        return StringUtils.hasText(name) ? category.name.contains(name) : null;
+    }
+
+    private BooleanExpression codeContains(String code) {
+        return StringUtils.hasText(code) ? category.code.contains(code) : null;
+    }
+
+    private OrderSpecifier<?>[] getOrderSpecifier(Sort sort) {
+        if (sort.isUnsorted()) {
+            return new OrderSpecifier[0];
+        }
+
+        List<OrderSpecifier<?>> orders = new ArrayList<>();
+        PathBuilder<Category> pathBuilder = new PathBuilder<>(category.getType(), category.getMetadata());
+
+        sort.forEach(order -> {
+            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+            String prop = order.getProperty();
+
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            OrderSpecifier orderSpecifier = new OrderSpecifier(direction, pathBuilder.get(prop));
+            orders.add(orderSpecifier);
+        });
+        return orders.toArray(OrderSpecifier[]::new);
+    }
+}
