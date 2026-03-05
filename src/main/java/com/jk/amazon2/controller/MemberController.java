@@ -3,6 +3,10 @@ package com.jk.amazon2.controller;
 import com.jk.amazon2.controller.dto.MemberRequest;
 import com.jk.amazon2.controller.dto.MemberResponse;
 import com.jk.amazon2.controller.spec.MemberApiSpec;
+import com.jk.amazon2.service.MemberService;
+import com.jk.amazon2.service.dto.MemberCommand;
+import com.jk.amazon2.service.dto.MemberResult;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -18,6 +22,8 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class MemberController implements MemberApiSpec {
+    private final MemberService memberService;
+
     @Override
     @GetMapping("/members")
     public ResponseEntity<Page<MemberResponse.MemberDto>> getMembers(
@@ -47,18 +53,17 @@ public class MemberController implements MemberApiSpec {
 
     @Override
     @PostMapping("/members")
-    public ResponseEntity<MemberResponse.MemberDto> createMember(
-            @RequestBody MemberRequest.MemberDto memberDto
+    public ResponseEntity<MemberResponse.MemberCreateDto> createMember(
+            @RequestBody @Valid MemberRequest.MemberCreateDto request
     ) {
-        MemberResponse.MemberDto savedMember = new MemberResponse.MemberDto(
-                memberDto.nickname(),
-                memberDto.categoryCode(),
-                LocalDate.now(),
-                "active"
-        );
+        MemberCommand.Create command = MemberCommand.Create.of(request.nickname(), request.categoryCode());
+        var createdMember = memberService.create(command);
+
+        var response = MemberResponse.MemberCreateDto.from(createdMember);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(savedMember);
+                .body(response);
     }
 
     @Override

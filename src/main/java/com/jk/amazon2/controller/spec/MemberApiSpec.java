@@ -20,7 +20,7 @@ public interface MemberApiSpec {
     );
     @Operation(summary = "유저 추가")
     @ApiResponse(responseCode = "201", description = "유저 추가 성공")
-    ResponseEntity<MemberResponse.MemberDto> createMember(MemberRequest.MemberDto memberDto);
+    ResponseEntity<MemberResponse.MemberCreateDto> createMember(MemberRequest.MemberCreateDto memberDto);
     @Operation(summary = "유저 수정")
     @ApiResponse(responseCode = "200", description = "유저 수정 성공")
     ResponseEntity<MemberResponse.MemberDto> updateMember(Long id, MemberRequest.MemberDto memberDto);
