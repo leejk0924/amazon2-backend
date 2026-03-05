@@ -19,7 +19,8 @@ CREATE TABLE member
     updated_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by    VARCHAR(50) NOT NULL,
     CONSTRAINT fk_member_category FOREIGN KEY (category_code) REFERENCES blog_category (code),
-    INDEX idx_member_deleted (deleted)
+    INDEX idx_member_deleted (deleted),
+    INDEX idx_nickname (nickname)
 );
 
 -- uk_user_week : 데이터 무결성을 위해
