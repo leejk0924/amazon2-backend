@@ -1,0 +1,37 @@
+package com.jk.amazon2.service.dto;
+
+import com.jk.amazon2.controller.dto.MemberRequest;
+import com.jk.amazon2.exception.MemberErrorCode;
+import com.jk.amazon2.exception.RestApiException;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class MemberCommand {
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Create {
+        private String nickname;
+        private String categoryCode;
+
+        public static Create of(String nickname, String categoryCode) {
+            return new Create(nickname, categoryCode);
+        }
+
+        public static Create from(MemberRequest.MemberDto dto) {
+            return new Create(dto.nickname(), dto.categoryCode());
+        }
+
+        private Create(String nickname, String categoryCode) {
+            if (nickname == null || nickname.isBlank() || nickname.length() > 50) {
+                log.warn("[VALIDATION_FAILED] MemberCommand.Detail - Invalid nickname. nickname={}", nickname);
+                throw new RestApiException(MemberErrorCode.MEMBER_NICKNAME_INVALID);
+            }
+            this.nickname = nickname;
+            this.categoryCode = categoryCode;
+        }
+    }
+}
