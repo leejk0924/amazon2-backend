@@ -1,6 +1,5 @@
 package com.jk.amazon2.controller;
 
-
 import com.jk.amazon2.controller.dto.MemberRequest;
 import com.jk.amazon2.controller.dto.MemberResponse;
 import com.jk.amazon2.exception.CategoryErrorCode;
@@ -92,4 +91,5 @@ class MemberControllerTest {
             );
         }
     }
+
 }
