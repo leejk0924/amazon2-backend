@@ -36,4 +36,18 @@ public class MemberService {
         Member savedMember = memberRepository.save(member);
         return MemberResult.Detail.from(savedMember);
     }
+
+    @Transactional
+    public MemberResult.Update update(MemberCommand.Update command) {
+        Member member = memberRepository
+                .findByNickname(command.getNickname())
+                .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NICKNAME_NOT_FOUND));
+
+        categoryRepository
+                .findByCodeAndDeletedFalse(command.getCategoryCode())
+                .orElseThrow(() -> new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+
+        member.update(command.getNickname(), command.getCategoryCode());
+        return MemberResult.Update.of(member.getNickname(), member.getCategoryCode());
+    }
 }

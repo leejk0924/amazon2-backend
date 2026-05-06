@@ -29,4 +29,13 @@ public class MemberResult {
             );
         }
     }
+
+    public record Update(
+            String nickname,
+            String categoryCode
+    ) {
+        public static Update of(String nickname, String categoryCode) {
+            return new Update(nickname, categoryCode);
+        }
+    }
 }

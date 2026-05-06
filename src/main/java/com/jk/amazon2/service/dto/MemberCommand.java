@@ -34,4 +34,31 @@ public class MemberCommand {
             this.categoryCode = categoryCode;
         }
     }
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Update {
+
+        private String nickname;
+        private String categoryCode;
+
+        public static Update of(String nickname, String categoryCode) {
+            return new Update(nickname, categoryCode);
+        }
+
+        private Update(String nickname, String categoryCode) {
+            if (nickname == null || nickname.isBlank() || nickname.length() > 50) {
+                log.warn("[VALIDATION_FAILED] MemberCommand.Update - Invalid nickname. nickname={}", nickname);
+                throw new RestApiException(MemberErrorCode.MEMBER_NICKNAME_INVALID);
+            }
+
+            if (categoryCode != null && (categoryCode.isBlank() || categoryCode.length() > 10)) {
+                log.warn("[VALIDATION_FAILED] MemberCommand.Update - Invalid categoryCode. categoryCode={}", categoryCode);
+                throw new RestApiException(MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID);
+            }
+
+            this.nickname = nickname;
+            this.categoryCode = categoryCode;
+        }
+    }
 }

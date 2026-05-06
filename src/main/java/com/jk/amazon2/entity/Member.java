@@ -30,4 +30,11 @@ public class Member extends BaseAudit {
         member.categoryCode = categoryCode;
         return member;
     }
+
+    public void update(String nickname, String categoryCode) {
+        if (nickname != null) {
+            this.nickname = nickname;
+        }
+        this.categoryCode = categoryCode;
+    }
 }

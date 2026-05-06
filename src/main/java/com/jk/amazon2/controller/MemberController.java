@@ -5,7 +5,6 @@ import com.jk.amazon2.controller.dto.MemberResponse;
 import com.jk.amazon2.controller.spec.MemberApiSpec;
 import com.jk.amazon2.service.MemberService;
 import com.jk.amazon2.service.dto.MemberCommand;
-import com.jk.amazon2.service.dto.MemberResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -68,14 +67,16 @@ public class MemberController implements MemberApiSpec {
 
     @Override
     @PutMapping("/members/{id}")
-    public ResponseEntity<MemberResponse.MemberDto> updateMember(
+    public ResponseEntity<MemberResponse.MemberUpdateDto> updateMember(
             @PathVariable Long id,
             @RequestBody MemberRequest.MemberDto member
     ) {
-        MemberResponse.MemberDto updatedMember = new MemberResponse.MemberDto(member.nickname(), member.categoryCode(), LocalDate.now(), "active");
+        var update = MemberCommand.Update.of(member.nickname(), member.categoryCode());
+
+        var response = MemberResponse.MemberUpdateDto.from(memberService.update(update));
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(updatedMember);
+                .body(response);
     }
 
     @Override

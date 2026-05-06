@@ -28,4 +28,13 @@ public class MemberResponse {
             LocalDate joinDate,
             String status
     ) {}
+
+    public record MemberUpdateDto (
+            String nickname,
+            String categoryCode
+    ){
+        public static MemberUpdateDto from(MemberResult.Update update) {
+            return new MemberUpdateDto(update.nickname(), update.categoryCode());
+        }
+    }
 }
