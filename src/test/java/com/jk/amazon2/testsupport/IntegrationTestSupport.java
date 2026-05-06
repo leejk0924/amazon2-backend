@@ -9,7 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 @Tag("integration")
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@Import(TestContainerConfig.class)
+@Import({TestContainerConfig.class, TestJacksonConfig.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 public abstract class IntegrationTestSupport {
 }
