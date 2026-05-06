@@ -21,6 +21,7 @@ Amazon2 프로젝트에 기여하실 때 따라야 할 규칙들입니다.
 | `Fix`      | 버그 수정                       | `Fix: 요일 계산 오류 수정`       |
 | `Docs`     | 문서 작성/수정 (코드 제외)            | `Docs: API 접속 링크 추가`     |
 | `Config`   | 설정 파일 변경                    | `Config: Swagger 경로 설정`  |
+| `Test`     | 테스트 코드 작성/수정                | `Test: 회원 API 테스트 추가`    |
 | `Chore`    | 코드와 무관한 작업 (import 정리, 의존성) | `Chore: 불필요한 import 제거`  |
 | `Refactor` | 코드 구조 개선 (동작 변경 없음)         | `Refactor: 중복 로직 추출`     |
 | `Build`    | 빌드 시스템, 의존성 변경              | `Build: 의존성 추가`          |
