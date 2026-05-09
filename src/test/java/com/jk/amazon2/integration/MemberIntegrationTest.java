@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,6 +33,8 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
     private MockMvc mockMvc;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private EntityManager em;
 
     private final Faker faker = new Faker(Locale.of("ko"));
 
@@ -262,6 +265,117 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                     .statusCode(HttpStatus.OK.value())
                     .body("totalElements", equalTo(0))
                     .body("content", hasSize(0));
+        }
+    }
+
+    @Nested
+    @DisplayName("Member 수정 통합 테스트")
+    class UpdateMember {
+        private Long memberId;
+
+        @BeforeEach
+        void setUpData() {
+            String categorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'test')";
+            jdbcTemplate.batchUpdate(categorySql, List.of(
+                    new Object[]{"ORIGIN_CAT", "원래카테고리", "설명"},
+                    new Object[]{"TARGET_CAT", "변경카테고리", "설명"}
+            ));
+
+            String memberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'test', NOW(), 'test')";
+            jdbcTemplate.update(memberSql, "update_target_user", "ORIGIN_CAT");
+            memberId = jdbcTemplate.queryForObject("SELECT id FROM member WHERE nickname = ?", Long.class, "update_target_user");
+        }
+
+        @Test
+        @DisplayName("[통합] PUT /members/{id} - 수정 성공 및 DB 정합성 검증 [200 OK]")
+        void updateMember_success() {
+            // given
+            String newNickname = "updated_nickname";
+            String newCategoryCode = "TARGET_CAT";
+            var request = new MemberRequest.MemberDto(newNickname, newCategoryCode);
+
+            // when && then
+            RestAssuredMockMvc.given()
+                    .contentType(ContentType.JSON)
+                    .body(request)
+                    .when()
+                    .put("/members/{id}", memberId)
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("nickname", equalTo(newNickname))
+                    .body("categoryCode", equalTo(newCategoryCode));
+            em.flush();
+
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM member WHERE nickname = ? AND category_code = ?",
+                    Integer.class, newNickname, newCategoryCode
+            );
+            assertThat(count).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("[통합] PUT /members/{id} - 존재하지 않는 회원 [404 Not Found]")
+        void updateMember_fail_member_not_found() {
+            // given
+            Long nonExistentId = 999999L;
+            var request = new MemberRequest.MemberDto("new_nickname", "ORIGIN_CAT");
+
+            // when & then
+            RestAssuredMockMvc.given()
+                    .contentType(ContentType.JSON)
+                    .body(request)
+                    .when()
+                    .put("/members/{id}", nonExistentId)
+                    .then()
+                    .statusCode(HttpStatus.NOT_FOUND.value())
+                    .body("code", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.name()))
+                    .body("message", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
+        }
+
+        @Test
+        @DisplayName("[통합] PUT /members/{id} - 존재하지 않는 카테고리 코드 [404 Not Found]")
+        void updateMember_fail_category_not_found() {
+            // given
+            var request = new MemberRequest.MemberDto("new_nickname", "NO_CAT");
+
+            // when & then
+            RestAssuredMockMvc.given()
+                    .contentType(ContentType.JSON)
+                    .body(request)
+                    .when()
+                    .put("/members/{id}", memberId)
+                    .then()
+                    .statusCode(HttpStatus.NOT_FOUND.value())
+                    .body("code", equalTo(CategoryErrorCode.CATEGORY_NOT_FOUND.name()))
+                    .body("message", equalTo(CategoryErrorCode.CATEGORY_NOT_FOUND.getMessage()));
+        }
+
+        @DisplayName("[통합] PUT /members/{id} - 유효성 검사 실패 [400 Bad Request]")
+        @ParameterizedTest(name = "[{index}] {0}")
+        @MethodSource("provideInvalidUpdateScenarios")
+        void updateMember_fail_validation(String scenario, String nickname, String categoryCode, String expectedMessage) {
+            // given
+            var request = new MemberRequest.MemberDto(nickname, categoryCode);
+
+            // when & then
+            RestAssuredMockMvc.given()
+                    .contentType(ContentType.JSON)
+                    .body(request)
+                    .when()
+                    .put("/members/{id}", memberId)
+                    .then()
+                    .statusCode(HttpStatus.BAD_REQUEST.value())
+                    .body("message", equalTo(expectedMessage));
+        }
+
+        static Stream<Arguments> provideInvalidUpdateScenarios() {
+            return Stream.of(
+                    Arguments.of("닉네임 공백", "", "TARGET_CAT", MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage()),
+                    Arguments.of("닉네임 null", null, "TARGET_CAT", MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage()),
+                    Arguments.of("닉네임 50자 초과", "a".repeat(51), "TARGET_CAT", MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage()),
+                    Arguments.of("카테고리 코드 공백", "new_nickname", "", MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID.getMessage()),
+                    Arguments.of("카테고리 코드 10자 초과", "new_nickname", "a".repeat(11), MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID.getMessage())
+            );
         }
     }
 }
