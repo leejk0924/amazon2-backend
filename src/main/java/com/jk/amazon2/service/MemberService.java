@@ -43,8 +43,8 @@ public class MemberService {
     @Transactional
     public MemberResult.Update update(MemberCommand.Update command) {
         Member member = memberRepository
-                .findByNickname(command.getNickname())
-                .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NICKNAME_NOT_FOUND));
+                .findById(command.getId())
+                .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         categoryRepository
                 .findByCodeAndDeletedFalse(command.getCategoryCode())

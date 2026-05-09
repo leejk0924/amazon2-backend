@@ -56,7 +56,7 @@ public class MemberController implements MemberApiSpec {
             @PathVariable Long id,
             @RequestBody MemberRequest.MemberDto member
     ) {
-        var update = MemberCommand.Update.of(member.nickname(), member.categoryCode());
+        var update = MemberCommand.Update.of(id, member.nickname(), member.categoryCode());
 
         var response = MemberResponse.MemberUpdateDto.from(memberService.update(update));
         return ResponseEntity

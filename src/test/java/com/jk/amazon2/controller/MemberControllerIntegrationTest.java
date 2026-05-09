@@ -119,7 +119,7 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
 
         private static Stream<Arguments> provideUpdateMemberFailureCases() {
             return Stream.of(
-                    Arguments.of("존재하지 않는 회원", "test_member", "DESIGN", MemberErrorCode.MEMBER_NICKNAME_NOT_FOUND),
+                    Arguments.of("존재하지 않는 회원", "test_member", "DESIGN", MemberErrorCode.MEMBER_NOT_FOUND),
                     Arguments.of("닉네임 공백", "", "DESIGN", MemberErrorCode.MEMBER_NICKNAME_INVALID),
                     Arguments.of("닉네임 null", null, "DESIGN", MemberErrorCode.MEMBER_NICKNAME_INVALID),
                     Arguments.of("닉네임 50자 초과", "a".repeat(51), "DESIGN", MemberErrorCode.MEMBER_NICKNAME_INVALID),

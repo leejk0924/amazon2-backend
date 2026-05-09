@@ -76,7 +76,7 @@ class MemberCommandTest {
                 String categoryCode
         ) {
             // when
-            MemberCommand.Update command = MemberCommand.Update.of(nickname, categoryCode);
+            MemberCommand.Update command = MemberCommand.Update.of(1L, nickname, categoryCode);
 
             // then
             assertThat(command).isNotNull();
@@ -103,7 +103,7 @@ class MemberCommandTest {
                 String categoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(invalidNickname, categoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of(1L, invalidNickname, categoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage());
         }
@@ -126,7 +126,7 @@ class MemberCommandTest {
                 String invalidCategoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(nickname, invalidCategoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of(1L, nickname, invalidCategoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID.getMessage());
         }
