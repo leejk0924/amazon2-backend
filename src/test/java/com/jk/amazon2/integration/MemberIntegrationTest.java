@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 public class MemberIntegrationTest extends IntegrationTestSupport {
     @Autowired
@@ -163,6 +164,99 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                     Arguments.of("닉네임 null", null, "DEV", MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage()),
                     Arguments.of("닉네임 50자 초과", "a".repeat(51), "DEV", "닉네임은 최대 50자까지 입력 가능합니다.")
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("Member 목록 조회 통합 테스트")
+    class GetMembers {
+
+        @BeforeEach
+        void setUpData() {
+            String categoryInsertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'test')";
+            jdbcTemplate.update(categoryInsertSql, "DEV_E2E", "개발", "개발팀");
+            jdbcTemplate.update(categoryInsertSql, "DESIGN_E2E", "디자인", "디자인팀");
+
+            String memberInsertSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, NOW(), 'test', NOW(), 'test')";
+            jdbcTemplate.update(memberInsertSql, "dev_user1", "DEV_E2E", false);
+            jdbcTemplate.update(memberInsertSql, "dev_user2", "DEV_E2E", false);
+            jdbcTemplate.update(memberInsertSql, "design_user", "DESIGN_E2E", false);
+            jdbcTemplate.update(memberInsertSql, "deleted_user", "DEV_E2E", true);
+        }
+
+        @DisplayName("조회 성공 - 필터 조건별 결과 수 검증 [success]")
+        @ParameterizedTest(name = "[{index}] {0}")
+        @MethodSource("provideFilterConditions")
+        void getMembers_success(String scenario, String nickname, String categoryCode, String status, int expectedTotal) {
+            var spec = RestAssuredMockMvc.given();
+            if (nickname != null) spec.param("nickname", nickname);
+            if (categoryCode != null) spec.param("categoryCode", categoryCode);
+            if (status != null) spec.param("status", status);
+
+            spec.when().get("/members")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("totalElements", equalTo(expectedTotal));
+        }
+
+        static Stream<Arguments> provideFilterConditions() {
+            return Stream.of(
+                    Arguments.of("전체 조회", null, null, null, 4),
+                    Arguments.of("nickname 필터", "dev", null, null, 2),
+                    Arguments.of("categoryCode 필터", null, "DEV_E2E", null, 3),
+                    Arguments.of("active 상태 필터", null, null, "active", 3),
+                    Arguments.of("deleted 상태 필터", null, null, "deleted", 1)
+            );
+        }
+
+        @Test
+        @DisplayName("조회 성공 - categoryName JOIN 반환 확인 [success]")
+        void getMembers_success_categoryName() {
+            RestAssuredMockMvc.given()
+                    .param("categoryCode", "DEV_E2E")
+                    .when().get("/members")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("content[0].categoryName", equalTo("개발"));
+        }
+
+        @Test
+        @DisplayName("조회 성공 - status 문자열 변환 확인 [success]")
+        void getMembers_success_status_conversion() {
+            RestAssuredMockMvc.given()
+                    .param("nickname", "deleted_user")
+                    .when().get("/members")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("totalElements", equalTo(1))
+                    .body("content[0].status", equalTo("deleted"));
+        }
+
+        @Test
+        @DisplayName("조회 성공 - 페이지네이션 구조 검증 [success]")
+        void getMembers_success_pagination() {
+            RestAssuredMockMvc.given()
+                    .param("page", "0")
+                    .param("size", "2")
+                    .when().get("/members")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("totalElements", equalTo(4))
+                    .body("content", hasSize(2))
+                    .body("size", equalTo(2))
+                    .body("number", equalTo(0));
+        }
+
+        @Test
+        @DisplayName("조회 성공 - 빈 결과 [success]")
+        void getMembers_success_empty() {
+            RestAssuredMockMvc.given()
+                    .param("nickname", "nonexistent_xyz")
+                    .when().get("/members")
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("totalElements", equalTo(0))
+                    .body("content", hasSize(0));
         }
     }
 }

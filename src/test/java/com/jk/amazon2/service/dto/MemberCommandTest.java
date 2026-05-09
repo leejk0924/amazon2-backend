@@ -1,5 +1,6 @@
 package com.jk.amazon2.service.dto;
 
+import com.jk.amazon2.controller.dto.MemberRequest;
 import com.jk.amazon2.exception.MemberErrorCode;
 import com.jk.amazon2.exception.RestApiException;
 import org.junit.jupiter.api.DisplayName;
@@ -135,6 +136,36 @@ class MemberCommandTest {
                     of("categoryCode가 빈 문자열인 경우", "tester", ""),
                     of("categoryCode가 공백인 경우", "tester", "   "),
                     of("categoryCode가 10자를 초과하는 경우", "tester", "a".repeat(11))
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("MemberCommand.Search 테스트")
+    class MemberCommand_Search {
+        @DisplayName("status를 deleted boolean으로 변환 [success]")
+        @ParameterizedTest(name = "[{index}] {0}")
+        @MethodSource("provideStatusConversions")
+        void search_from_with_status_conversion(
+                String scenario,
+                String inputStatus,
+                Boolean expectedDeleted
+        ) {
+            // given
+            var condition = new MemberRequest.MemberSearchCondition(null, null, inputStatus);
+
+            // when
+            MemberCommand.Search command = MemberCommand.Search.from(condition);
+
+            // then
+            assertThat(command.getDeleted()).isEqualTo(expectedDeleted);
+        }
+
+        private static Stream<Arguments> provideStatusConversions() {
+            return Stream.of(
+                    of("active 상태 변환", "active", false),
+                    of("deleted 상태 변환", "deleted", true),
+                    of("상태 지정 없음", null, null)
             );
         }
     }

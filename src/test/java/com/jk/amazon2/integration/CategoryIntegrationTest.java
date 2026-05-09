@@ -5,6 +5,7 @@ import com.jk.amazon2.exception.CategoryErrorCode;
 import com.jk.amazon2.testsupport.IntegrationTestSupport;
 import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
+import jakarta.persistence.EntityManager;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,8 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
     private MockMvc mockMvc;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private EntityManager entityManager;
 
     private final Faker faker = new Faker(Locale.of("ko"));
 
@@ -60,6 +63,7 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
                 .body("categoryCode", equalTo(code))
                 .body("categoryName", equalTo(name))
                 .body("description", equalTo(description));
+        entityManager.flush();
 
         // then (DB에 저장되었는지 검증)
         var sql = "SELECT name FROM blog_category WHERE code = ?";
@@ -131,6 +135,7 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
                     .body("categoryCode", equalTo(code))
                     .body("categoryName", equalTo(updateName))
                     .body("description", equalTo(updateDesc));
+            entityManager.flush();
 
             // then (DB 데이터 변경 확인)
             String selectSql = "SELECT name, description FROM blog_category WHERE code = ?";
