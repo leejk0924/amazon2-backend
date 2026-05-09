@@ -5,18 +5,16 @@ import com.jk.amazon2.controller.dto.MemberResponse;
 import com.jk.amazon2.controller.spec.MemberApiSpec;
 import com.jk.amazon2.service.MemberService;
 import com.jk.amazon2.service.dto.MemberCommand;
+import com.jk.amazon2.service.dto.MemberResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,29 +23,16 @@ public class MemberController implements MemberApiSpec {
 
     @Override
     @GetMapping("/members")
-    public ResponseEntity<Page<MemberResponse.MemberDto>> getMembers(
+    public ResponseEntity<Page<MemberResponse.MemberListDto>> getMembers(
             MemberRequest.MemberSearchCondition searchCondition,
-            @PageableDefault(size = 10, sort = "nickname") Pageable pageable
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        List<MemberResponse.MemberDto> content = List.of(
-                new MemberResponse.MemberDto("user1", "카테고리1", LocalDate.of(2026, 2, 10), "active"),
-                new MemberResponse.MemberDto("user2", "카테고리2", LocalDate.of(2026, 2, 11), "active")
-        );
-
-        Page<MemberResponse.MemberDto> data = new PageImpl<>(
-            content,
-            pageable,
-            content.size()
-        ).map(m -> new MemberResponse.MemberDto(
-                m.nickname(),
-                m.categoryName(),
-                m.joinDate(),
-                m.status()
-        ));
+        Page<MemberResult.Summary> results = memberService.findMembers(searchCondition, pageable);
+        Page<MemberResponse.MemberListDto> response = results.map(MemberResponse.MemberListDto::from);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(data);
+                .body(response);
     }
 
     @Override

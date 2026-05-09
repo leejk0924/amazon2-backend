@@ -38,4 +38,12 @@ public class MemberResult {
             return new Update(nickname, categoryCode);
         }
     }
+
+    public record Summary(
+            String nickname,
+            String categoryName,
+            LocalDateTime createdAt,
+            boolean deleted
+    ) {
+    }
 }

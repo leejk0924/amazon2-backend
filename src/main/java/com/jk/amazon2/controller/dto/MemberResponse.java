@@ -37,4 +37,20 @@ public class MemberResponse {
             return new MemberUpdateDto(update.nickname(), update.categoryCode());
         }
     }
+
+    public record MemberListDto(
+            String nickname,
+            String categoryName,
+            LocalDate joinDate,
+            String status
+    ) {
+        public static MemberListDto from(MemberResult.Summary summary) {
+            return new MemberListDto(
+                    summary.nickname(),
+                    summary.categoryName(),
+                    summary.createdAt().toLocalDate(),
+                    summary.deleted() ? "deleted" : "active"
+            );
+        }
+    }
 }

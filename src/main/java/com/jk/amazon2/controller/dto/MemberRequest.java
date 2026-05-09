@@ -11,7 +11,7 @@ public class MemberRequest {
 
     public record MemberSearchCondition(
             String nickname,
-            String category,
+            String categoryCode,
             String status
     ) {}
 

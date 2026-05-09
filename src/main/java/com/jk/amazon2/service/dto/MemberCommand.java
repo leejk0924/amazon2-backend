@@ -6,6 +6,7 @@ import com.jk.amazon2.exception.RestApiException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -59,6 +60,24 @@ public class MemberCommand {
 
             this.nickname = nickname;
             this.categoryCode = categoryCode;
+        }
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class Search {
+        private final String nickname;
+        private final String categoryCode;
+        private final Boolean deleted;
+
+        public static Search from(MemberRequest.MemberSearchCondition condition) {
+            Boolean deleted = switch (condition.status()) {
+                case "active" -> false;
+                case "deleted" -> true;
+                case null,
+                default -> null;
+            };
+            return new Search(condition.nickname(), condition.categoryCode(), deleted);
         }
     }
 }

@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 public interface MemberApiSpec {
     @Operation(summary = "유저 조회 및 검색")
     @ApiResponse(responseCode = "200", description = "조회 성공")
-    ResponseEntity<Page<MemberResponse.MemberDto>> getMembers(
+    ResponseEntity<Page<MemberResponse.MemberListDto>> getMembers(
             @ParameterObject MemberRequest.MemberSearchCondition searchCondition,
             Pageable pageable
     );

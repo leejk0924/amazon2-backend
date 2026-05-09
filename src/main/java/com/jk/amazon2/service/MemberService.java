@@ -1,5 +1,6 @@
 package com.jk.amazon2.service;
 
+import com.jk.amazon2.controller.dto.MemberRequest;
 import com.jk.amazon2.entity.Category;
 import com.jk.amazon2.entity.Member;
 import com.jk.amazon2.exception.CategoryErrorCode;
@@ -10,6 +11,8 @@ import com.jk.amazon2.repository.MemberRepository;
 import com.jk.amazon2.service.dto.MemberCommand;
 import com.jk.amazon2.service.dto.MemberResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,5 +52,11 @@ public class MemberService {
 
         member.update(command.getNickname(), command.getCategoryCode());
         return MemberResult.Update.of(member.getNickname(), member.getCategoryCode());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MemberResult.Summary> findMembers(MemberRequest.MemberSearchCondition searchCondition, Pageable pageable) {
+        MemberCommand.Search command = MemberCommand.Search.from(searchCondition);
+        return memberRepository.findMembers(command, pageable);
     }
 }
