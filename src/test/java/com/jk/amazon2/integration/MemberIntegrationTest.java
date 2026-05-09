@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
@@ -174,14 +175,18 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         @BeforeEach
         void setUpData() {
             String categoryInsertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'test')";
-            jdbcTemplate.update(categoryInsertSql, "DEV_E2E", "개발", "개발팀");
-            jdbcTemplate.update(categoryInsertSql, "DESIGN_E2E", "디자인", "디자인팀");
+            jdbcTemplate.batchUpdate(categoryInsertSql, List.of(
+                    new Object[]{"DEV_E2E", "개발", "개발팀"},
+                    new Object[]{"DESIGN_E2E", "디자인", "디자인팀"}
+            ));
 
             String memberInsertSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, NOW(), 'test', NOW(), 'test')";
-            jdbcTemplate.update(memberInsertSql, "dev_user1", "DEV_E2E", false);
-            jdbcTemplate.update(memberInsertSql, "dev_user2", "DEV_E2E", false);
-            jdbcTemplate.update(memberInsertSql, "design_user", "DESIGN_E2E", false);
-            jdbcTemplate.update(memberInsertSql, "deleted_user", "DEV_E2E", true);
+            jdbcTemplate.batchUpdate(memberInsertSql, List.of(
+                    new Object[]{"dev_user1", "DEV_E2E", false},
+                    new Object[]{"dev_user2", "DEV_E2E", false},
+                    new Object[]{"design_user", "DESIGN_E2E", false},
+                    new Object[]{"deleted_user", "DEV_E2E", true}
+            ));
         }
 
         @DisplayName("조회 성공 - 필터 조건별 결과 수 검증 [success]")
