@@ -12,19 +12,25 @@ import org.springframework.http.ResponseEntity;
 
 @Tag(name = "유저", description = "유저 관련 API")
 public interface MemberApiSpec {
+    @Operation(summary = "유저 단건 조회")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    ResponseEntity<MemberResponse.MemberDetailDto> getMember(Long id);
     @Operation(summary = "유저 조회 및 검색")
     @ApiResponse(responseCode = "200", description = "조회 성공")
-    ResponseEntity<Page<MemberResponse.MemberDto>> getMembers(
+    ResponseEntity<Page<MemberResponse.MemberListDto>> getMembers(
             @ParameterObject MemberRequest.MemberSearchCondition searchCondition,
             Pageable pageable
     );
     @Operation(summary = "유저 추가")
     @ApiResponse(responseCode = "201", description = "유저 추가 성공")
-    ResponseEntity<MemberResponse.MemberDto> createMember(MemberRequest.MemberDto memberDto);
+    ResponseEntity<MemberResponse.MemberCreateDto> createMember(MemberRequest.MemberCreateDto memberDto);
     @Operation(summary = "유저 수정")
     @ApiResponse(responseCode = "200", description = "유저 수정 성공")
-    ResponseEntity<MemberResponse.MemberDto> updateMember(Long id, MemberRequest.MemberDto memberDto);
+    ResponseEntity<MemberResponse.MemberUpdateDto> updateMember(Long id, MemberRequest.MemberDto memberDto);
     @Operation(summary = "유저 삭제")
     @ApiResponse(responseCode = "204", description = "유저 삭제 성공")
     ResponseEntity<Void> deleteMember(Long memberId);
+    @Operation(summary = "유저 영구 삭제")
+    @ApiResponse(responseCode = "204", description = "유저 영구 삭제 성공")
+    ResponseEntity<Void> hardDeleteMember(Long memberId);
 }

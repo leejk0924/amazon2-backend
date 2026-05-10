@@ -12,7 +12,7 @@
 | | | | | | | |
 | MEMBER   | 인원       | Member              | 인원        | 관리자 입력    | member                  | 블로그 포스팅 수를 관리하는 대상 사용자      | soft delete 적용                      |
 | MEMBER   | 닉네임      | Nickname            | 닉네임       | 관리자 입력    | member.nickname         | 블로그 사용자 식별용 고유 이름           | UNIQUE                              |
-| MEMBER   | 삭제일시     | DeletedAt           | 삭제일시      | 시스템 처리    | member.deleted_at       | soft delete 처리 시 기록되는 시각    | NULL이면 활성 상태                        |
+| MEMBER   | 삭제여부     | Deleted             | 삭제여부      | 시스템 처리    | member.deleted          | soft delete 여부                  | false면 활성 상태                        |
 | MEMBER   | 생성일시     | CreatedAt           | 생성일시      | 시스템 자동 생성 | member.created_at       | 데이터 최초 생성 시 기록되는 시각         | DEFAULT CURRENT_TIMESTAMP           |
 | MEMBER   | 수정일시     | UpdatedAt           | 수정일시      | 시스템 자동 갱신 | member.updated_at       | 데이터 수정 시 갱신되는 시각            | ON UPDATE CURRENT_TIMESTAMP         |
 | | | | | | | |
@@ -33,5 +33,3 @@
 | 명칭           | 정의                               |
 | ------------ |----------------------------------|
 | 주간 집계        | 한 주의 포스팅 수를 그 다음주 월요일 00:01 에 집계 |
-
-

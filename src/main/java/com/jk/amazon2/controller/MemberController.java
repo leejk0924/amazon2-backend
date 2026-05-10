@@ -3,74 +3,72 @@ package com.jk.amazon2.controller;
 import com.jk.amazon2.controller.dto.MemberRequest;
 import com.jk.amazon2.controller.dto.MemberResponse;
 import com.jk.amazon2.controller.spec.MemberApiSpec;
+import com.jk.amazon2.service.MemberService;
+import com.jk.amazon2.service.dto.MemberCommand;
+import com.jk.amazon2.service.dto.MemberResult;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 public class MemberController implements MemberApiSpec {
+    private final MemberService memberService;
+
+    @Override
+    @GetMapping("/members/{id}")
+    public ResponseEntity<MemberResponse.MemberDetailDto> getMember(@PathVariable Long id) {
+        MemberResult.Detail result = memberService.findById(id);
+        return ResponseEntity.ok(MemberResponse.MemberDetailDto.from(result));
+    }
+
     @Override
     @GetMapping("/members")
-    public ResponseEntity<Page<MemberResponse.MemberDto>> getMembers(
+    public ResponseEntity<Page<MemberResponse.MemberListDto>> getMembers(
             MemberRequest.MemberSearchCondition searchCondition,
-            @PageableDefault(size = 10, sort = "nickname") Pageable pageable
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        List<MemberResponse.MemberDto> content = List.of(
-                new MemberResponse.MemberDto("user1", "카테고리1", LocalDate.of(2026, 2, 10), "active"),
-                new MemberResponse.MemberDto("user2", "카테고리2", LocalDate.of(2026, 2, 11), "active")
-        );
-
-        Page<MemberResponse.MemberDto> data = new PageImpl<>(
-            content,
-            pageable,
-            content.size()
-        ).map(m -> new MemberResponse.MemberDto(
-                m.nickname(),
-                m.categoryName(),
-                m.joinDate(),
-                m.status()
-        ));
+        Page<MemberResult.Summary> results = memberService.findMembers(searchCondition, pageable);
+        Page<MemberResponse.MemberListDto> response = results.map(MemberResponse.MemberListDto::from);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(data);
+                .body(response);
     }
 
     @Override
     @PostMapping("/members")
-    public ResponseEntity<MemberResponse.MemberDto> createMember(
-            @RequestBody MemberRequest.MemberDto memberDto
+    public ResponseEntity<MemberResponse.MemberCreateDto> createMember(
+            @RequestBody @Valid MemberRequest.MemberCreateDto request
     ) {
-        MemberResponse.MemberDto savedMember = new MemberResponse.MemberDto(
-                memberDto.nickname(),
-                memberDto.categoryCode(),
-                LocalDate.now(),
-                "active"
-        );
+        MemberCommand.Create command = MemberCommand.Create.of(request.nickname(), request.categoryCode());
+        var createdMember = memberService.create(command);
+
+        var response = MemberResponse.MemberCreateDto.from(createdMember);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(savedMember);
+                .body(response);
     }
 
     @Override
     @PutMapping("/members/{id}")
-    public ResponseEntity<MemberResponse.MemberDto> updateMember(
+    public ResponseEntity<MemberResponse.MemberUpdateDto> updateMember(
             @PathVariable Long id,
             @RequestBody MemberRequest.MemberDto member
     ) {
-        MemberResponse.MemberDto updatedMember = new MemberResponse.MemberDto(member.nickname(), member.categoryCode(), LocalDate.now(), "active");
+        var update = MemberCommand.Update.of(id, member.nickname(), member.categoryCode());
+
+        var response = MemberResponse.MemberUpdateDto.from(memberService.update(update));
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(updatedMember);
+                .body(response);
     }
 
     @Override
@@ -78,6 +76,18 @@ public class MemberController implements MemberApiSpec {
     public ResponseEntity<Void> deleteMember(
             @PathVariable Long id
     ) {
+        memberService.delete(id);
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
+    }
+
+    @Override
+    @DeleteMapping("/members/{id}/permanent")
+    public ResponseEntity<Void> hardDeleteMember(
+            @PathVariable Long id
+    ) {
+        memberService.hardDelete(id);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
