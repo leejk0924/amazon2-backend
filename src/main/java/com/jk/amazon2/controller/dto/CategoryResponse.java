@@ -41,10 +41,4 @@ public class CategoryResponse {
             return new Info(info.getCode(), info.getName(), info.getDescription());
         }
     }
-
-    @Deprecated
-    public record CategoryDto(
-            String code,
-            String name
-    ) {}
 }

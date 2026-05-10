@@ -20,14 +20,6 @@ public class MemberResponse {
             );
         }
     }
-    
-    @Deprecated
-    public record MemberDto(
-            String nickname,
-            String categoryName,
-            LocalDate joinDate,
-            String status
-    ) {}
 
     public record MemberUpdateDto (
             String nickname,
