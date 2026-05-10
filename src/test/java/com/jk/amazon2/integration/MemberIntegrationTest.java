@@ -380,6 +380,70 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
     }
 
     @Nested
+    @DisplayName("Member 삭제 통합 테스트")
+    class DeleteMember {
+        private Long memberId;
+
+        @BeforeEach
+        void setUpData() {
+            String categorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'test')";
+            jdbcTemplate.update(categorySql, "DEL_CAT", "삭제테스트", "설명");
+
+            String memberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'test', NOW(), 'test')";
+            jdbcTemplate.update(memberSql, "delete_target_user", "DEL_CAT");
+            memberId = jdbcTemplate.queryForObject("SELECT id FROM member WHERE nickname = ?", Long.class, "delete_target_user");
+        }
+
+        @Test
+        @DisplayName("[통합] DELETE /members/{id} - 삭제 성공 및 DB 정합성 검증 [204 No Content]")
+        void deleteMember_success() {
+            // when & then
+            RestAssuredMockMvc.given()
+                    .when()
+                    .delete("/members/{id}", memberId)
+                    .then()
+                    .statusCode(HttpStatus.NO_CONTENT.value());
+
+            em.flush();
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM member WHERE id = ? AND deleted = true",
+                    Integer.class, memberId
+            );
+            assertThat(count).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("[통합] DELETE /members/{id} - 이미 삭제된 회원 재삭제 성공 - 멱등성 [204 No Content]")
+        void deleteMember_success_idempotent() {
+            // given
+            jdbcTemplate.update("UPDATE member SET deleted = true WHERE id = ?", memberId);
+
+            // when & then
+            RestAssuredMockMvc.given()
+                    .when()
+                    .delete("/members/{id}", memberId)
+                    .then()
+                    .statusCode(HttpStatus.NO_CONTENT.value());
+        }
+
+        @Test
+        @DisplayName("[통합] DELETE /members/{id} - 존재하지 않는 회원 [404 Not Found]")
+        void deleteMember_fail_not_found() {
+            // given
+            Long nonExistentId = 999999L;
+
+            // when & then
+            RestAssuredMockMvc.given()
+                    .when()
+                    .delete("/members/{id}", nonExistentId)
+                    .then()
+                    .statusCode(HttpStatus.NOT_FOUND.value())
+                    .body("code", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.name()))
+                    .body("message", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
+        }
+    }
+
+    @Nested
     @DisplayName("Member 단건 조회 통합 테스트")
     class GetMember {
         private Long memberId;

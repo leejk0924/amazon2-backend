@@ -37,4 +37,8 @@ public class Member extends BaseAudit {
         }
         this.categoryCode = categoryCode;
     }
+
+    public void softDelete() {
+        this.deleted = true;
+    }
 }

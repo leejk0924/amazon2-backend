@@ -76,6 +76,7 @@ public class MemberController implements MemberApiSpec {
     public ResponseEntity<Void> deleteMember(
             @PathVariable Long id
     ) {
+        memberService.delete(id);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();

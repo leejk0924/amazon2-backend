@@ -54,6 +54,13 @@ public class MemberService {
         return MemberResult.Update.of(member.getNickname(), member.getCategoryCode());
     }
 
+    @Transactional
+    public void delete(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+        member.softDelete();
+    }
+
     @Transactional(readOnly = true)
     public MemberResult.Detail findById(Long id) {
         Member member = memberRepository.findById(id)

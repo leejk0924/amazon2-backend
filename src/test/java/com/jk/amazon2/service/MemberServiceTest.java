@@ -127,6 +127,59 @@ class MemberServiceTest {
     }
 
     @Nested
+    @DisplayName("Member 삭제 - 단위 테스트")
+    class DeleteMember {
+        @Test
+        @DisplayName("회원 삭제 성공 [success]")
+        void delete_success() {
+            // given
+            Long id = 1L;
+            Member member = Member.of("test_member", "DEV");
+            ReflectionTestUtils.setField(member, "id", id);
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.of(member));
+
+            // when
+            memberService.delete(id);
+
+            // then
+            assertThat(member.isDeleted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("이미 삭제된 회원 재삭제 성공 - 멱등성 [success]")
+        void delete_success_already_deleted() {
+            // given
+            Long id = 1L;
+            Member member = Member.of("test_member", "DEV");
+            ReflectionTestUtils.setField(member, "id", id);
+            member.softDelete();
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.of(member));
+
+            // when
+            memberService.delete(id);
+
+            // then
+            assertThat(member.isDeleted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("회원 삭제 실패 - 존재하지 않는 회원 [fail]")
+        void delete_fail_not_found() {
+            // given
+            Long id = 999L;
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> memberService.delete(id))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
+        }
+    }
+
+    @Nested
     @DisplayName("Member 조회 - 단위 테스트")
     class GetMember {
         @Test

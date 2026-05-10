@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -90,6 +91,38 @@ class MemberControllerTest {
                     Arguments.of("닉네임 null", null, "DEV", MemberErrorCode.MEMBER_NICKNAME_INVALID),
                     Arguments.of("닉네임 50자 초과", "a".repeat(51), "DEV", MemberErrorCode.MEMBER_NICKNAME_INVALID)
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("Member 삭제 - 단위 테스트")
+    class DeleteMember {
+        @Test
+        @DisplayName("회원 삭제 성공")
+        void deleteMember_success() {
+            // given
+            Long id = 1L;
+
+            // when
+            ResponseEntity<Void> response = memberController.deleteMember(id);
+
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.NO_CONTENT);
+            verify(memberService).delete(id);
+        }
+
+        @Test
+        @DisplayName("회원 삭제 실패 - 존재하지 않는 회원")
+        void deleteMember_fail_not_found() {
+            // given
+            Long id = 999L;
+            org.mockito.Mockito.doThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND))
+                    .when(memberService).delete(id);
+
+            // when & then
+            assertThatThrownBy(() -> memberController.deleteMember(id))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
         }
     }
 
