@@ -378,4 +378,59 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             );
         }
     }
+
+    @Nested
+    @DisplayName("Member 단건 조회 통합 테스트")
+    class GetMember {
+        private Long memberId;
+
+        @BeforeEach
+        void setUpData() {
+            String categorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'test')";
+            jdbcTemplate.update(categorySql, "GET_CAT", "조회테스트", "설명");
+
+            String memberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'test', NOW(), 'test')";
+            jdbcTemplate.update(memberSql, "get_member", "GET_CAT");
+            memberId = jdbcTemplate.queryForObject("SELECT id FROM member WHERE nickname = ?", Long.class, "get_member");
+        }
+
+        @Test
+        @DisplayName("[통합] GET /members/{id} - 조회 성공 [200 OK]")
+        void getMember_success() {
+            // when & then
+            RestAssuredMockMvc.given()
+                    .when()
+                    .get("/members/{id}", memberId)
+                    .then()
+                    .statusCode(HttpStatus.OK.value())
+                    .body("id", equalTo(memberId.intValue()))
+                    .body("nickname", equalTo("get_member"))
+                    .body("categoryCode", equalTo("GET_CAT"))
+                    .body("status", equalTo("active"));
+
+            // DB 검증
+            em.flush();
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM member WHERE id = ? AND nickname = ? AND category_code = ?",
+                    Integer.class, memberId, "get_member", "GET_CAT"
+            );
+            assertThat(count).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("[통합] GET /members/{id} - 존재하지 않는 회원 [404 Not Found]")
+        void getMember_fail_not_found() {
+            // given
+            Long nonExistentId = 999999L;
+
+            // when & then
+            RestAssuredMockMvc.given()
+                    .when()
+                    .get("/members/{id}", nonExistentId)
+                    .then()
+                    .statusCode(HttpStatus.NOT_FOUND.value())
+                    .body("code", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.name()))
+                    .body("message", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
+        }
+    }
 }

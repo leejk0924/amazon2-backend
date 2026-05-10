@@ -24,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -54,7 +55,7 @@ class MemberControllerTest {
 
             var request = new MemberRequest.MemberCreateDto(nickname, categoryCode);
 
-            var savedMember = MemberResult.Detail.of(id, nickname, categoryCode, LocalDateTime.now());
+            var savedMember = MemberResult.Detail.of(id, nickname, categoryCode, LocalDateTime.now(), false);
             given(memberService.create(any(MemberCommand.Create.class)))
                     .willReturn(savedMember);
 
@@ -89,6 +90,45 @@ class MemberControllerTest {
                     Arguments.of("닉네임 null", null, "DEV", MemberErrorCode.MEMBER_NICKNAME_INVALID),
                     Arguments.of("닉네임 50자 초과", "a".repeat(51), "DEV", MemberErrorCode.MEMBER_NICKNAME_INVALID)
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("Member 조회 - 단위 테스트")
+    class GetMember {
+        @Test
+        @DisplayName("회원 조회 성공")
+        void getMember_success() {
+            // given
+            Long id = 1L;
+            var result = MemberResult.Detail.of(id, "test_member", "DEV", LocalDateTime.now(), false);
+            given(memberService.findById(id))
+                    .willReturn(result);
+
+            // when
+            ResponseEntity<MemberResponse.MemberDetailDto> response = memberController.getMember(id);
+
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().id()).isEqualTo(id);
+            assertThat(response.getBody().nickname()).isEqualTo("test_member");
+            assertThat(response.getBody().categoryCode()).isEqualTo("DEV");
+            assertThat(response.getBody().status()).isEqualTo("active");
+        }
+
+        @Test
+        @DisplayName("회원 조회 실패 - 존재하지 않는 회원")
+        void getMember_fail_not_found() {
+            // given
+            Long id = 999L;
+            given(memberService.findById(id))
+                    .willThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+            // when & then
+            assertThatThrownBy(() -> memberController.getMember(id))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
         }
     }
 

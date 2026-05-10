@@ -125,4 +125,45 @@ class MemberServiceTest {
                     .hasMessage(MemberErrorCode.MEMBER_NICKNAME_ALREADY_EXISTS.getMessage());
         }
     }
+
+    @Nested
+    @DisplayName("Member 조회 - 단위 테스트")
+    class GetMember {
+        @Test
+        @DisplayName("회원 조회 성공 [success]")
+        void findById_success() {
+            // given
+            Long id = 1L;
+            Member member = Member.of("test_member", "DEV");
+            ReflectionTestUtils.setField(member, "id", id);
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.of(member));
+
+            // when
+            MemberResult.Detail result = memberService.findById(id);
+
+            // then
+            assertThat(result).isNotNull();
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.getId()).isEqualTo(id);
+                softly.assertThat(result.getNickname()).isEqualTo("test_member");
+                softly.assertThat(result.getCategoryCode()).isEqualTo("DEV");
+                softly.assertThat(result.isDeleted()).isFalse();
+            });
+        }
+
+        @Test
+        @DisplayName("회원 조회 실패 - 존재하지 않는 회원 [fail]")
+        void findById_fail_not_found() {
+            // given
+            Long id = 999L;
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> memberService.findById(id))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
+        }
+    }
 }
