@@ -55,6 +55,13 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
+    public MemberResult.Detail findById(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+        return MemberResult.Detail.from(member);
+    }
+
+    @Transactional(readOnly = true)
     public Page<MemberResult.Summary> findMembers(MemberRequest.MemberSearchCondition searchCondition, Pageable pageable) {
         MemberCommand.Search command = MemberCommand.Search.from(searchCondition);
         return memberRepository.findMembers(command, pageable);

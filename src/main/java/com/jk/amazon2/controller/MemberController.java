@@ -22,6 +22,13 @@ public class MemberController implements MemberApiSpec {
     private final MemberService memberService;
 
     @Override
+    @GetMapping("/members/{id}")
+    public ResponseEntity<MemberResponse.MemberDetailDto> getMember(@PathVariable Long id) {
+        MemberResult.Detail result = memberService.findById(id);
+        return ResponseEntity.ok(MemberResponse.MemberDetailDto.from(result));
+    }
+
+    @Override
     @GetMapping("/members")
     public ResponseEntity<Page<MemberResponse.MemberListDto>> getMembers(
             MemberRequest.MemberSearchCondition searchCondition,

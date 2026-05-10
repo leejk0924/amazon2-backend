@@ -12,6 +12,9 @@ import org.springframework.http.ResponseEntity;
 
 @Tag(name = "유저", description = "유저 관련 API")
 public interface MemberApiSpec {
+    @Operation(summary = "유저 단건 조회")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    ResponseEntity<MemberResponse.MemberDetailDto> getMember(Long id);
     @Operation(summary = "유저 조회 및 검색")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     ResponseEntity<Page<MemberResponse.MemberListDto>> getMembers(

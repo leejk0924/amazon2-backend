@@ -38,6 +38,24 @@ public class MemberResponse {
         }
     }
 
+    public record MemberDetailDto(
+            Long id,
+            String nickname,
+            String categoryCode,
+            LocalDate joinDate,
+            String status
+    ) {
+        public static MemberDetailDto from(MemberResult.Detail detail) {
+            return new MemberDetailDto(
+                    detail.getId(),
+                    detail.getNickname(),
+                    detail.getCategoryCode(),
+                    detail.getCreatedAt().toLocalDate(),
+                    detail.isDeleted() ? "deleted" : "active"
+            );
+        }
+    }
+
     public record MemberListDto(
             String nickname,
             String categoryName,

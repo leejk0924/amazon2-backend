@@ -19,13 +19,15 @@ public class MemberResult {
         private String nickname;
         private String categoryCode;
         private LocalDateTime createdAt;
+        private boolean deleted;
 
         public static Detail from(Member member) {
             return new Detail(
                     member.getId(),
                     member.getNickname(),
                     member.getCategoryCode(),
-                    member.getCreatedAt()
+                    member.getCreatedAt(),
+                    member.isDeleted()
             );
         }
     }
