@@ -497,4 +497,73 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                     .body("message", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
         }
     }
+
+    @Nested
+    @DisplayName("Member 영구 삭제 통합 테스트")
+    class HardDeleteMember {
+        private Long softDeletedMemberId;
+        private Long activeMemberId;
+
+        @BeforeEach
+        void setUpData() {
+            String categorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'test')";
+            jdbcTemplate.update(categorySql, "HARD_DEL", "삭제", "설명");
+
+            String memberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, NOW(), 'test', NOW(), 'test')";
+            jdbcTemplate.batchUpdate(memberSql, List.of(
+                    new Object[] {"soft_deleted_member", "HARD_DEL", true},
+                    new Object[] {"active_member", "HARD_DEL", false}
+            ));
+
+            softDeletedMemberId = jdbcTemplate.queryForObject("SELECT id FROM member WHERE nickname = ?", Long.class, "soft_deleted_member");
+            activeMemberId = jdbcTemplate.queryForObject("SELECT id FROM member WHERE nickname = ?", Long.class, "active_member");
+        }
+
+        @Test
+        @DisplayName("[통합] DELETE /members/{id}/permanent - 영구 삭제 성공 [204 No Content]")
+        void hardDeleteMember_success() {
+            // when & then
+            RestAssuredMockMvc.given()
+                    .when()
+                    .delete("/members/{id}/permanent", softDeletedMemberId)
+                    .then()
+                    .statusCode(HttpStatus.NO_CONTENT.value());
+
+            em.flush();
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM member WHERE id = ?",
+                    Integer.class, softDeletedMemberId
+            );
+            assertThat(count).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("[통합] DELETE /members/{id}/permanent - 존재하지 않는 회원 [404 Not Found]")
+        void hardDeleteMember_fail_not_found() {
+            // given
+            Long nonExistentId = 999999L;
+
+            // when & then
+            RestAssuredMockMvc.given()
+                    .when()
+                    .delete("/members/{id}/permanent", nonExistentId)
+                    .then()
+                    .statusCode(HttpStatus.NOT_FOUND.value())
+                    .body("code", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.name()))
+                    .body("message", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
+        }
+
+        @Test
+        @DisplayName("[통합] DELETE /members/{id}/permanent - 활성 회원 영구 삭제 실패 [400 Bad Request]")
+        void hardDeleteMember_fail_not_deleted() {
+            // when & then
+            RestAssuredMockMvc.given()
+                    .when()
+                    .delete("/members/{id}/permanent", activeMemberId)
+                    .then()
+                    .statusCode(HttpStatus.BAD_REQUEST.value())
+                    .body("code", equalTo(MemberErrorCode.MEMBER_NOT_DELETED.name()))
+                    .body("message", equalTo(MemberErrorCode.MEMBER_NOT_DELETED.getMessage()));
+        }
+    }
 }

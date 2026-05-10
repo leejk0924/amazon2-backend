@@ -30,4 +30,7 @@ public interface MemberApiSpec {
     @Operation(summary = "유저 삭제")
     @ApiResponse(responseCode = "204", description = "유저 삭제 성공")
     ResponseEntity<Void> deleteMember(Long memberId);
+    @Operation(summary = "유저 영구 삭제")
+    @ApiResponse(responseCode = "204", description = "유저 영구 삭제 성공")
+    ResponseEntity<Void> hardDeleteMember(Long memberId);
 }

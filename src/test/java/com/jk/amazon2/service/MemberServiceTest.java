@@ -219,4 +219,56 @@ class MemberServiceTest {
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
         }
     }
+
+    @Nested
+    @DisplayName("Member 영구 삭제 - 단위 테스트")
+    class HardDeleteMember {
+        @Test
+        @DisplayName("회원 영구 삭제 성공 [success]")
+        void hardDelete_success() {
+            // given
+            Long id = 1L;
+            Member member = Member.of("test_member", "DEV");
+            ReflectionTestUtils.setField(member, "id", id);
+            member.softDelete();
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.of(member));
+
+            // when
+            memberService.hardDelete(id);
+
+            // then
+            verify(memberRepository).delete(member);
+        }
+
+        @Test
+        @DisplayName("회원 영구 삭제 실패 - 존재하지 않는 회원 [fail]")
+        void hardDelete_fail_not_found() {
+            // given
+            Long id = 999L;
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> memberService.hardDelete(id))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
+        }
+
+        @Test
+        @DisplayName("회원 영구 삭제 실패 - 소프트 삭제되지 않은 회원 [fail]")
+        void hardDelete_fail_not_deleted() {
+            // given
+            Long id = 1L;
+            Member member = Member.of("test_member", "DEV");
+            ReflectionTestUtils.setField(member, "id", id);
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.of(member));
+
+            // when & then
+            assertThatThrownBy(() -> memberService.hardDelete(id))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_DELETED.getMessage());
+        }
+    }
 }

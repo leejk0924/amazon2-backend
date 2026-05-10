@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -284,6 +285,36 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
                     .andExpect(jsonPath("$.totalElements").value(2))
                     .andExpect(jsonPath("$.content[0].status").value("active"))
                     .andExpect(jsonPath("$.content[1].status").value("deleted"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Member 영구 삭제 - 통합 테스트")
+    class HardDeleteMember {
+        @Test
+        @DisplayName("회원 영구 삭제 성공 [success]")
+        void hardDeleteMember_success() throws Exception {
+            // given
+            Long memberId = 1L;
+
+            // when & then
+            mockMvc.perform(delete("/members/{id}/permanent", memberId))
+                    .andExpect(status().isNoContent());
+
+            verify(memberService).hardDelete(memberId);
+        }
+
+        @Test
+        @DisplayName("회원 영구 삭제 실패 - 소프트 삭제되지 않은 회원 [fail]")
+        void hardDeleteMember_fail_not_deleted() throws Exception {
+            // given
+            Long memberId = 1L;
+            org.mockito.Mockito.doThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_DELETED))
+                    .when(memberService).hardDelete(memberId);
+
+            // when & then
+            mockMvc.perform(delete("/members/{id}/permanent", memberId))
+                    .andExpect(status().isBadRequest());
         }
     }
 }

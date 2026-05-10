@@ -73,4 +73,14 @@ public class MemberService {
         MemberCommand.Search command = MemberCommand.Search.from(searchCondition);
         return memberRepository.findMembers(command, pageable);
     }
+
+    @Transactional
+    public void hardDelete(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+        if (!member.isDeleted()) {
+            throw new RestApiException(MemberErrorCode.MEMBER_NOT_DELETED);
+        }
+        memberRepository.delete(member);
+    }
 }

@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 
@@ -162,6 +163,38 @@ class MemberControllerTest {
             assertThatThrownBy(() -> memberController.getMember(id))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Member 영구 삭제 - 단위 테스트")
+    class HardDeleteMember {
+        @Test
+        @DisplayName("회원 영구 삭제 성공")
+        void hardDeleteMember_success() {
+            // given
+            Long id = 1L;
+
+            // when
+            ResponseEntity<Void> response = memberController.hardDeleteMember(id);
+
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.NO_CONTENT);
+            verify(memberService).hardDelete(id);
+        }
+
+        @Test
+        @DisplayName("회원 영구 삭제 실패 - 소프트 삭제되지 않은 회원")
+        void hardDeleteMember_fail_not_deleted() {
+            // given
+            Long id = 1L;
+            doThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_DELETED))
+                    .when(memberService).hardDelete(id);
+
+            // when & then
+            assertThatThrownBy(() -> memberController.hardDeleteMember(id))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_DELETED.getMessage());
         }
     }
 

@@ -81,4 +81,15 @@ public class MemberController implements MemberApiSpec {
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
+
+    @Override
+    @DeleteMapping("/members/{id}/permanent")
+    public ResponseEntity<Void> hardDeleteMember(
+            @PathVariable Long id
+    ) {
+        memberService.hardDelete(id);
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
+    }
 }

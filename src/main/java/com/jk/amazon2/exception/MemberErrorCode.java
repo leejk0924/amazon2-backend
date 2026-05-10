@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum MemberErrorCode implements ErrorCode{
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
+    MEMBER_NOT_DELETED(HttpStatus.BAD_REQUEST, "소프트 삭제된 회원만 영구 삭제가 가능합니다."),
     MEMBER_NICKNAME_INVALID(HttpStatus.BAD_REQUEST, "닉네임은 필수 입니다."),
     MEMBER_NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 닉네임 입니다."),
     MEMBER_NICKNAME_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 닉네임 입니다."),
