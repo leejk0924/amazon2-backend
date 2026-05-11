@@ -19,10 +19,22 @@
 
 #### 1. 패치 파일 생성하기 (현재 변경사항 저장)
 
-현재 작업 디렉토리의 변경사항(Staged되지 않은 변경사항)을 `.patch` 파일로 저장합니다.
+g현재 작업 디렉토리의 변경사항을 `.patch` 파일로 저장합니다. 
 
+**주의:** 새로 생성된 파일(Untracked files)은 일반적인 `git diff` 명령어에 포함되지 않습니다. 따라서 아래 두 가지 방법 중 하나를 사용해야 합니다.
+
+**방법 A: Staging 후 Diff 생성 (권장)**
+모든 변경사항(새 파일 포함)을 Staging Area에 올린 후 패치를 생성합니다.
 ```bash
-git diff > patches/my-feature-in-progress.patch
+git add .
+git diff --staged > patches/my-feature-in-progress.patch
+```
+
+**방법 B: Stash를 활용한 패치 생성**
+변경사항을 Stash에 저장한 후 패치 파일로 추출합니다. (`-u` 옵션으로 새로 생성된 파일도 포함시킵니다.)
+```bash
+git stash -u
+git stash show -p -u > patches/my-feature-in-progress.patch
 ```
 
 > **팁:** 패치 파일의 이름은 작업 내용을 알 수 있도록 명확하게 짓는 것이 좋습니다. (예: `refactor-member-service.patch`)
