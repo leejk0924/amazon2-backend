@@ -2,7 +2,7 @@ package com.jk.amazon2.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jk.amazon2.member.dto.MemberRequest;
-import com.jk.amazon2.exception.MemberErrorCode;
+import com.jk.amazon2.member.exception.MemberErrorCode;
 import com.jk.amazon2.exception.RestApiException;
 import com.jk.amazon2.member.service.MemberService;
 import com.jk.amazon2.service.dto.MemberCommand;

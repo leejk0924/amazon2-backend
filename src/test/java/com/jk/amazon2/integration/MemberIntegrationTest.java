@@ -2,7 +2,7 @@ package com.jk.amazon2.integration;
 
 import com.jk.amazon2.member.dto.MemberRequest;
 import com.jk.amazon2.exception.CategoryErrorCode;
-import com.jk.amazon2.exception.MemberErrorCode;
+import com.jk.amazon2.member.exception.MemberErrorCode;
 import com.jk.amazon2.testsupport.IntegrationTestSupport;
 import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;

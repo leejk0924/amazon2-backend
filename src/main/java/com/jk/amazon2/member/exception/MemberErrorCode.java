@@ -1,5 +1,6 @@
-package com.jk.amazon2.exception;
+package com.jk.amazon2.member.exception;
 
+import com.jk.amazon2.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
