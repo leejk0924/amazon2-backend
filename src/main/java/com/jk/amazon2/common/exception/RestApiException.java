@@ -1,4 +1,4 @@
-package com.jk.amazon2.exception;
+package com.jk.amazon2.common.exception;
 
 import lombok.Getter;
 

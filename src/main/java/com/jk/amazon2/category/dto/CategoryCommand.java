@@ -2,7 +2,7 @@ package com.jk.amazon2.category.dto;
 
 import com.jk.amazon2.category.dto.CategoryRequest;
 import com.jk.amazon2.category.exception.CategoryErrorCode;
-import com.jk.amazon2.exception.RestApiException;
+import com.jk.amazon2.common.exception.RestApiException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

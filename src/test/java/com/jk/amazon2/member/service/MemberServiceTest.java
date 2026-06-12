@@ -5,7 +5,7 @@ import com.jk.amazon2.member.entity.Member;
 import com.jk.amazon2.member.service.MemberService;
 import com.jk.amazon2.category.exception.CategoryErrorCode;
 import com.jk.amazon2.member.exception.MemberErrorCode;
-import com.jk.amazon2.exception.RestApiException;
+import com.jk.amazon2.common.exception.RestApiException;
 import com.jk.amazon2.category.repository.CategoryRepository;
 import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.service.dto.MemberCommand;

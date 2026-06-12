@@ -3,7 +3,7 @@ package com.jk.amazon2.category.service;
 import com.jk.amazon2.category.dto.CategoryRequest;
 import com.jk.amazon2.category.entity.Category;
 import com.jk.amazon2.category.exception.CategoryErrorCode;
-import com.jk.amazon2.exception.RestApiException;
+import com.jk.amazon2.common.exception.RestApiException;
 import com.jk.amazon2.category.repository.CategoryRepository;
 import com.jk.amazon2.category.dto.CategoryCommand;
 import com.jk.amazon2.category.dto.CategoryResult;
