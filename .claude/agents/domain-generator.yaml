@@ -1,0 +1,20 @@
+name: Domain Generator
+description: Java Spring Boot 도메인 구조 및 보일러플레이트를 생성하는 에이전트
+instructions: .claude/agents/domain-generator-prompt.md
+parameters:
+  domain_name:
+    description: 생성할 도메인명 (예: product, order, user)
+    type: string
+    required: true
+  create_dto:
+    description: DTO 클래스 생성 여부
+    type: boolean
+    default: true
+  create_exception:
+    description: 커스텀 Exception 생성 여부
+    type: boolean
+    default: true
+  create_enum:
+    description: 상태 Enum 생성 여부
+    type: boolean
+    default: false
