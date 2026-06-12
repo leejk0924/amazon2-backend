@@ -7,7 +7,7 @@ import com.jk.amazon2.exception.CategoryErrorCode;
 import com.jk.amazon2.exception.MemberErrorCode;
 import com.jk.amazon2.exception.RestApiException;
 import com.jk.amazon2.repository.CategoryRepository;
-import com.jk.amazon2.repository.MemberRepository;
+import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.service.dto.MemberCommand;
 import com.jk.amazon2.service.dto.MemberResult;
 import lombok.RequiredArgsConstructor;

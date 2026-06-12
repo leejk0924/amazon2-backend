@@ -1,5 +1,6 @@
 package com.jk.amazon2.repository;
 
+import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.service.dto.MemberCommand;
 import com.jk.amazon2.service.dto.MemberResult;
 import com.jk.amazon2.testsupport.RepositoryTestSupport;

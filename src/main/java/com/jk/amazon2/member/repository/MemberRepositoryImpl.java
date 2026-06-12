@@ -1,4 +1,4 @@
-package com.jk.amazon2.repository;
+package com.jk.amazon2.member.repository;
 
 import com.jk.amazon2.service.dto.MemberCommand;
 import com.jk.amazon2.service.dto.MemberResult;
@@ -13,8 +13,8 @@ import org.springframework.data.support.PageableExecutionUtils;
 
 import java.util.List;
 
+import static com.jk.amazon2.member.entity.QMember.member;
 import static com.jk.amazon2.entity.QCategory.category;
-import static com.jk.amazon2.entity.QMember.member;
 
 @RequiredArgsConstructor
 public class MemberRepositoryImpl implements MemberRepositoryCustom {

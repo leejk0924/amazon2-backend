@@ -1,4 +1,4 @@
-package com.jk.amazon2.repository;
+package com.jk.amazon2.member.repository;
 
 import com.jk.amazon2.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
