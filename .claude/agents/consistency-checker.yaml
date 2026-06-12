@@ -1,0 +1,22 @@
+name: Harness Consistency Checker
+description: 도메인 패키지 구조, 네이밍, 어노테이션, DTO, Exception의 일관성을 검증하는 에이전트
+instructions: .claude/agents/consistency-checker-prompt.md
+parameters:
+  domain_name:
+    description: 검증할 도메인명 (예: product, member)
+    type: string
+    required: true
+  check_type:
+    description: 검증 유형 (all, package, naming, annotation, dto, exception)
+    type: string
+    enum: [all, package, naming, annotation, dto, exception]
+    default: all
+  auto_fix:
+    description: 자동 수정 여부
+    type: boolean
+    default: false
+  report_format:
+    description: 보고서 형식 (summary, detailed, json)
+    type: string
+    enum: [summary, detailed, json]
+    default: detailed
