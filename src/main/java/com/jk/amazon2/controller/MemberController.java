@@ -3,7 +3,7 @@ package com.jk.amazon2.controller;
 import com.jk.amazon2.member.dto.MemberRequest;
 import com.jk.amazon2.member.dto.MemberResponse;
 import com.jk.amazon2.controller.spec.MemberApiSpec;
-import com.jk.amazon2.service.MemberService;
+import com.jk.amazon2.member.service.MemberService;
 import com.jk.amazon2.service.dto.MemberCommand;
 import com.jk.amazon2.service.dto.MemberResult;
 import jakarta.validation.Valid;

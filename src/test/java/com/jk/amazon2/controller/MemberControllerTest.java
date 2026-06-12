@@ -6,7 +6,7 @@ import com.jk.amazon2.exception.CategoryErrorCode;
 import com.jk.amazon2.exception.ErrorCode;
 import com.jk.amazon2.exception.MemberErrorCode;
 import com.jk.amazon2.exception.RestApiException;
-import com.jk.amazon2.service.MemberService;
+import com.jk.amazon2.member.service.MemberService;
 import com.jk.amazon2.service.dto.MemberCommand;
 import com.jk.amazon2.service.dto.MemberResult;
 import org.junit.jupiter.api.BeforeEach;

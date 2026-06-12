@@ -1,4 +1,4 @@
-package com.jk.amazon2.service;
+package com.jk.amazon2.member.service;
 
 import com.jk.amazon2.member.dto.MemberRequest;
 import com.jk.amazon2.entity.Category;
