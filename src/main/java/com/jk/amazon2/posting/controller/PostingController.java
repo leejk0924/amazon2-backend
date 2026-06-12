@@ -1,8 +1,7 @@
-package com.jk.amazon2.controller;
+package com.jk.amazon2.posting.controller;
 
-import com.jk.amazon2.controller.dto.PostingRequest;
-import com.jk.amazon2.controller.dto.PostingResponse;
-import com.jk.amazon2.controller.spec.PostingApiSpec;
+import com.jk.amazon2.posting.dto.PostingRequest;
+import com.jk.amazon2.posting.dto.PostingResponse;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

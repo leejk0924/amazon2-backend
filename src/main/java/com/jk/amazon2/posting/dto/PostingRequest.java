@@ -1,4 +1,4 @@
-package com.jk.amazon2.controller.dto;
+package com.jk.amazon2.posting.dto;
 
 import java.time.LocalDate;
 
