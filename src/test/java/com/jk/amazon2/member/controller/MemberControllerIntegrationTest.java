@@ -1,4 +1,4 @@
-package com.jk.amazon2.controller;
+package com.jk.amazon2.member.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jk.amazon2.member.dto.MemberRequest;

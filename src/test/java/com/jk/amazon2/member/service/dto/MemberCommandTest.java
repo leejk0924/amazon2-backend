@@ -1,8 +1,10 @@
-package com.jk.amazon2.service.dto;
+package com.jk.amazon2.member.service.dto;
 
 import com.jk.amazon2.member.dto.MemberRequest;
 import com.jk.amazon2.member.exception.MemberErrorCode;
 import com.jk.amazon2.exception.RestApiException;
+import com.jk.amazon2.service.dto.MemberCommand;
+import com.jk.amazon2.service.dto.MemberResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
