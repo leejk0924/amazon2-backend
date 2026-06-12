@@ -1,0 +1,204 @@
+name: harness-architecture-validator
+version: 1.0.0
+description: |
+  Amazon2의 도메인 기반 아키텍처 검증 규칙 정의.
+  모든 에이전트가 사용하는 공유 기반으로, 도메인 간 일관성 있는 구조와 명명 규칙을 강제합니다.
+
+# 정의된 도메인
+domains:
+  - member
+  - category
+  - posting
+
+# 아키텍처 계층 (Layered Architecture)
+layers:
+  - entity          # JPA 엔티티 (도메인 모델)
+  - repository      # DB 접근 계층 (데이터 영속성)
+  - service         # 비즈니스 로직 (CommandService, QueryService)
+  - dto             # Request/Response DTO
+  - controller      # REST API 엔드포인트
+  - exception       # 도메인별 예외 처리 (ErrorCode 구현)
+
+# 패키지 네이밍 규칙
+package_naming:
+  pattern: "com.jk.amazon2.{domain}.{layer}"
+  examples:
+    - "com.jk.amazon2.member.entity"
+    - "com.jk.amazon2.member.repository"
+    - "com.jk.amazon2.member.service"
+    - "com.jk.amazon2.category.controller"
+    - "com.jk.amazon2.posting.dto"
+
+# 의존성 규칙 (Dependency Rules)
+dependency_rules:
+  allowed:
+    # 계층 간 상향 의존성 (순환 의존 방지)
+    - source: "controller"
+      targets: ["service", "dto", "exception"]
+    - source: "service"
+      targets: ["repository", "entity", "dto", "exception", "common"]
+    - source: "repository"
+      targets: ["entity", "common"]
+    - source: "entity"
+      targets: ["common"]
+    - source: "dto"
+      targets: ["common"]
+    - source: "exception"
+      targets: ["common"]
+
+    # 도메인 간 의존성
+    - comment: "도메인 간 의존성은 제한적이어야 함 (API 계층에서만 허용)"
+      source: "[any_domain].controller"
+      targets: "[other_domain].dto"
+
+  forbidden:
+    # 하향 의존성 (원칙 위반)
+    - source: "entity"
+      targets: ["controller", "service", "repository"]
+    - source: "repository"
+      targets: ["controller", "service"]
+    - source: "service"
+      targets: ["controller"]
+
+    # 순환 의존성
+    - source: "controller"
+      targets: ["repository"]
+    - source: "entity"
+      targets: ["dto", "exception", "controller"]
+
+    # 도메인 내 계층 스킵
+    - comment: "Controller → Repository 직접 접근 금지 (Service를 통해서만)"
+      source: "[domain].controller"
+      targets: "[domain].repository"
+
+# 테스트 구조 규칙
+test_structure:
+  location: "src/test/java/com/jk/amazon2/{domain}/"
+  test_types:
+    - name: "entity_test"
+      package: "{domain}.entity"
+      suffix: "Test"
+      focus: "JPA 어노테이션, 연관관계, 메서드 로직"
+
+    - name: "repository_test"
+      package: "{domain}.repository"
+      suffix: "Test"
+      focus: "쿼리 검증, 데이터 영속성"
+
+    - name: "service_test"
+      package: "{domain}.service"
+      suffix: "Test"
+      focus: "비즈니스 로직, 예외 처리, 서비스 메서드"
+
+    - name: "controller_test"
+      package: "{domain}.controller"
+      suffix: "ControllerTest"
+      focus: "HTTP 요청/응답, 상태 코드, API 명세"
+
+# 공통 계층 (Cross-cutting)
+common_layers:
+  common:
+    - "common.auditor"
+    - "common.entity"
+    - "common.exception"
+
+  config:
+    - "config.*"
+
+  allowed_imports:
+    - "org.springframework.*"
+    - "jakarta.persistence.*"
+    - "jakarta.validation.*"
+    - "lombok.*"
+    - "com.jk.amazon2.common.*"
+    - "com.jk.amazon2.config.*"
+
+# 명명 규칙 (Naming Conventions)
+naming_rules:
+  entity:
+    pattern: "{DomainName}"
+    examples: ["Member", "Category", "Posting"]
+
+  repository:
+    pattern: "{DomainName}Repository"
+    examples: ["MemberRepository", "CategoryRepository"]
+    constraint: "JpaRepository 또는 Custom Repository Interface 구현"
+
+  service:
+    pattern: "{DomainName}{CommandOrQuery}Service"
+    examples: ["MemberCommandService", "MemberQueryService", "CategoryService"]
+    constraint: "복잡한 도메인은 Command/Query 분리 권장"
+
+  controller:
+    pattern: "{DomainName}Controller"
+    examples: ["MemberController", "CategoryController"]
+    constraint: "Rest API 리소스 기반 네이밍"
+
+  dto:
+    pattern: "{DomainName}{Request|Response|Dto}"
+    examples: ["MemberCreateRequest", "MemberResponse", "CategoryDto"]
+
+  exception:
+    pattern: "{DomainName}ErrorCode"
+    examples: ["MemberErrorCode", "CategoryErrorCode"]
+    constraint: "ErrorCode 인터페이스 구현"
+
+# 아키텍처 검증 규칙
+validation_rules:
+  - rule_id: "PACKAGE_NAMING"
+    description: "패키지명은 com.jk.amazon2.{domain}.{layer} 형식 준수"
+    severity: "ERROR"
+
+  - rule_id: "LAYER_DEPENDENCY"
+    description: "계층 간 의존성 규칙 준수"
+    severity: "ERROR"
+
+  - rule_id: "CIRCULAR_DEPENDENCY"
+    description: "순환 의존성 없음"
+    severity: "ERROR"
+
+  - rule_id: "DOMAIN_ISOLATION"
+    description: "도메인 간 의존성 최소화 (API 계층 제외)"
+    severity: "WARN"
+
+  - rule_id: "CLASS_NAMING"
+    description: "클래스명이 네이밍 규칙 준수"
+    severity: "WARN"
+
+  - rule_id: "TEST_STRUCTURE"
+    description: "테스트 파일이 테스트 구조 규칙 준수"
+    severity: "WARN"
+
+# 예외 정의
+exceptions:
+  global:
+    - "com.jk.amazon2.common.exception.GlobalExceptionHandler"
+
+  domain_specific:
+    - domain: "member"
+      class: "com.jk.amazon2.member.exception.MemberErrorCode"
+    - domain: "category"
+      class: "com.jk.amazon2.category.exception.CategoryErrorCode"
+    - domain: "posting"
+      class: "com.jk.amazon2.posting.exception.PostingErrorCode"
+
+# 저장소 구조
+repository_patterns:
+  - domain: "member"
+    interface: "MemberRepository extends JpaRepository<Member, Long>"
+    custom_spec: "com.jk.amazon2.member.repository.spec"
+
+  - domain: "category"
+    interface: "CategoryRepository extends JpaRepository<Category, Long>"
+    custom_spec: "com.jk.amazon2.category.repository.spec"
+
+  - domain: "posting"
+    interface: "PostingRepository extends JpaRepository<Posting, Long>"
+
+# 프로젝트 설정
+project_info:
+  basePackage: "com.jk.amazon2"
+  framework: "Spring Boot 4.0.0"
+  jpaProvider: "Hibernate 6"
+  java_version: 21
+  testing_framework: "JUnit 5, Testcontainers"
