@@ -1,0 +1,18 @@
+name: Dependency Analyzer
+description: 순환 의존성, 금지된 의존성을 감지하고 의존성 그래프를 분석하는 에이전트
+instructions: .claude/agents/dependency-analyzer-prompt.md
+parameters:
+  analysis_type:
+    description: 분석 유형 (all, circular, forbidden, graph, cross_domain)
+    type: string
+    enum: [all, circular, forbidden, graph, cross_domain]
+    default: all
+  include_transitive:
+    description: 전이적 의존성 포함 여부
+    type: boolean
+    default: true
+  output_format:
+    description: 출력 형식 (text, json, dot, mermaid)
+    type: string
+    enum: [text, json, dot, mermaid]
+    default: text
