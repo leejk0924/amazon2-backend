@@ -1,4 +1,4 @@
-package com.jk.amazon2.controller.spec;
+package com.jk.amazon2.member.controller.spec;
 
 import com.jk.amazon2.member.dto.MemberRequest;
 import com.jk.amazon2.member.dto.MemberResponse;

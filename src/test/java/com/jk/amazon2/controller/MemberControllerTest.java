@@ -1,5 +1,6 @@
 package com.jk.amazon2.controller;
 
+import com.jk.amazon2.member.controller.MemberController;
 import com.jk.amazon2.member.dto.MemberRequest;
 import com.jk.amazon2.member.dto.MemberResponse;
 import com.jk.amazon2.exception.CategoryErrorCode;
