@@ -1,7 +1,7 @@
 package com.jk.amazon2.controller;
 
-import com.jk.amazon2.controller.dto.MemberRequest;
-import com.jk.amazon2.controller.dto.MemberResponse;
+import com.jk.amazon2.member.dto.MemberRequest;
+import com.jk.amazon2.member.dto.MemberResponse;
 import com.jk.amazon2.controller.spec.MemberApiSpec;
 import com.jk.amazon2.service.MemberService;
 import com.jk.amazon2.service.dto.MemberCommand;

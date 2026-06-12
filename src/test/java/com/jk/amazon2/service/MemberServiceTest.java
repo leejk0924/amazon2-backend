@@ -1,7 +1,7 @@
 package com.jk.amazon2.service;
 
 import com.jk.amazon2.entity.Category;
-import com.jk.amazon2.entity.Member;
+import com.jk.amazon2.member.entity.Member;
 import com.jk.amazon2.exception.CategoryErrorCode;
 import com.jk.amazon2.exception.MemberErrorCode;
 import com.jk.amazon2.exception.RestApiException;

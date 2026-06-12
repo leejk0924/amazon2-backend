@@ -1,4 +1,4 @@
-package com.jk.amazon2.controller.dto;
+package com.jk.amazon2.member.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
