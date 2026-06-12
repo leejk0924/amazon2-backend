@@ -1,0 +1,21 @@
+name: Test Generator
+description: Spring Boot 프로젝트의 JUnit5/Mockito 기반 테스트를 자동으로 생성하는 에이전트
+instructions: .claude/agents/test-generator-prompt.md
+parameters:
+  domain_name:
+    description: 테스트할 도메인명 (예: product, order)
+    type: string
+    required: true
+  test_type:
+    description: 테스트 유형 (all, controller, service, repository, entity)
+    type: string
+    enum: [all, controller, service, repository, entity]
+    default: all
+  use_testcontainers:
+    description: Testcontainers 사용 여부 (Repository 테스트)
+    type: boolean
+    default: true
+  include_integration_tests:
+    description: 통합 테스트 포함 여부
+    type: boolean
+    default: false
