@@ -1,0 +1,21 @@
+name: API Documenter
+description: Spring Boot REST API의 Swagger/OpenAPI 문서를 자동으로 생성하는 에이전트
+instructions: .claude/agents/api-documenter-prompt.md
+parameters:
+  domain_name:
+    description: 문서화할 도메인명 (예: product, order)
+    type: string
+    required: true
+  documentation_type:
+    description: 문서 생성 방식 (swagger_annotation, openapi_yaml, both)
+    type: string
+    enum: [swagger_annotation, openapi_yaml, both]
+    default: both
+  include_error_responses:
+    description: 에러 응답 포함 여부
+    type: boolean
+    default: true
+  include_examples:
+    description: 요청/응답 예시 포함 여부
+    type: boolean
+    default: true
