@@ -1,4 +1,4 @@
-package com.jk.amazon2.service.dto;
+package com.jk.amazon2.member.dto;
 
 import com.jk.amazon2.member.entity.Member;
 import lombok.AccessLevel;

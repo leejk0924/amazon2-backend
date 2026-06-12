@@ -1,8 +1,8 @@
 package com.jk.amazon2.member.repository;
 
 import com.jk.amazon2.member.repository.MemberRepository;
-import com.jk.amazon2.service.dto.MemberCommand;
-import com.jk.amazon2.service.dto.MemberResult;
+import com.jk.amazon2.member.dto.MemberCommand;
+import com.jk.amazon2.member.dto.MemberResult;
 import com.jk.amazon2.testsupport.RepositoryTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
