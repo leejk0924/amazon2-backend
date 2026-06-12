@@ -1,7 +1,7 @@
-package com.jk.amazon2.repository.spec;
+package com.jk.amazon2.category.repository.spec;
 
-import com.jk.amazon2.controller.dto.CategoryRequest;
-import com.jk.amazon2.entity.Category;
+import com.jk.amazon2.category.dto.CategoryRequest;
+import com.jk.amazon2.category.entity.Category;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;

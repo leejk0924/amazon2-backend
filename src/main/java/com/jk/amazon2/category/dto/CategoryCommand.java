@@ -1,7 +1,7 @@
-package com.jk.amazon2.service.dto;
+package com.jk.amazon2.category.dto;
 
-import com.jk.amazon2.controller.dto.CategoryRequest;
-import com.jk.amazon2.exception.CategoryErrorCode;
+import com.jk.amazon2.category.dto.CategoryRequest;
+import com.jk.amazon2.category.exception.CategoryErrorCode;
 import com.jk.amazon2.exception.RestApiException;
 import lombok.AccessLevel;
 import lombok.Getter;

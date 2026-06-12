@@ -1,4 +1,4 @@
-package com.jk.amazon2.controller.dto;
+package com.jk.amazon2.category.dto;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;

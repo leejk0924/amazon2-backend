@@ -1,11 +1,11 @@
-package com.jk.amazon2.service;
+package com.jk.amazon2.category.service;
 
-import com.jk.amazon2.controller.dto.CategoryRequest;
-import com.jk.amazon2.entity.Category;
-import com.jk.amazon2.exception.CategoryErrorCode;
-import com.jk.amazon2.repository.CategoryRepository;
-import com.jk.amazon2.service.dto.CategoryCommand;
-import com.jk.amazon2.service.dto.CategoryResult;
+import com.jk.amazon2.category.dto.CategoryRequest;
+import com.jk.amazon2.category.entity.Category;
+import com.jk.amazon2.category.exception.CategoryErrorCode;
+import com.jk.amazon2.category.repository.CategoryRepository;
+import com.jk.amazon2.category.dto.CategoryCommand;
+import com.jk.amazon2.category.dto.CategoryResult;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -1,4 +1,4 @@
-package com.jk.amazon2.entity;
+package com.jk.amazon2.category.entity;
 
 import com.jk.amazon2.common.entity.BaseCreation;
 import jakarta.persistence.Entity;

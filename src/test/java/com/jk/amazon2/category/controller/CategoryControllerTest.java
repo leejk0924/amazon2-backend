@@ -1,12 +1,12 @@
-package com.jk.amazon2.controller;
+package com.jk.amazon2.category.controller;
 
-import com.jk.amazon2.controller.dto.CategoryRequest;
-import com.jk.amazon2.controller.dto.CategoryResponse;
-import com.jk.amazon2.exception.CategoryErrorCode;
+import com.jk.amazon2.category.dto.CategoryRequest;
+import com.jk.amazon2.category.dto.CategoryResponse;
+import com.jk.amazon2.category.exception.CategoryErrorCode;
 import com.jk.amazon2.exception.RestApiException;
-import com.jk.amazon2.service.CategoryService;
-import com.jk.amazon2.service.dto.CategoryCommand;
-import com.jk.amazon2.service.dto.CategoryResult;
+import com.jk.amazon2.category.service.CategoryService;
+import com.jk.amazon2.category.dto.CategoryCommand;
+import com.jk.amazon2.category.dto.CategoryResult;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import org.assertj.core.api.SoftAssertions;

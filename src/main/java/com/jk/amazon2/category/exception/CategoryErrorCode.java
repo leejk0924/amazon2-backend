@@ -1,4 +1,6 @@
-package com.jk.amazon2.exception;
+package com.jk.amazon2.category.exception;
+
+import com.jk.amazon2.exception.ErrorCode;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

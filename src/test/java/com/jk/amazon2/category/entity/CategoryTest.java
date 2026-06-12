@@ -1,8 +1,8 @@
-package com.jk.amazon2.entity;
+package com.jk.amazon2.category.entity;
 
 import com.jk.amazon2.config.JpaAuditingConfig;
 import com.jk.amazon2.config.QueryDslConfig;
-import com.jk.amazon2.repository.CategoryRepository;
+import com.jk.amazon2.category.repository.CategoryRepository;
 import com.jk.amazon2.testsupport.TestContainerConfig;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;

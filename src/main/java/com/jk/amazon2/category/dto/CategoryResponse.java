@@ -1,6 +1,6 @@
-package com.jk.amazon2.controller.dto;
+package com.jk.amazon2.category.dto;
 
-import com.jk.amazon2.service.dto.CategoryResult;
+import com.jk.amazon2.category.dto.CategoryResult;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,7 +1,7 @@
 package com.jk.amazon2.member.integration;
 
 import com.jk.amazon2.member.dto.MemberRequest;
-import com.jk.amazon2.exception.CategoryErrorCode;
+import com.jk.amazon2.category.exception.CategoryErrorCode;
 import com.jk.amazon2.member.exception.MemberErrorCode;
 import com.jk.amazon2.testsupport.IntegrationTestSupport;
 import io.restassured.http.ContentType;

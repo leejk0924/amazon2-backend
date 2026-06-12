@@ -1,6 +1,6 @@
-package com.jk.amazon2.repository;
+package com.jk.amazon2.category.repository;
 
-import com.jk.amazon2.entity.Category;
+import com.jk.amazon2.category.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

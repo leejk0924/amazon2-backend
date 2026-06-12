@@ -1,7 +1,7 @@
-package com.jk.amazon2.integration;
+package com.jk.amazon2.category.integration;
 
-import com.jk.amazon2.controller.dto.CategoryRequest;
-import com.jk.amazon2.exception.CategoryErrorCode;
+import com.jk.amazon2.category.dto.CategoryRequest;
+import com.jk.amazon2.category.exception.CategoryErrorCode;
 import com.jk.amazon2.testsupport.IntegrationTestSupport;
 import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;

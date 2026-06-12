@@ -1,7 +1,7 @@
-package com.jk.amazon2.repository;
+package com.jk.amazon2.category.repository;
 
-import com.jk.amazon2.controller.dto.CategoryRequest;
-import com.jk.amazon2.entity.Category;
+import com.jk.amazon2.category.dto.CategoryRequest;
+import com.jk.amazon2.category.entity.Category;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jk.amazon2.entity.QCategory.category;
+import static com.jk.amazon2.category.entity.QCategory.category;
 
 @RequiredArgsConstructor
 public class CategoryRepositoryImpl implements CategoryQueryRepository{

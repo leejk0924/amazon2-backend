@@ -14,7 +14,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import java.util.List;
 
 import static com.jk.amazon2.member.entity.QMember.member;
-import static com.jk.amazon2.entity.QCategory.category;
+import static com.jk.amazon2.category.entity.QCategory.category;
 
 @RequiredArgsConstructor
 public class MemberRepositoryImpl implements MemberRepositoryCustom {
