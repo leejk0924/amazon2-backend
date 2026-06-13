@@ -24,8 +24,8 @@ services:
   github-mcp:
     image: ghcr.io/github/github-mcp-server:latest
     container_name: amazon2-github-mcp
-    ports:
-      - "3001:3001"
+    stdin_open: true
+    tty: true
     environment:
       GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}
       GITHUB_TOOLSETS: "issues,pull_requests"
@@ -35,13 +35,15 @@ services:
   github-mcp-wrapper:
     build: ./mcp-wrapper
     container_name: amazon2-git-mcp-wrapper
-    ports:
-      - "3000:3000"
+    stdin_open: true
+    tty: true
     environment:
       GITHUB_TOKEN: ${GITHUB_TOKEN}
       REPOSITORY: ${REPOSITORY}
       LOG_LEVEL: info
       CONTRIBUTING_MD_PATH: /app/docs/CONTRIBUTING.md
+    volumes:
+      - ./docs/CONTRIBUTING.md:/app/docs/CONTRIBUTING.md:ro
     depends_on:
       - github-mcp
     networks:
