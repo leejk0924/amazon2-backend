@@ -1,9 +1,11 @@
 package com.jk.amazon2.testsupport;
 
+import org.flywaydb.core.Flyway;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.testcontainers.mysql.MySQLContainer;
 
 @EnableConfigurationProperties(TestContainerMySQLDataSource.class)
@@ -22,4 +24,5 @@ public class TestContainerConfig {
         }
         return container;
     }
+
 }

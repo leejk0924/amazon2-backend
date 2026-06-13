@@ -80,7 +80,7 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
         String description = faker.lorem().sentence();
 
         String initSql = """
-                    INSERT INTO blog_category (code, name, description) VALUES(?, ?, ?)
+                    INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES(?, ?, ?, NOW(), "system")
                 """;
         jdbcTemplate.update(initSql, code, name,description);
 
