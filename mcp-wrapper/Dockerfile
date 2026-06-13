@@ -6,7 +6,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY src/ ./src/
 
-RUN npm ci --only=production && npm run build && rm -rf src/
+RUN npm ci && npm run build && npm prune --production && rm -rf src/
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "process.exit(0)"
