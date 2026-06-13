@@ -40,6 +40,8 @@ dependencies {
 
     // DB
     runtimeOnly 'com.mysql:mysql-connector-j'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
 
     // QueryDSL
     implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.1'

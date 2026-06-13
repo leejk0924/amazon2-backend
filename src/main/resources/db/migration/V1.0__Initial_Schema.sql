@@ -1,3 +1,5 @@
+-- V1.0__Initial_Schema.sql
+
 CREATE TABLE blog_category
 (
     code            VARCHAR(10) PRIMARY KEY,
@@ -23,7 +25,6 @@ CREATE TABLE member
     INDEX idx_nickname (nickname)
 );
 
--- uk_user_week : 데이터 무결성을 위해
 CREATE TABLE posting
 (
     id              BIGINT PRIMARY KEY AUTO_INCREMENT,
