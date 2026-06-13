@@ -43,6 +43,9 @@ infra/
 
 ### Local development configuration ###
 application-local.yml
+.env
+.env.local
+../.env
 
 ### Claude Code (로컬 전용) ###
 .bkit*

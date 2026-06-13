@@ -9,7 +9,7 @@ dist/
 build/
 *.tsbuildinfo
 
-# 환경 변수
+# 환경 변수 (프로젝트 루트의 .env는 루트 .gitignore에서 관리)
 .env
 .env.local
 .env.*.local
