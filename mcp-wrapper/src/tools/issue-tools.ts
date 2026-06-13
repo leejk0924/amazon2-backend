@@ -1,4 +1,4 @@
-import { Tool } from '@modelcontextprotocol/sdk/types';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { GitHubClient } from '../services/github-client';
 import { CreateIssueInput, CreateIssueOutput, GitHubIssue } from '../types';
 import { logger } from '../utils/logger';
@@ -7,9 +7,10 @@ const CLAUDE_CODE_LABEL = process.env.CLAUDE_CODE_LABEL || 'claude-code-generate
 
 /**
  * 이슈 관련 도구 정의
+ * @param _githubClient GitHub API 클라이언트
  * @returns Tool 배열
  */
-export function createIssueTools(): Tool[] {
+export function createIssueTools(_githubClient: GitHubClient): Tool[] {
   return [
     {
       name: 'create_issue_from_claude',

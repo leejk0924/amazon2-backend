@@ -1,4 +1,4 @@
-import { Tool } from '@modelcontextprotocol/sdk/types';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { GitHubClient } from '../services/github-client';
 import { Formatter } from '../services/formatter';
 import { CreatePRInput, CreatePROutput } from '../types';
@@ -6,9 +6,13 @@ import { logger } from '../utils/logger';
 
 /**
  * PR 생성 도구 정의
+ * @param githubClient GitHub API 클라이언트 (타입 정의를 위해 필요)
+ * @param formatter 포매터 (타입 정의를 위해 필요)
  * @returns Tool 배열
  */
-export function createPRTools(): Tool[] {
+export function createPRTools(githubClient: GitHubClient, formatter: Formatter): Tool[] {
+  void githubClient;
+  void formatter;
   return [{
     name: 'create_pr_from_issue',
     description: '이슈를 기반으로 PR을 자동 생성합니다.',
