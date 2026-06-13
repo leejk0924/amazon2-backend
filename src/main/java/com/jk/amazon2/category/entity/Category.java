@@ -1,6 +1,7 @@
 package com.jk.amazon2.category.entity;
 
 import com.jk.amazon2.common.entity.BaseCreation;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -23,6 +24,7 @@ public class Category extends BaseCreation implements Persistable<String> {
     private String code;
     private String name;
     private String description;
+    @Column(name = "deleted", columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
     private boolean deleted = Boolean.FALSE;
 
     public static Category of(String code, String name, String description) {
