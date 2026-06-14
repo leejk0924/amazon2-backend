@@ -36,6 +36,7 @@ src/main/java/com/jk/amazon2/
 |------|------|---------|
 | **커밋 규칙** | 자동 커밋 금지, 반드시 사용자 확인 | `.claude/rules/git-workflow.md` |
 | **브랜칭** | feature/#이슈-설명 + git worktree | `.claude/rules/git-workflow.md` |
+| **GitHub MCP** | 이슈 조회 → 작업 흐름 자동화 | `.claude/rules/github-mcp.md` |
 | **의존성** | posting → category → member | [harnesses/README.md](harnesses/README.md) |
 | **기여 규칙** | 커밋 메시지 형식 (Feat/Fix/Docs) | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 | **에러 관리** | 프로젝트별 에러 코드 | `.claude/errors/ERRORS.md` |
