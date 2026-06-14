@@ -32,6 +32,45 @@ src/main/java/com/jk/amazon2/
 
 ---
 
+## Git 워크플로우 (⚠️ 필수)
+
+### 브랜칭 전략
+
+모든 기능 추가 시 다음 규칙을 **반드시** 따르세요:
+
+```bash
+# 1️⃣ GitHub에서 이슈 생성
+#    예: Issue #42 "포스팅 관련 API 구현"
+
+# 2️⃣ Feature 브랜치 생성 (main 직접 수정 금지)
+git checkout -b feature/#42-포스팅-관련-api-구현
+
+# 3️⃣ 해당 브랜치에서 작업 & 커밋
+git add ...
+git commit -m "feat: 포스팅 API 구현"
+
+# 4️⃣ PR 생성 (이슈 번호와 함께)
+gh pr create --title "#42: 포스팅 관련 API 구현" \
+  --body "Closes #42"
+
+# 5️⃣ 머지 후 이슈 자동 종료
+```
+
+**브랜치 명명 규칙:**
+- 형식: `feature/#<이슈번호>-<한글설명>`
+- 예시: `feature/#13-github-mcp-서버-구성`
+- ❌ main, master 직접 수정 금지
+
+**Worktree 사용 (선택):**
+```bash
+# 깨끗한 독립 작업 환경 원할 때
+git worktree add -b feature/#42-포스팅-api ../amazon2-feature-42
+cd ../amazon2-feature-42
+# 여기서 작업
+```
+
+---
+
 ## 개발 가이드
 
 - **전체 아키텍처**: [harnesses/README.md](harnesses/README.md)
