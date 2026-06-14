@@ -46,16 +46,90 @@ src/main/java/com/jk/amazon2/
 
 ## 📋 6개 Claude 에이전트 시스템
 
-**Phase 1 (자동화):**
-- Domain Generator - 도메인 보일러플레이트
-- Test Generator - JUnit5/Mockito 테스트
-- API Documenter - Swagger/OpenAPI 문서
+### Phase 1: 자동화 에이전트
 
-**Phase 2 (검증):**
-- Consistency Checker - 패키지 일관성
-- Dependency Analyzer - 의존성 그래프
+#### 🏗️ Domain Generator
+**언제 사용:** 새로운 도메인(entity, service, controller, repository) 생성 시
+```bash
+# 예: "comment 도메인 생성해줘" → 자동으로:
+# - Comment.java (엔티티)
+# - CommentDTO.java (DTO)
+# - CommentRepository.java (리포지토리)
+# - CommentService.java (서비스)
+# - CommentController.java (컨트롤러)
+```
 
-상세: `.claude/agents/{agent-name}/main-prompt.md`
+#### 🧪 Test Generator
+**언제 사용:** Controller, Service 구현 완료 후 테스트 작성 필요 시
+```bash
+# 예: "MonitoringService/Controller에 대한 테스트 생성해줘"
+# → 자동으로:
+# - MonitoringServiceTest.java (@ExtendWith(MockitoExtension.class))
+# - MonitoringControllerTest.java (@WebMvcTest)
+```
+
+#### 📚 API Documenter
+**언제 사용:** REST API 엔드포인트에 Swagger 문서 필요 시
+```bash
+# 예: "PostingController API 문서 자동 생성해줘"
+# → 자동으로:
+# - @Operation, @ApiResponse 애노테이션 추가
+# - DTO에 @Schema 추가
+# - OpenAPI YAML 생성
+```
+
+### Phase 2: 검증 에이전트
+
+#### ✅ Consistency Checker
+**언제 사용:** 새로운 도메인 또는 리팩토링 후 규칙 준수 확인 시
+```bash
+# 예: "posting 도메인이 하네스 규칙을 따르는지 확인해줘"
+# → 패키지 구조, 네이밍, 애노테이션 검증
+```
+
+#### 🔗 Dependency Analyzer
+**언제 사용:** 의존성 구조 확인 또는 순환 참조 검사 시
+```bash
+# 예: "posting → category → member 의존성이 맞는지 확인해줘"
+# → 의존성 그래프 생성, 순환 참조 검사
+```
+
+---
+
+### 🚀 사용 패턴
+
+```
+1단계: 기능 요청
+당신: "comment 도메인 만들어줘"
+
+2단계: Domain Generator 자동 실행
+Claude: "Domain Generator를 사용해서 comment 도메인을 생성하겠습니다."
+→ 엔티티, DTO, Repository, Service, Controller 자동 생성
+
+3단계: 테스트 작성
+당신: "테스트도 작성해줘"
+
+4단계: Test Generator 자동 실행
+Claude: "Test Generator를 사용해서 테스트를 생성하겠습니다."
+→ ServiceTest, ControllerTest 자동 생성
+
+5단계: 검증
+당신: "하네스 규칙 확인해줄래?"
+
+6단계: Consistency Checker 자동 실행
+Claude: "Consistency Checker로 패키지 구조를 검증하겠습니다."
+→ 규칙 위반 사항 보고 및 개선안 제시
+```
+
+---
+
+### 📖 상세 문서
+- [에이전트 사용 가이드](./.claude/rules/agent-usage.md)
+- [Domain Generator](./.claude/agents/domain-generator/main-prompt.md)
+- [Test Generator](./.claude/agents/test-generator/main-prompt.md)
+- [API Documenter](./.claude/agents/api-documenter/main-prompt.md)
+- [Consistency Checker](./.claude/agents/consistency-checker/main-prompt.md)
+- [Dependency Analyzer](./.claude/agents/dependency-analyzer/main-prompt.md)
 
 ---
 
