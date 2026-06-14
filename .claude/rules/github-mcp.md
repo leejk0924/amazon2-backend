@@ -93,6 +93,34 @@ Claude (자동):
   3. Git worktree 설정 제안
 ```
 
+### Rule 4: 이슈 조회 시 CONTRIBUTING.md 검증
+```
+트리거: 이슈 조회 후 내용 제시
+동작:
+  1. 이슈가 CONTRIBUTING.md#3 템플릿 준수 확인
+  2. 문제 발견 시 지적:
+     - ❌ 파일 경로 명시되었는가?
+     - ❌ 구현 코드가 상세히 작성되었는가?
+     - ❌ 타입별 템플릿을 따랐는가?
+     - ❌ 라벨이 추가되었는가?
+  3. 개선 권고사항 제시
+```
+
+### Rule 5: PR 생성 시 체크리스트 검증
+```
+트리거: PR 생성 또는 검토 요청
+동작:
+  1. PR 제목에 이슈번호 포함 확인 (#XX 형식)
+  2. PR 본문의 체크리스트 확인:
+     - [ ] 단위 테스트 작성
+     - [ ] CI 테스트 통과
+     - [ ] 코드 리뷰 요청
+     - [ ] 문서 업데이트
+     - [ ] 리그레션 확인
+  3. "Closes #XX" 문법 포함 확인
+  4. 미충족 항목 지적 및 완료 유도
+```
+
 ---
 
 ## 🛠️ 필수 설정
@@ -189,10 +217,19 @@ docker-compose logs github-mcp-wrapper
 
 ## 🔗 관련 문서
 
-- [Git 워크플로우](.github-mcp/git-workflow.md) - Feature 브랜칭 규칙
-- [CONTRIBUTING.md](../../docs/CONTRIBUTING.md) - 커밋 메시지 형식
-- [MCP 사용 가이드](../../docs/MCP_USAGE_GUIDE.md) - 상세 기술 문서
+- [Git 워크플로우](./git-workflow.md) - Feature 브랜칭 규칙
+- [CONTRIBUTING.md](../../docs/CONTRIBUTING.md) - 커밋/이슈/PR 작성 규칙
+  - Section 3: 이슈 작성 (타입별 템플릿)
+  - Section 4: PR 작성 (체크리스트)
+- [프로젝트 메모리: GitHub 이슈/PR 가이드](./../projects/amazon2-backend/memory/github_issue_pr_guide.md)
 
 ---
 
-**마지막 업데이트**: 2026-06-14
+**마지막 업데이트**: 2026-06-15
+
+### 최근 변경사항
+
+- ✅ Rule 4: 이슈 조회 시 CONTRIBUTING.md 검증 추가
+- ✅ Rule 5: PR 생성 시 체크리스트 검증 추가
+- ✅ CONTRIBUTING.md 섹션 3, 4 개선 완료
+- ✅ 프로젝트 메모리 github_issue_pr_guide.md 추가
