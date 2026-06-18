@@ -1,12 +1,11 @@
 package com.jk.amazon2.member.service;
 
-import com.jk.amazon2.category.entity.Category;
 import com.jk.amazon2.member.entity.Member;
 import com.jk.amazon2.member.service.MemberService;
 import com.jk.amazon2.category.exception.CategoryErrorCode;
 import com.jk.amazon2.member.exception.MemberErrorCode;
 import com.jk.amazon2.common.exception.RestApiException;
-import com.jk.amazon2.category.repository.CategoryRepository;
+import com.jk.amazon2.common.port.CategoryValidationPort;
 import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.member.dto.MemberCommand;
 import com.jk.amazon2.member.dto.MemberResult;
@@ -26,7 +25,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,13 +35,13 @@ class MemberServiceTest {
     @Mock
     private MemberRepository memberRepository;
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryValidationPort categoryValidationPort;
 
     private MemberService memberService;
 
     @BeforeEach
     void setUp() {
-        memberService = new MemberService(memberRepository, categoryRepository);
+        memberService = new MemberService(memberRepository, categoryValidationPort);
 
     }
 
@@ -54,12 +55,9 @@ class MemberServiceTest {
             Long id = 1L;
             String nickname = "test";
             String categoryCode = "TEST";
-            Category category = Category.of(categoryCode, "테스트카테고리", "설명");
 
             var inputMember = MemberCommand.Create.of(nickname, categoryCode);
 
-            given(categoryRepository.findByCodeAndDeletedFalse(categoryCode))
-                    .willReturn(Optional.of(category));
             given(memberRepository.existsByNickname(any(String.class)))
                     .willReturn(false);
             given(memberRepository.save(any(Member.class)))
@@ -100,7 +98,8 @@ class MemberServiceTest {
             String categoryCode = "NON_EXISTENT_CODE";
             var inputMember = MemberCommand.Create.of(nickname, categoryCode);
 
-            given(categoryRepository.findByCodeAndDeletedFalse(categoryCode)).willReturn(Optional.empty());
+            doThrow(new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND))
+                    .when(categoryValidationPort).validateCategoryExists(categoryCode);
 
             // when & then
             assertThatThrownBy(() -> memberService.create(inputMember))
@@ -124,6 +123,75 @@ class MemberServiceTest {
             assertThatThrownBy(() -> memberService.create(inputMember))
                     .isInstanceOf(RestApiException.class)
                     .hasMessage(MemberErrorCode.MEMBER_NICKNAME_ALREADY_EXISTS.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Member 업데이트 - 단위 테스트")
+    class UpdateMember {
+        @DisplayName("회원 정보 업데이트 성공 [success]")
+        @Test
+        void update_success() {
+            // given
+            Long id = 1L;
+            String newNickname = "updated_member";
+            String newCategoryCode = "UPDATED";
+            Member member = Member.of("test_member", "DEV");
+            ReflectionTestUtils.setField(member, "id", id);
+
+            var updateCommand = MemberCommand.Update.of(id, newNickname, newCategoryCode);
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.of(member));
+
+            // when
+            MemberResult.Update result = memberService.update(updateCommand);
+
+            // then
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(result.nickname()).isEqualTo(newNickname);
+                softly.assertThat(result.categoryCode()).isEqualTo(newCategoryCode);
+            });
+            verify(categoryValidationPort).validateCategoryExists(newCategoryCode);
+        }
+
+        @DisplayName("회원 업데이트 실패 - 존재하지 않는 회원 [fail]")
+        @Test
+        void update_fail_not_found() {
+            // given
+            Long id = 999L;
+            String newNickname = "updated_member";
+            String newCategoryCode = "UPDATED";
+            var updateCommand = MemberCommand.Update.of(id, newNickname, newCategoryCode);
+
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> memberService.update(updateCommand))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
+        }
+
+        @DisplayName("회원 업데이트 실패 - 존재하지 않는 카테고리 [fail]")
+        @Test
+        void update_fail_category_not_found() {
+            // given
+            Long id = 1L;
+            String newNickname = "updated_member";
+            String newCategoryCode = "NOTEXIST";
+            Member member = Member.of("test_member", "DEV");
+            ReflectionTestUtils.setField(member, "id", id);
+            var updateCommand = MemberCommand.Update.of(id, newNickname, newCategoryCode);
+
+            given(memberRepository.findById(id))
+                    .willReturn(Optional.of(member));
+            doThrow(new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND))
+                    .when(categoryValidationPort).validateCategoryExists(newCategoryCode);
+
+            // when & then
+            assertThatThrownBy(() -> memberService.update(updateCommand))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(CategoryErrorCode.CATEGORY_NOT_FOUND.getMessage());
         }
     }
 
