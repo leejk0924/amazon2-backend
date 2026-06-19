@@ -1,6 +1,5 @@
 package com.jk.amazon2.posting.service;
 
-import com.jk.amazon2.posting.entity.BatchExecution;
 import com.jk.amazon2.posting.repository.BatchExecutionRepository;
 import com.jk.amazon2.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
@@ -10,7 +9,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class BatchServiceTest {
 
@@ -21,10 +20,13 @@ class BatchServiceTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private PostingService postingService;
+    private NaverBlogScraper scraper;
 
     @Mock
-    private NaverBlogScraper scraper;
+    private RateLimiter rateLimiter;
+
+    @Mock
+    private BatchTaskProcessor batchTaskProcessor;
 
     private BatchService batchService;
 
@@ -34,20 +36,14 @@ class BatchServiceTest {
         batchService = new BatchService(
             batchExecutionRepository,
             memberRepository,
-            postingService,
-            null,
-            null,
             scraper,
-            null,
-            null
+            rateLimiter,
+            batchTaskProcessor
         );
     }
 
     @Test
     void testExecuteBatch() {
-        LocalDate startDate = LocalDate.of(2026, 6, 9);
-        LocalDate endDate = LocalDate.of(2026, 6, 15);
-
-        assertNotNull(batchService);
+        assertThat(batchService).isNotNull();
     }
 }
