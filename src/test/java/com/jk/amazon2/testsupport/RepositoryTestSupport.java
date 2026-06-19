@@ -11,7 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
 @Import({TestContainerConfig.class, QueryDslTestConfig.class})
 @DataJpaTest
 @AutoConfigureTestDatabase(replace =  AutoConfigureTestDatabase.Replace.NONE)
-public class RepositoryTestSupport {
+public abstract class RepositoryTestSupport {
 }
 
 

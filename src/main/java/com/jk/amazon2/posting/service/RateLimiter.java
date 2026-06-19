@@ -1,57 +1,34 @@
 package com.jk.amazon2.posting.service;
 
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 요청 속도 제한을 관리하는 Rate Limiter
- * Semaphore와 AtomicLong을 사용하여 지정된 시간 간격으로 요청 허용
+ * 첫 번째 요청은 즉시 허용, 이후 요청은 지정된 간격만큼 대기
  */
 public class RateLimiter {
 
-    private final long refillIntervalMs; // 요청 간격 (밀리초)
-    private final Semaphore semaphore;
-    private final AtomicLong lastRefillTime;
+    private final long intervalMs;
+    // 다음 요청이 가능한 시각 (초기값 = 현재 → 첫 요청 즉시 허용)
+    private final AtomicLong nextAvailableAt;
 
-    /**
-     * RateLimiter 인스턴스 생성
-     *
-     * @param refillIntervalMs 요청 간격 (밀리초). 예: 2000 = 2초에 1개 요청
-     */
-    public RateLimiter(long refillIntervalMs) {
-        this.refillIntervalMs = refillIntervalMs;
-        this.semaphore = new Semaphore(1);
-        this.lastRefillTime = new AtomicLong(System.currentTimeMillis());
+    public RateLimiter(long intervalMs) {
+        this.intervalMs = intervalMs;
+        this.nextAvailableAt = new AtomicLong(System.currentTimeMillis());
     }
 
-    /**
-     * 요청 토큰 획득
-     * 지정된 시간 간격이 경과하지 않았으면 대기
-     *
-     * @throws RuntimeException 인터럽트된 경우
-     */
-    public void acquire() {
-        refillIfNeeded();
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Rate limiter interrupted", e);
-        }
-    }
-
-    /**
-     * 필요시 토큰 리필
-     * 마지막 리필 시간으로부터 지정된 간격이 경과했으면 토큰 추가
-     */
-    private void refillIfNeeded() {
+    public synchronized void acquire() {
         long now = System.currentTimeMillis();
-        long lastRefill = lastRefillTime.get();
+        long waitMs = nextAvailableAt.get() - now;
 
-        if (now - lastRefill >= refillIntervalMs) {
-            if (lastRefillTime.compareAndSet(lastRefill, now)) {
-                semaphore.release();
+        if (waitMs > 0) {
+            try {
+                Thread.sleep(waitMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Rate limiter interrupted", e);
             }
         }
+        nextAvailableAt.set(System.currentTimeMillis() + intervalMs);
     }
 }

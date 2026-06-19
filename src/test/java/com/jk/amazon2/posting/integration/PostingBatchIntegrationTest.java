@@ -1,31 +1,38 @@
 package com.jk.amazon2.posting.integration;
 
+import com.jk.amazon2.member.entity.Member;
+import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.posting.entity.BatchExecution;
-import com.jk.amazon2.posting.entity.Posting;
 import com.jk.amazon2.posting.repository.BatchExecutionRepository;
 import com.jk.amazon2.posting.repository.PostingRepository;
 import com.jk.amazon2.posting.service.BatchService;
-import com.jk.amazon2.member.entity.Member;
-import com.jk.amazon2.member.repository.MemberRepository;
-import com.jk.amazon2.testsupport.IntegrationTestSupport;
-import jakarta.persistence.EntityManager;
+import com.jk.amazon2.posting.service.NaverBlogScraper;
+import com.jk.amazon2.posting.service.RateLimiter;
+import com.jk.amazon2.testsupport.TestContainerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-/**
- * Batch 실행 통합 테스트
- * 배치 실행 시 생성되는 배치 실행 기록과 포스팅 데이터의 정합성을 검증
- */
+@ActiveProfiles("test")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@Import(TestContainerConfig.class)
 @DisplayName("배치 실행 통합 테스트")
-public class PostingBatchIntegrationTest extends IntegrationTestSupport {
+class PostingBatchIntegrationTest {
 
     @Autowired
     private BatchService batchService;
@@ -40,178 +47,151 @@ public class PostingBatchIntegrationTest extends IntegrationTestSupport {
     private BatchExecutionRepository batchExecutionRepository;
 
     @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @MockitoBean
+    private NaverBlogScraper scraper;
+
+    @MockitoBean
+    private RateLimiter rateLimiter;
 
     @BeforeEach
     void setUp() {
-        // 테스트 격리를 위해 테스트 데이터 정리
+        when(scraper.scrapePostingCount(any(), any())).thenReturn(5);
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=0");
+        jdbcTemplate.execute("TRUNCATE TABLE posting_error");
+        jdbcTemplate.execute("TRUNCATE TABLE posting_dead_letter");
         jdbcTemplate.execute("TRUNCATE TABLE posting");
         jdbcTemplate.execute("TRUNCATE TABLE batch_execution");
         jdbcTemplate.execute("TRUNCATE TABLE member");
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=1");
     }
 
-    @DisplayName("[통합] 배치 실행 시 BatchExecution 생성 및 상태 확인")
-    @Test
-    void testBatchExecutionCreated() {
-        // given
-        // 테스트 회원 생성
-        Member member = Member.of("test-user-1", "TECH");
-        memberRepository.save(member);
-        entityManager.flush();
+    @Nested
+    @DisplayName("BatchExecution 상태 검증")
+    class BatchExecutionStatus {
 
-        // 배치 실행
-        LocalDate startDate = LocalDate.of(2026, 6, 9);
-        LocalDate endDate = LocalDate.of(2026, 6, 9);
+        @Test
+        @DisplayName("[통합] 배치 실행 시 BatchExecution 생성 및 COMPLETED 상태 확인 [success]")
+        void batchExecution_created_and_completed() {
+            // given
+            memberRepository.save(Member.of("test-user-1", "TECH"));
+            LocalDate startDate = LocalDate.of(2026, 6, 9);
+            LocalDate endDate = LocalDate.of(2026, 6, 9);
 
-        // when
-        Long batchId = batchService.executeBatch(startDate, endDate, "TEST");
-        entityManager.flush();
+            // when
+            Long batchId = batchService.executeBatch(startDate, endDate, "TEST");
 
-        // then - 배치 실행 기록 확인
-        Optional<BatchExecution> execution = batchExecutionRepository.findById(batchId);
-        assertThat(execution).isPresent();
+            // then
+            Optional<BatchExecution> result = batchExecutionRepository.findById(batchId);
+            assertThat(result).isPresent();
+            BatchExecution execution = result.get();
+            assertSoftly(softly -> {
+                softly.assertThat(execution.getBatchType()).isEqualTo("TEST");
+                softly.assertThat(execution.getStartDate()).isEqualTo(startDate);
+                softly.assertThat(execution.getEndDate()).isEqualTo(endDate);
+                softly.assertThat(execution.getStatus()).isEqualTo("COMPLETED");
+                softly.assertThat(execution.getStartedAt()).isNotNull();
+                softly.assertThat(execution.getCompletedAt()).isNotNull();
+            });
+        }
 
-        BatchExecution batchExecution = execution.get();
-        assertThat(batchExecution.getId()).isEqualTo(batchId);
-        assertThat(batchExecution.getBatchType()).isEqualTo("TEST");
-        assertThat(batchExecution.getStartDate()).isEqualTo(startDate);
-        assertThat(batchExecution.getEndDate()).isEqualTo(endDate);
-        assertThat(batchExecution.getStatus()).isEqualTo("COMPLETED");
-        assertThat(batchExecution.getSuccessCount()).isGreaterThanOrEqualTo(0);
-        assertThat(batchExecution.getCompletedAt()).isNotNull();
+        @Test
+        @DisplayName("[통합] 배치 완료 후 completedAt이 startedAt 이후로 설정 [success]")
+        void batchExecution_completedAt_after_startedAt() {
+            // given
+            memberRepository.save(Member.of("test-user-2", "TECH"));
+
+            // when
+            Long batchId = batchService.executeBatch(
+                    LocalDate.of(2026, 6, 9), LocalDate.of(2026, 6, 9), "TEST");
+
+            // then
+            BatchExecution execution = batchExecutionRepository.findById(batchId).orElseThrow();
+            assertThat(execution.getCompletedAt()).isAfterOrEqualTo(execution.getStartedAt());
+        }
     }
 
-    @DisplayName("[통합] 배치 실행 후 총 카운트 증가 확인")
-    @Test
-    void testBatchExecutionCountIncremented() {
-        // given
-        Member member = Member.of("test-user-2", "TECH");
-        memberRepository.save(member);
-        entityManager.flush();
+    @Nested
+    @DisplayName("BatchExecution 카운트 검증")
+    class BatchExecutionCount {
 
-        LocalDate startDate = LocalDate.of(2026, 6, 9);
-        LocalDate endDate = LocalDate.of(2026, 6, 11);
+        @Test
+        @DisplayName("[통합] 단일 회원 3일 배치 실행 후 totalCount = 3 [success]")
+        void batchExecution_totalCount_single_member() {
+            // given
+            memberRepository.save(Member.of("test-user-3", "TECH"));
 
-        // when
-        Long batchId = batchService.executeBatch(startDate, endDate, "TEST");
-        entityManager.flush();
+            // when
+            Long batchId = batchService.executeBatch(
+                    LocalDate.of(2026, 6, 9), LocalDate.of(2026, 6, 11), "TEST"); // 3일
 
-        // then - 배치 실행 기록에서 totalCount 확인
-        Optional<BatchExecution> execution = batchExecutionRepository.findById(batchId);
-        assertThat(execution).isPresent();
+            // then - 1명 × 3일 = 3
+            BatchExecution execution = batchExecutionRepository.findById(batchId).orElseThrow();
+            assertSoftly(softly -> {
+                softly.assertThat(execution.getTotalCount()).isEqualTo(3);
+                softly.assertThat(execution.getSuccessCount()).isEqualTo(3);
+                softly.assertThat(execution.getFailedCount()).isEqualTo(0);
+            });
+        }
 
-        BatchExecution batchExecution = execution.get();
-        // 3일 * 1명 = 최소 3개의 태스크 실행
-        assertThat(batchExecution.getTotalCount()).isGreaterThanOrEqualTo(0);
+        @Test
+        @DisplayName("[통합] 다중 회원 1일 배치 실행 후 totalCount = 2 [success]")
+        void batchExecution_totalCount_multiple_members() {
+            // given
+            memberRepository.save(Member.of("test-user-multi-1", "TECH"));
+            memberRepository.save(Member.of("test-user-multi-2", "TECH"));
+
+            // when
+            Long batchId = batchService.executeBatch(
+                    LocalDate.of(2026, 6, 9), LocalDate.of(2026, 6, 9), "TEST"); // 1일
+
+            // then - 2명 × 1일 = 2
+            BatchExecution execution = batchExecutionRepository.findById(batchId).orElseThrow();
+            assertSoftly(softly -> {
+                softly.assertThat(execution.getStatus()).isEqualTo("COMPLETED");
+                softly.assertThat(execution.getTotalCount()).isEqualTo(2);
+                softly.assertThat(execution.getSuccessCount()).isEqualTo(2);
+            });
+        }
     }
 
-    @DisplayName("[통합] 배치 실행 시 배치 실행 기록 DB 저장 확인")
-    @Test
-    void testBatchExecutionSavedToDatabase() {
-        // given
-        Member member = Member.of("test-user-3", "TECH");
-        memberRepository.save(member);
-        entityManager.flush();
+    @Nested
+    @DisplayName("DB 저장 검증")
+    class DatabasePersistence {
 
-        LocalDate startDate = LocalDate.of(2026, 6, 9);
-        LocalDate endDate = LocalDate.of(2026, 6, 10);
+        @Test
+        @DisplayName("[통합] 배치 실행 후 BatchExecution DB 직접 조회 [success]")
+        void batchExecution_saved_to_database() {
+            // given
+            memberRepository.save(Member.of("test-user-4", "TECH"));
 
-        // when
-        Long batchId = batchService.executeBatch(startDate, endDate, "MANUAL");
-        entityManager.flush();
+            // when
+            Long batchId = batchService.executeBatch(
+                    LocalDate.of(2026, 6, 9), LocalDate.of(2026, 6, 10), "MANUAL");
 
-        // then - DB에서 직접 조회하여 저장 확인
-        String sql = "SELECT status FROM batch_execution WHERE id = ?";
-        String status = jdbcTemplate.queryForObject(sql, String.class, batchId);
-        assertThat(status).isEqualTo("COMPLETED");
+            // then
+            String status = jdbcTemplate.queryForObject(
+                    "SELECT status FROM batch_execution WHERE id = ?", String.class, batchId);
+            String batchType = jdbcTemplate.queryForObject(
+                    "SELECT batch_type FROM batch_execution WHERE id = ?", String.class, batchId);
 
-        // 배치 타입 확인
-        String typeSql = "SELECT batch_type FROM batch_execution WHERE id = ?";
-        String batchType = jdbcTemplate.queryForObject(typeSql, String.class, batchId);
-        assertThat(batchType).isEqualTo("MANUAL");
-    }
+            assertThat(status).isEqualTo("COMPLETED");
+            assertThat(batchType).isEqualTo("MANUAL");
+        }
 
-    @DisplayName("[통합] 배치 실행 후 Posting 데이터 생성 확인")
-    @Test
-    void testPostingDataCreatedAfterBatch() {
-        // given
-        Member member = Member.of("test-user-4", "TECH");
-        memberRepository.save(member);
-        Long memberId = member.getId();
-        entityManager.flush();
+        @Test
+        @DisplayName("[통합] 배치 실행 후 Posting 데이터 생성 확인 [success]")
+        void posting_data_created_after_batch() {
+            // given
+            memberRepository.save(Member.of("test-user-5", "TECH"));
 
-        LocalDate targetDate = LocalDate.of(2026, 6, 9); // Monday
-        LocalDate startDate = targetDate;
-        LocalDate endDate = targetDate;
+            // when
+            batchService.executeBatch(
+                    LocalDate.of(2026, 6, 9), LocalDate.of(2026, 6, 9), "TEST");
 
-        // when
-        batchService.executeBatch(startDate, endDate, "TEST");
-        entityManager.flush();
-
-        // then - 포스팅 데이터가 생성되었는지 확인
-        var postings = postingRepository.findAll();
-
-        // 배치 실행이 스크래이핑 실패로 인해 포스팅을 생성하지 않을 수 있으므로
-        // 포스팅 테이블이 비어있거나 데이터가 있을 수 있음
-        assertThat(postings).isNotNull();
-    }
-
-    @DisplayName("[통합] 배치 실행 완료 후 completedAt 설정 확인")
-    @Test
-    void testBatchExecutionCompletedAtSet() {
-        // given
-        Member member = Member.of("test-user-5", "TECH");
-        memberRepository.save(member);
-        entityManager.flush();
-
-        LocalDate startDate = LocalDate.of(2026, 6, 9);
-        LocalDate endDate = LocalDate.of(2026, 6, 9);
-
-        // when
-        Long batchId = batchService.executeBatch(startDate, endDate, "TEST");
-        entityManager.flush();
-
-        // then
-        Optional<BatchExecution> execution = batchExecutionRepository.findById(batchId);
-        assertThat(execution).isPresent();
-
-        BatchExecution batchExecution = execution.get();
-        assertThat(batchExecution.getStatus()).isEqualTo("COMPLETED");
-        assertThat(batchExecution.getCompletedAt()).isNotNull();
-        assertThat(batchExecution.getStartedAt()).isNotNull();
-        assertThat(batchExecution.getCompletedAt()).isAfterOrEqualTo(batchExecution.getStartedAt());
-    }
-
-    @DisplayName("[통합] 다중 회원 배치 실행 확인")
-    @Test
-    void testBatchExecutionWithMultipleMembers() {
-        // given
-        Member member1 = Member.of("test-user-multi-1", "TECH");
-        memberRepository.save(member1);
-
-        Member member2 = Member.of("test-user-multi-2", "TECH");
-        memberRepository.save(member2);
-        entityManager.flush();
-
-        LocalDate startDate = LocalDate.of(2026, 6, 9);
-        LocalDate endDate = LocalDate.of(2026, 6, 9);
-
-        // when
-        Long batchId = batchService.executeBatch(startDate, endDate, "TEST");
-        entityManager.flush();
-
-        // then
-        Optional<BatchExecution> execution = batchExecutionRepository.findById(batchId);
-        assertThat(execution).isPresent();
-
-        BatchExecution batchExecution = execution.get();
-        assertThat(batchExecution.getStatus()).isEqualTo("COMPLETED");
-        // 2명의 회원 * 1일 = 2개의 태스크 (스크래이핑 성공 여부와 무관하게 배치 완료)
-        assertThat(batchExecution.getTotalCount()).isGreaterThanOrEqualTo(0);
+            // then
+            assertThat(postingRepository.findAll()).isNotEmpty();
+        }
     }
 }
