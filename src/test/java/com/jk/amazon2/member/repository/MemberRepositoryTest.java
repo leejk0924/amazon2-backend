@@ -38,8 +38,8 @@ class MemberRepositoryTest extends RepositoryTestSupport {
 
         @BeforeEach
         void setUp() {
-            String categoryInsertSql = "INSERT INTO blog_category (code, name, description, created_by, deleted) VALUES (?, ?, ?, ?, ?)";
-            String memberInsertSql = "INSERT INTO member (nickname, category_code, created_by, updated_by, deleted) VALUES (?, ?, ?, ?, ?)";
+            String categoryInsertSql = "INSERT INTO blog_category (code, name, description, created_by, created_at, deleted) VALUES (?, ?, ?, ?, NOW(), ?)";
+            String memberInsertSql = "INSERT INTO member (nickname, category_code, created_by, updated_by, created_at, updated_at, deleted) VALUES (?, ?, ?, ?, NOW(), NOW(), ?)";
 
             jdbcTemplate.batchUpdate(categoryInsertSql, List.of(
                     new Object[]{"DEV", "개발", "개발 팀", "test", false},
