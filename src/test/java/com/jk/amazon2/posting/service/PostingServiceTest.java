@@ -1,5 +1,7 @@
 package com.jk.amazon2.posting.service;
 
+import com.jk.amazon2.member.entity.Member;
+import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.posting.dto.PostingResponse;
 import com.jk.amazon2.posting.entity.Posting;
 import com.jk.amazon2.posting.repository.PostingRepository;
@@ -20,13 +22,18 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class PostingServiceTest {
 
     @Mock
     private PostingRepository postingRepository;
+
+    @Mock
+    private MemberRepository memberRepository;
 
     @InjectMocks
     private PostingService postingService;
@@ -73,8 +80,10 @@ class PostingServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Posting posting = new Posting(1L, startDate, 1, 2, 3, 4, 5, 6, 7, "admin");
         Page<Posting> postingPage = new PageImpl<>(List.of(posting), pageable, 1);
-        when(postingRepository.findAllByWeekStartDate(startDate, pageable))
-            .thenReturn(postingPage);
+        Member member = Member.of("testUser", "CAT01");
+        ReflectionTestUtils.setField(member, "id", 1L);
+        when(postingRepository.findAllByWeekStartDate(startDate, pageable)).thenReturn(postingPage);
+        when(memberRepository.findAllById(anyCollection())).thenReturn(List.of(member));
 
         // When
         Page<PostingResponse.PostingDto> result = postingService.getPostings(startDate, pageable);
@@ -84,6 +93,8 @@ class PostingServiceTest {
         assertThat(result.getContent()).hasSize(1);
         PostingResponse.PostingDto dto = result.getContent().get(0);
         assertThat(dto.memberId()).isEqualTo(1L);
+        assertThat(dto.memberNickname()).isEqualTo("testUser");
+        assertThat(dto.weekStartDate()).isEqualTo(startDate);
         assertThat(dto.mon()).isEqualTo(1);
         assertThat(dto.sun()).isEqualTo(7);
     }
@@ -94,8 +105,7 @@ class PostingServiceTest {
         // Given
         LocalDate startDate = LocalDate.of(2026, 6, 9);
         Pageable pageable = PageRequest.of(0, 10);
-        when(postingRepository.findAllByWeekStartDate(startDate, pageable))
-            .thenReturn(Page.empty(pageable));
+        when(postingRepository.findAllByWeekStartDate(startDate, pageable)).thenReturn(Page.empty(pageable));
 
         // When
         Page<PostingResponse.PostingDto> result = postingService.getPostings(startDate, pageable);
