@@ -23,16 +23,7 @@ public class PostingService {
     @Transactional(readOnly = true)
     public Page<PostingResponse.PostingDto> getPostings(LocalDate startDate, Pageable pageable) {
         return postingRepository.findAllByWeekStartDate(startDate, pageable)
-            .map(p -> new PostingResponse.PostingDto(
-                p.getMemberId(),
-                p.getMon(),
-                p.getTue(),
-                p.getWed(),
-                p.getThu(),
-                p.getFri(),
-                p.getSat(),
-                p.getSun()
-            ));
+            .map(PostingResponse.PostingDto::from);
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
