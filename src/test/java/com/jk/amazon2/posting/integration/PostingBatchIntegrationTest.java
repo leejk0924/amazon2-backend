@@ -8,6 +8,7 @@ import com.jk.amazon2.posting.repository.PostingRepository;
 import com.jk.amazon2.posting.service.BatchService;
 import com.jk.amazon2.posting.service.NaverBlogScraper;
 import com.jk.amazon2.posting.service.RateLimiter;
+import com.jk.amazon2.posting.service.ScrapingResult;
 import com.jk.amazon2.testsupport.TestContainerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +58,7 @@ class PostingBatchIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        when(scraper.scrapePostingCount(any(), any())).thenReturn(5);
+        when(scraper.scrapePostingCount(any(), any())).thenReturn(new ScrapingResult.Success<>(5));
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=0");
         jdbcTemplate.execute("TRUNCATE TABLE posting_error");
         jdbcTemplate.execute("TRUNCATE TABLE posting_dead_letter");

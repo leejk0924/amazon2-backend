@@ -1,7 +1,5 @@
 package com.jk.amazon2.posting.service;
 
-import com.jk.amazon2.posting.exception.ParsingException;
-import com.jk.amazon2.posting.exception.ScrapingException;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -34,15 +32,19 @@ public class NaverBlogScraper {
             .build();
     }
 
-    public Integer scrapePostingCount(String blogId, LocalDate date) {
+    public ScrapingResult<Integer> scrapePostingCount(String blogId, LocalDate date) {
         try {
             String url = buildUrl(blogId, date);
-            Document doc = fetchAndParse(url);
+            ScrapingResult<Document> fetchResult = fetchAndParse(url);
+            if (fetchResult instanceof ScrapingResult.Failure<Document> failure) {
+                return new ScrapingResult.Failure<>(failure.type(), failure.message(), failure.cause());
+            }
+            Document doc = ((ScrapingResult.Success<Document>) fetchResult).value();
             return extractPostingCount(doc);
-        } catch (ParsingException e) {
-            throw e;
-        } catch (IOException | InterruptedException e) {
-            throw new ScrapingException("Failed to scrape blog for " + blogId, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new ScrapingResult.Failure<>(ScrapingResult.FailureType.NETWORK_ERROR,
+                    "요청 중단: " + blogId, e);
         }
     }
 
@@ -51,7 +53,7 @@ public class NaverBlogScraper {
             NAVER_BLOG_BASE_URL, blogId, date);
     }
 
-    private Document fetchAndParse(String url) throws IOException, InterruptedException {
+    private ScrapingResult<Document> fetchAndParse(String url) throws InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(url))
             .header("User-Agent", USER_AGENT)
@@ -59,21 +61,28 @@ public class NaverBlogScraper {
             .GET()
             .build();
 
-        HttpResponse<String> response = httpClient.send(request,
-            HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() != 200) {
-            throw new ScrapingException("HTTP " + response.statusCode() + " for " + url);
+        HttpResponse<String> response;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            return new ScrapingResult.Failure<>(ScrapingResult.FailureType.NETWORK_ERROR,
+                    "네트워크 오류: " + url, e);
         }
 
-        return Jsoup.parse(response.body());
+        if (response.statusCode() != 200) {
+            return new ScrapingResult.Failure<>(ScrapingResult.FailureType.HTTP_ERROR,
+                    "HTTP " + response.statusCode() + ": " + url, null);
+        }
+
+        return new ScrapingResult.Success<>(Jsoup.parse(response.body()));
     }
 
-    private Integer extractPostingCount(Document doc) {
+    private ScrapingResult<Integer> extractPostingCount(Document doc) {
         Elements categoryTitlePcol2 = doc.getElementsByClass("category_title pcol2");
 
         if (categoryTitlePcol2.isEmpty()) {
-            throw new ParsingException("Element 'category_title pcol2' not found");
+            return new ScrapingResult.Failure<>(ScrapingResult.FailureType.PARSING_ERROR,
+                    "요소를 찾을 수 없음: category_title pcol2", null);
         }
 
         Element element = categoryTitlePcol2.get(0);
@@ -83,9 +92,9 @@ public class NaverBlogScraper {
         Matcher matcher = pattern.matcher(text);
 
         if (matcher.find()) {
-            return Integer.parseInt(matcher.group(1));
+            return new ScrapingResult.Success<>(Integer.parseInt(matcher.group(1)));
         }
 
-        return 0;
+        return new ScrapingResult.Success<>(0);
     }
 }
