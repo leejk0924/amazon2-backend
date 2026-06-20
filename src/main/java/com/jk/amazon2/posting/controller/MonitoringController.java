@@ -18,7 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/postings")
 @RequiredArgsConstructor
-public class MonitoringController {
+public class MonitoringController implements MonitoringApiSpec {
 
     private final MonitoringService monitoringService;
     private final StatisticsService statisticsService;
