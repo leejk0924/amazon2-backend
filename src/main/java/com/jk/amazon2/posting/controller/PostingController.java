@@ -4,23 +4,23 @@ import com.jk.amazon2.posting.dto.BatchRequest;
 import com.jk.amazon2.posting.dto.PostingRequest;
 import com.jk.amazon2.posting.dto.PostingResponse;
 import com.jk.amazon2.posting.service.BatchService;
+import com.jk.amazon2.posting.service.PostingService;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 public class PostingController implements PostingApiSpec {
 
+    private final PostingService postingService;
     private final BatchService batchService;
 
     @Override
@@ -29,26 +29,9 @@ public class PostingController implements PostingApiSpec {
             @ParameterObject PostingRequest.PostingSearchDto searchCondition,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<PostingResponse.PostingDto> content = List.of(
-            new PostingResponse.PostingDto(1L, 3, 5, 2, 4, 6, 1, 0),
-            new PostingResponse.PostingDto(2L, 1, 2, 3, 1, 4, 2, 1),
-            new PostingResponse.PostingDto(3L, 0, 1, 2, 3, 5, 3, 2)
+        Page<PostingResponse.PostingDto> page = postingService.getPostings(
+            searchCondition.startDate(), pageable
         );
-
-        Page<PostingResponse.PostingDto> page = new PageImpl<>(
-            content,
-            pageable,
-            content.size()
-        ).map(m -> new PostingResponse.PostingDto(
-                m.memberId(),
-                m.mon(),
-                m.tue(),
-                m.wed(),
-                m.thu(),
-                m.fri(),
-                m.sat(),
-                m.sun()
-        ));
 
         return ResponseEntity
                 .status(HttpStatus.OK)

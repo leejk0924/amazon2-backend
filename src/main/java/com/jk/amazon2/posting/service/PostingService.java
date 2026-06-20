@@ -1,9 +1,12 @@
 package com.jk.amazon2.posting.service;
 
+import com.jk.amazon2.posting.dto.PostingResponse;
 import com.jk.amazon2.posting.entity.Posting;
 import com.jk.amazon2.posting.repository.PostingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +19,21 @@ import java.time.LocalDate;
 public class PostingService {
 
     private final PostingRepository postingRepository;
+
+    @Transactional(readOnly = true)
+    public Page<PostingResponse.PostingDto> getPostings(LocalDate startDate, Pageable pageable) {
+        return postingRepository.findAllByWeekStartDate(startDate, pageable)
+            .map(p -> new PostingResponse.PostingDto(
+                p.getMemberId(),
+                p.getMon(),
+                p.getTue(),
+                p.getWed(),
+                p.getThu(),
+                p.getFri(),
+                p.getSat(),
+                p.getSun()
+            ));
+    }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void savePosting(Long memberId, LocalDate weekStartDate,
