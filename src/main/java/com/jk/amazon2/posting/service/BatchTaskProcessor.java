@@ -29,7 +29,7 @@ public class BatchTaskProcessor {
 
     @Transactional
     public void processTask(BatchService.PostingTask task, BlockingQueue<BatchService.PostingTask> queue, BatchExecution execution) {
-        ScrapingResult<Integer> result = scraper.scrapePostingCount(task.memberId().toString(), task.targetDate());
+        ScrapingResult<Integer> result = scraper.scrapePostingCount(task.memberNickname(), task.targetDate());
 
         switch (result) {
             case ScrapingResult.Success<Integer> success -> {
