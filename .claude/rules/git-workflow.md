@@ -43,4 +43,13 @@ gh pr create --title "#42: 포스팅 관련 API 구현" \
 **규칙:**
 - 형식: `feature/#<이슈번호>-<한글설명>`
 - ❌ main/master 직접 수정 금지
-- ✅ Git worktree 추천 (병렬 작업 안전성)
+- ✅ Git worktree 필수 (병렬 작업 안전성)
+- ⚠️ **worktree는 반드시 프로젝트 외부에 생성** — 프로젝트 내부에 생성 시 Gradle이 워크트리 build 디렉토리를 스캔해 중복 클래스 오류 발생
+
+```bash
+# ✅ 올바른 예 — 프로젝트 외부
+git worktree add ~/worktrees/amazon2/feature/#42-포스팅-api -b feature/#42-포스팅-api
+
+# ❌ 잘못된 예 — 프로젝트 내부 (.worktrees/)
+git worktree add .worktrees/feature/#42-포스팅-api -b feature/#42-포스팅-api
+```
