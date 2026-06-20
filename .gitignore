@@ -56,3 +56,6 @@ application-local.yml
 
 ### 빈 디렉토리 placeholder (더 이상 필요 없음) ###
 .gitkeep
+
+### Git Worktrees ###
+.worktrees/
