@@ -41,15 +41,22 @@ public class BatchTaskProcessor {
                         task.memberId(), weekStart, task.dayOfWeek(), success.value());
             }
             case ScrapingResult.Failure<Integer> failure -> {
-                if (failure.type() == ScrapingResult.FailureType.PARSING_ERROR) {
-                    // 구조적 문제 → 재시도 없이 즉시 실패 처리
-                    execution.incrementFailedCount();
-                    batchExecutionRepository.save(execution);
-                    log.error("[BATCH] 파싱 오류 (재시도 불가) member={}, date={}, error={}",
-                            task.memberId(), task.targetDate(), failure.message());
-                } else {
-                    // NETWORK_ERROR, HTTP_ERROR → 기존 재시도 로직
-                    handleRetryableError(task, queue, execution, failure);
+                switch (failure.type()) {
+                    case PARSING_ERROR -> {
+                        // 구조적 문제 → 재시도 없이 즉시 실패 처리
+                        execution.incrementFailedCount();
+                        batchExecutionRepository.save(execution);
+                        log.error("[BATCH] 파싱 오류 (재시도 불가) member={}, date={}, error={}",
+                                task.memberId(), task.targetDate(), failure.message());
+                    }
+                    case NETWORK_ERROR, HTTP_ERROR -> handleRetryableError(task, queue, execution, failure);
+                    default -> {
+                        // 분류되지 않은 새 FailureType 추가 시 유실 방지
+                        execution.incrementFailedCount();
+                        batchExecutionRepository.save(execution);
+                        log.error("[BATCH] 미분류 실패 타입 (처리 누락 주의) type={}, member={}, date={}, error={}",
+                                failure.type(), task.memberId(), task.targetDate(), failure.message());
+                    }
                 }
             }
         }
