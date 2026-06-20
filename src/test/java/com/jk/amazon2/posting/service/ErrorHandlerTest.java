@@ -4,7 +4,6 @@ import com.jk.amazon2.posting.entity.PostingError;
 import com.jk.amazon2.posting.entity.PostingDeadLetter;
 import com.jk.amazon2.posting.repository.PostingErrorRepository;
 import com.jk.amazon2.posting.repository.PostingDeadLetterRepository;
-import com.jk.amazon2.posting.exception.ScrapingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +46,7 @@ class ErrorHandlerTest {
      */
     @Test
     void testHandleErrorCreatesErrorLog() {
-        Exception cause = new ScrapingException(TEST_ERROR_MESSAGE);
+        Exception cause = new RuntimeException(TEST_ERROR_MESSAGE);
 
         errorHandler.handleError(TEST_MEMBER_ID, TEST_DATE, TEST_DAY_OF_WEEK, cause);
 

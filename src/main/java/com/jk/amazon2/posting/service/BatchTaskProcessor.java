@@ -3,8 +3,6 @@ package com.jk.amazon2.posting.service;
 import com.jk.amazon2.posting.entity.BatchExecution;
 import com.jk.amazon2.posting.entity.Posting;
 import com.jk.amazon2.posting.entity.PostingError;
-import com.jk.amazon2.posting.exception.ParsingException;
-import com.jk.amazon2.posting.exception.ScrapingException;
 import com.jk.amazon2.posting.repository.BatchExecutionRepository;
 import com.jk.amazon2.posting.repository.PostingErrorRepository;
 import com.jk.amazon2.posting.repository.PostingRepository;
@@ -31,25 +29,45 @@ public class BatchTaskProcessor {
 
     @Transactional
     public void processTask(BatchService.PostingTask task, BlockingQueue<BatchService.PostingTask> queue, BatchExecution execution) {
-        try {
-            Integer count = scraper.scrapePostingCount(task.memberId().toString(), task.targetDate());
-            LocalDate weekStart = getWeekStartDate(task.targetDate());
-            updatePostingForDay(task.memberId(), weekStart, task.dayOfWeek(), count);
+        ScrapingResult<Integer> result = scraper.scrapePostingCount(task.memberId().toString(), task.targetDate());
 
-            execution.incrementSuccessCount();
-            batchExecutionRepository.save(execution);
-
-            log.info("[BATCH] Saved posting - member={}, week={}, day={}, count={}",
-                    task.memberId(), weekStart, task.dayOfWeek(), count);
-
-        } catch (ParsingException | ScrapingException e) {
-            handleTaskError(task, queue, execution, e);
+        switch (result) {
+            case ScrapingResult.Success<Integer> success -> {
+                LocalDate weekStart = getWeekStartDate(task.targetDate());
+                updatePostingForDay(task.memberId(), weekStart, task.dayOfWeek(), success.value());
+                execution.incrementSuccessCount();
+                batchExecutionRepository.save(execution);
+                log.info("[BATCH] Saved posting - member={}, week={}, day={}, count={}",
+                        task.memberId(), weekStart, task.dayOfWeek(), success.value());
+            }
+            case ScrapingResult.Failure<Integer> failure -> {
+                switch (failure.type()) {
+                    case PARSING_ERROR -> {
+                        // 구조적 문제 → 재시도 없이 즉시 실패 처리
+                        execution.incrementFailedCount();
+                        batchExecutionRepository.save(execution);
+                        log.error("[BATCH] 파싱 오류 (재시도 불가) member={}, date={}, error={}",
+                                task.memberId(), task.targetDate(), failure.message());
+                    }
+                    case NETWORK_ERROR, HTTP_ERROR -> handleRetryableError(task, queue, execution, failure);
+                    default -> {
+                        // 분류되지 않은 새 FailureType 추가 시 유실 방지
+                        execution.incrementFailedCount();
+                        batchExecutionRepository.save(execution);
+                        log.error("[BATCH] 미분류 실패 타입 (처리 누락 주의) type={}, member={}, date={}, error={}",
+                                failure.type(), task.memberId(), task.targetDate(), failure.message());
+                    }
+                }
+            }
         }
     }
 
-    private void handleTaskError(BatchService.PostingTask task, BlockingQueue<BatchService.PostingTask> queue,
-                                 BatchExecution execution, Exception e) {
-        errorHandler.handleError(task.memberId(), task.targetDate(), task.dayOfWeek(), e);
+    private void handleRetryableError(BatchService.PostingTask task, BlockingQueue<BatchService.PostingTask> queue,
+                                      BatchExecution execution, ScrapingResult.Failure<Integer> failure) {
+        RuntimeException cause = failure.cause() != null
+                ? new RuntimeException(failure.message(), failure.cause())
+                : new RuntimeException(failure.message());
+        errorHandler.handleError(task.memberId(), task.targetDate(), task.dayOfWeek(), cause);
 
         PostingError error = postingErrorRepository
                 .findByMemberAndDate(task.memberId(), task.targetDate())
@@ -71,7 +89,8 @@ public class BatchTaskProcessor {
         }
 
         batchExecutionRepository.save(execution);
-        log.warn("[BATCH] Failed member={}, date={}, error={}", task.memberId(), task.targetDate(), e.getMessage());
+        log.warn("[BATCH] Failed member={}, date={}, type={}, error={}",
+                task.memberId(), task.targetDate(), failure.type(), failure.message());
     }
 
     private void updatePostingForDay(Long memberId, LocalDate weekStart, String dayOfWeek, Integer count) {
