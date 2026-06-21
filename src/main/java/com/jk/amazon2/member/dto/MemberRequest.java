@@ -21,7 +21,7 @@ public class MemberRequest {
             @Size(max = 50, message = "닉네임은 최대 50자까지 입력 가능합니다.")
             String nickname,
             @NotBlank(message = "이름은 필수 입니다.")
-            @Size(max = 50, message = "이름은 최대 50자까지 입력 가능합니다.")
+            @Size(max = 20, message = "이름은 최대 20자까지 입력 가능합니다.")
             String name,
             @NotBlank(message = "카테고리 코드는 필수 입니다.")
             String categoryCode

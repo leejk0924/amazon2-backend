@@ -64,6 +64,35 @@ class MemberCommandTest {
                     of("nickname이 50자를 초과하는 경우", "a".repeat(51))
             );
         }
+
+        @Test
+        @DisplayName("name이 20자를 초과하면 생성 실패 [fail]")
+        void create_fail_invalid_name() {
+            // when & then
+            assertThatThrownBy(() -> MemberCommand.Create.of("tester", "a".repeat(21), "DEV"))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NAME_INVALID.getMessage());
+        }
+
+        @Test
+        @DisplayName("name이 null이면 생성 성공 (선택값) [success]")
+        void create_success_name_null() {
+            // when
+            MemberCommand.Create command = MemberCommand.Create.of("tester", null, "DEV");
+
+            // then
+            assertThat(command.getName()).isNull();
+        }
+
+        @Test
+        @DisplayName("name이 20자이면 생성 성공 [success]")
+        void create_success_name_max_length() {
+            // when
+            MemberCommand.Create command = MemberCommand.Create.of("tester", "a".repeat(20), "DEV");
+
+            // then
+            assertThat(command.getName()).isEqualTo("a".repeat(20));
+        }
     }
 
     @Nested
@@ -139,6 +168,25 @@ class MemberCommandTest {
                     of("categoryCode가 공백인 경우", "tester", "   "),
                     of("categoryCode가 10자를 초과하는 경우", "tester", "a".repeat(11))
             );
+        }
+
+        @Test
+        @DisplayName("name이 20자를 초과하면 수정 실패 [fail]")
+        void update_fail_invalid_name() {
+            // when & then
+            assertThatThrownBy(() -> MemberCommand.Update.of(1L, "tester", "a".repeat(21), "DEV"))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NAME_INVALID.getMessage());
+        }
+
+        @Test
+        @DisplayName("name이 null이면 수정 성공 (선택값) [success]")
+        void update_success_name_null() {
+            // when
+            MemberCommand.Update command = MemberCommand.Update.of(1L, "tester", null, "DEV");
+
+            // then
+            assertThat(command.getName()).isNull();
         }
     }
 

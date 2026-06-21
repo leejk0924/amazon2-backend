@@ -54,7 +54,7 @@ class MemberServiceTest {
             // given
             Long id = 1L;
             String nickname = "test";
-            String name = "테스터";
+            String name = "test-name";
             String categoryCode = "TEST";
 
             var inputMember = MemberCommand.Create.of(nickname, name, categoryCode);
@@ -99,7 +99,7 @@ class MemberServiceTest {
             // given
             String nickname = "test";
             String categoryCode = "NON_EXISTENT_CODE";
-            var inputMember = MemberCommand.Create.of(nickname, null, categoryCode);
+            var inputMember = MemberCommand.Create.of(nickname, "test-name", categoryCode);
 
             doThrow(new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND))
                     .when(categoryValidationPort).validateCategoryExists(categoryCode);
@@ -117,7 +117,7 @@ class MemberServiceTest {
             String nickname = "duplicate_user";
             String categoryCode = "TEST";
 
-            var inputMember = MemberCommand.Create.of(nickname, null, categoryCode);
+            var inputMember = MemberCommand.Create.of(nickname, "test-name", categoryCode);
 
             given(memberRepository.existsByNickname(any(String.class)))
                     .willReturn(true);
@@ -138,9 +138,9 @@ class MemberServiceTest {
             // given
             Long id = 1L;
             String newNickname = "updated_member";
-            String newName = "수정된이름";
+            String newName = "updated-name";
             String newCategoryCode = "UPDATED";
-            Member member = Member.of("test_member", null, "DEV");
+            Member member = Member.of("test_member", "test-name", "DEV");
             ReflectionTestUtils.setField(member, "id", id);
 
             var updateCommand = MemberCommand.Update.of(id, newNickname, newName, newCategoryCode);
@@ -166,7 +166,7 @@ class MemberServiceTest {
             Long id = 999L;
             String newNickname = "updated_member";
             String newCategoryCode = "UPDATED";
-            var updateCommand = MemberCommand.Update.of(id, newNickname, null, newCategoryCode);
+            var updateCommand = MemberCommand.Update.of(id, newNickname, "updated-name", newCategoryCode);
 
             given(memberRepository.findById(id))
                     .willReturn(Optional.empty());
@@ -184,9 +184,9 @@ class MemberServiceTest {
             Long id = 1L;
             String newNickname = "updated_member";
             String newCategoryCode = "NOTEXIST";
-            Member member = Member.of("test_member", null, "DEV");
+            Member member = Member.of("test_member", "test-name", "DEV");
             ReflectionTestUtils.setField(member, "id", id);
-            var updateCommand = MemberCommand.Update.of(id, newNickname, null, newCategoryCode);
+            var updateCommand = MemberCommand.Update.of(id, newNickname, "updated-name", newCategoryCode);
 
             given(memberRepository.findById(id))
                     .willReturn(Optional.of(member));
@@ -208,7 +208,7 @@ class MemberServiceTest {
         void delete_success() {
             // given
             Long id = 1L;
-            Member member = Member.of("test_member", null, "DEV");
+            Member member = Member.of("test_member", "test-name", "DEV");
             ReflectionTestUtils.setField(member, "id", id);
             given(memberRepository.findById(id))
                     .willReturn(Optional.of(member));
@@ -225,7 +225,7 @@ class MemberServiceTest {
         void delete_success_already_deleted() {
             // given
             Long id = 1L;
-            Member member = Member.of("test_member", null, "DEV");
+            Member member = Member.of("test_member", "test-name", "DEV");
             ReflectionTestUtils.setField(member, "id", id);
             member.softDelete();
             given(memberRepository.findById(id))
@@ -261,7 +261,7 @@ class MemberServiceTest {
         void findById_success() {
             // given
             Long id = 1L;
-            Member member = Member.of("test_member", null, "DEV");
+            Member member = Member.of("test_member", "test-name", "DEV");
             ReflectionTestUtils.setField(member, "id", id);
             given(memberRepository.findById(id))
                     .willReturn(Optional.of(member));
@@ -302,7 +302,7 @@ class MemberServiceTest {
         void hardDelete_success() {
             // given
             Long id = 1L;
-            Member member = Member.of("test_member", null, "DEV");
+            Member member = Member.of("test_member", "test-name", "DEV");
             ReflectionTestUtils.setField(member, "id", id);
             member.softDelete();
             given(memberRepository.findById(id))
@@ -334,7 +334,7 @@ class MemberServiceTest {
         void hardDelete_fail_not_deleted() {
             // given
             Long id = 1L;
-            Member member = Member.of("test_member", null, "DEV");
+            Member member = Member.of("test_member", "test-name", "DEV");
             ReflectionTestUtils.setField(member, "id", id);
             given(memberRepository.findById(id))
                     .willReturn(Optional.of(member));

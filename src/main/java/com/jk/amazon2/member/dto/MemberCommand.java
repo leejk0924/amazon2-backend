@@ -29,8 +29,12 @@ public class MemberCommand {
 
         private Create(String nickname, String name, String categoryCode) {
             if (nickname == null || nickname.isBlank() || nickname.length() > 50) {
-                log.warn("[VALIDATION_FAILED] MemberCommand.Detail - Invalid nickname. nickname={}", nickname);
+                log.warn("[VALIDATION_FAILED] MemberCommand.Create - Invalid nickname. nickname={}", nickname);
                 throw new RestApiException(MemberErrorCode.MEMBER_NICKNAME_INVALID);
+            }
+            if (name != null && name.length() > 20) {
+                log.warn("[VALIDATION_FAILED] MemberCommand.Create - Invalid name. name={}", name);
+                throw new RestApiException(MemberErrorCode.MEMBER_NAME_INVALID);
             }
             this.nickname = nickname;
             this.name = name;
@@ -56,7 +60,10 @@ public class MemberCommand {
                 log.warn("[VALIDATION_FAILED] MemberCommand.Update - Invalid nickname. nickname={}", nickname);
                 throw new RestApiException(MemberErrorCode.MEMBER_NICKNAME_INVALID);
             }
-
+            if (name != null && name.length() > 20) {
+                log.warn("[VALIDATION_FAILED] MemberCommand.Update - Invalid name. name={}", name);
+                throw new RestApiException(MemberErrorCode.MEMBER_NAME_INVALID);
+            }
             if (categoryCode != null && (categoryCode.isBlank() || categoryCode.length() > 10)) {
                 log.warn("[VALIDATION_FAILED] MemberCommand.Update - Invalid categoryCode. categoryCode={}", categoryCode);
                 throw new RestApiException(MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID);
