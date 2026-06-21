@@ -20,6 +20,19 @@ public interface PostingRepository extends JpaRepository<Posting, Long> {
         Pageable pageable
     );
 
+    @Query("""
+            SELECT p FROM Posting p
+            WHERE (:startDate IS NULL OR p.weekStartDate >= :startDate)
+              AND (:endDate IS NULL OR p.weekStartDate <= :endDate)
+              AND (:memberId IS NULL OR p.memberId = :memberId)
+            """)
+    Page<Posting> findAllBySearchCondition(
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate,
+        @Param("memberId") Long memberId,
+        Pageable pageable
+    );
+
     @Query("SELECT p FROM Posting p WHERE p.memberId = :memberId AND p.weekStartDate = :weekStartDate")
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Posting> findByMemberIdAndWeekStartDateWithLock(

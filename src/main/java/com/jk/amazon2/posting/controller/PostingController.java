@@ -30,7 +30,7 @@ public class PostingController implements PostingApiSpec {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<PostingResponse.PostingDto> page = postingService.getPostings(
-            searchCondition.startDate(), pageable
+            searchCondition.startDate(), searchCondition.endDate(), searchCondition.memberId(), pageable
         );
 
         return ResponseEntity
