@@ -31,13 +31,20 @@ class NaverBlogScraperTest {
         // When
         ScrapingResult<Integer> result = scraper.scrapePostingCount(invalidBlogId, date);
 
-        // Then: 네트워크 실패 또는 HTTP 오류 또는 파싱 오류 중 하나
-        assertThat(result).isInstanceOf(ScrapingResult.Failure.class);
-        ScrapingResult.Failure<Integer> failure = (ScrapingResult.Failure<Integer>) result;
-        assertThat(failure.type()).isIn(
-                ScrapingResult.FailureType.NETWORK_ERROR,
-                ScrapingResult.FailureType.HTTP_ERROR,
-                ScrapingResult.FailureType.PARSING_ERROR
+        // Then: 네트워크 실패, HTTP 오류, 또는 글 없음(0) 중 하나
+        // - 블로그가 없거나 해당 날짜에 글이 없으면 category_title pcol2 요소가 없어 Success(0) 반환
+        assertThat(result).satisfiesAnyOf(
+                r -> {
+                    assertThat(r).isInstanceOf(ScrapingResult.Failure.class);
+                    assertThat(((ScrapingResult.Failure<Integer>) r).type()).isIn(
+                            ScrapingResult.FailureType.NETWORK_ERROR,
+                            ScrapingResult.FailureType.HTTP_ERROR
+                    );
+                },
+                r -> {
+                    assertThat(r).isInstanceOf(ScrapingResult.Success.class);
+                    assertThat(((ScrapingResult.Success<Integer>) r).value()).isEqualTo(0);
+                }
         );
     }
 }
