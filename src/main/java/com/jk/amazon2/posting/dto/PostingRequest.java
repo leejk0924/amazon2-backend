@@ -4,6 +4,8 @@ import java.time.LocalDate;
 
 public class PostingRequest {
     public record PostingSearchDto(
-            LocalDate startDate
+            LocalDate startDate,
+            LocalDate endDate,
+            Long memberId
     ) {}
 }

@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,8 +27,14 @@ public class PostingService {
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
-    public Page<PostingResponse.PostingDto> getPostings(LocalDate startDate, Pageable pageable) {
-        Page<Posting> postings = postingRepository.findAllByWeekStartDate(startDate, pageable);
+    public Page<PostingResponse.PostingDto> getPostings(
+            LocalDate startDate, LocalDate endDate, Long memberId, Pageable pageable) {
+        // endDate가 null이면 startDate와 같게 설정 → startDate 단독 시 정확 일치 동작 유지
+        LocalDate effectiveEndDate = (endDate != null) ? endDate : startDate;
+
+        Page<Posting> postings = postingRepository.findAllBySearchCondition(
+            startDate, effectiveEndDate, memberId, pageable
+        );
 
         Set<Long> memberIds = postings.getContent().stream()
             .map(Posting::getMemberId)
