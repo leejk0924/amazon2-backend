@@ -81,8 +81,7 @@ public class NaverBlogScraper {
         Elements categoryTitlePcol2 = doc.getElementsByClass("category_title pcol2");
 
         if (categoryTitlePcol2.isEmpty()) {
-            return new ScrapingResult.Failure<>(ScrapingResult.FailureType.PARSING_ERROR,
-                    "요소를 찾을 수 없음: category_title pcol2", null);
+            return new ScrapingResult.Success<>(0);
         }
 
         Element element = categoryTitlePcol2.get(0);
