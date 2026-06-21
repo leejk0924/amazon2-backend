@@ -76,7 +76,7 @@ class PostingBatchIntegrationTest {
         @DisplayName("[통합] 배치 실행 시 BatchExecution 생성 및 COMPLETED 상태 확인 [success]")
         void batchExecution_created_and_completed() {
             // given
-            memberRepository.save(Member.of("test-user-1", "TECH"));
+            memberRepository.save(Member.of("test-user-1", "test-name-1", "TECH"));
             LocalDate startDate = LocalDate.of(2026, 6, 9);
             LocalDate endDate = LocalDate.of(2026, 6, 9);
 
@@ -101,7 +101,7 @@ class PostingBatchIntegrationTest {
         @DisplayName("[통합] 배치 완료 후 completedAt이 startedAt 이후로 설정 [success]")
         void batchExecution_completedAt_after_startedAt() {
             // given
-            memberRepository.save(Member.of("test-user-2", "TECH"));
+            memberRepository.save(Member.of("test-user-2", "test-name-2", "TECH"));
 
             // when
             Long batchId = batchService.executeBatch(
@@ -121,7 +121,7 @@ class PostingBatchIntegrationTest {
         @DisplayName("[통합] 단일 회원 3일 배치 실행 후 totalCount = 3 [success]")
         void batchExecution_totalCount_single_member() {
             // given
-            memberRepository.save(Member.of("test-user-3", "TECH"));
+            memberRepository.save(Member.of("test-user-3", "test-name-3", "TECH"));
 
             // when
             Long batchId = batchService.executeBatch(
@@ -140,8 +140,8 @@ class PostingBatchIntegrationTest {
         @DisplayName("[통합] 다중 회원 1일 배치 실행 후 totalCount = 2 [success]")
         void batchExecution_totalCount_multiple_members() {
             // given
-            memberRepository.save(Member.of("test-user-multi-1", "TECH"));
-            memberRepository.save(Member.of("test-user-multi-2", "TECH"));
+            memberRepository.save(Member.of("test-user-multi-1", "test-name-4", "TECH"));
+            memberRepository.save(Member.of("test-user-multi-2", "test-name-5", "TECH"));
 
             // when
             Long batchId = batchService.executeBatch(
@@ -165,7 +165,7 @@ class PostingBatchIntegrationTest {
         @DisplayName("[통합] 배치 실행 후 BatchExecution DB 직접 조회 [success]")
         void batchExecution_saved_to_database() {
             // given
-            memberRepository.save(Member.of("test-user-4", "TECH"));
+            memberRepository.save(Member.of("test-user-4", "test-name-4", "TECH"));
 
             // when
             Long batchId = batchService.executeBatch(
@@ -185,7 +185,7 @@ class PostingBatchIntegrationTest {
         @DisplayName("[통합] 배치 실행 후 Posting 데이터 생성 확인 [success]")
         void posting_data_created_after_batch() {
             // given
-            memberRepository.save(Member.of("test-user-5", "TECH"));
+            memberRepository.save(Member.of("test-user-5", "test-name-5", "TECH"));
 
             // when
             batchService.executeBatch(

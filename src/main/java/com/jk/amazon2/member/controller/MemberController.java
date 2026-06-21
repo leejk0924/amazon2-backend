@@ -47,7 +47,7 @@ public class MemberController implements MemberApiSpec {
     public ResponseEntity<MemberResponse.MemberCreateDto> createMember(
             @RequestBody @Valid MemberRequest.MemberCreateDto request
     ) {
-        MemberCommand.Create command = MemberCommand.Create.of(request.nickname(), request.categoryCode());
+        MemberCommand.Create command = MemberCommand.Create.of(request.nickname(), request.name(), request.categoryCode());
         var createdMember = memberService.create(command);
 
         var response = MemberResponse.MemberCreateDto.from(createdMember);
@@ -63,7 +63,7 @@ public class MemberController implements MemberApiSpec {
             @PathVariable Long id,
             @RequestBody MemberRequest.MemberDto member
     ) {
-        var update = MemberCommand.Update.of(id, member.nickname(), member.categoryCode());
+        var update = MemberCommand.Update.of(id, member.nickname(), member.name(), member.categoryCode());
 
         var response = MemberResponse.MemberUpdateDto.from(memberService.update(update));
         return ResponseEntity

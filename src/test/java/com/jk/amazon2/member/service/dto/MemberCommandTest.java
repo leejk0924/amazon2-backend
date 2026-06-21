@@ -34,7 +34,7 @@ class MemberCommandTest {
             String categoryCode = "DEV";
 
             // when
-            MemberCommand.Create command = MemberCommand.Create.of(nickname, categoryCode);
+            MemberCommand.Create command = MemberCommand.Create.of(nickname, null, categoryCode);
 
             // then
             assertSoftly(softly -> {
@@ -51,7 +51,7 @@ class MemberCommandTest {
                 String invalidNickname
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Create.of(invalidNickname, "DEV"))
+            assertThatThrownBy(() -> MemberCommand.Create.of(invalidNickname, null, "DEV"))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage());
         }
@@ -63,6 +63,35 @@ class MemberCommandTest {
                     of("nickname이 공백인 경우", "   "),
                     of("nickname이 50자를 초과하는 경우", "a".repeat(51))
             );
+        }
+
+        @Test
+        @DisplayName("name이 20자를 초과하면 생성 실패 [fail]")
+        void create_fail_invalid_name() {
+            // when & then
+            assertThatThrownBy(() -> MemberCommand.Create.of("tester", "a".repeat(21), "DEV"))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NAME_INVALID.getMessage());
+        }
+
+        @Test
+        @DisplayName("name이 null이면 생성 성공 (선택값) [success]")
+        void create_success_name_null() {
+            // when
+            MemberCommand.Create command = MemberCommand.Create.of("tester", null, "DEV");
+
+            // then
+            assertThat(command.getName()).isNull();
+        }
+
+        @Test
+        @DisplayName("name이 20자이면 생성 성공 [success]")
+        void create_success_name_max_length() {
+            // when
+            MemberCommand.Create command = MemberCommand.Create.of("tester", "a".repeat(20), "DEV");
+
+            // then
+            assertThat(command.getName()).isEqualTo("a".repeat(20));
         }
     }
 
@@ -78,7 +107,7 @@ class MemberCommandTest {
                 String categoryCode
         ) {
             // when
-            MemberCommand.Update command = MemberCommand.Update.of(1L, nickname, categoryCode);
+            MemberCommand.Update command = MemberCommand.Update.of(1L, nickname, null, categoryCode);
 
             // then
             assertThat(command).isNotNull();
@@ -105,7 +134,7 @@ class MemberCommandTest {
                 String categoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(1L, invalidNickname, categoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of(1L, invalidNickname, null, categoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage());
         }
@@ -128,7 +157,7 @@ class MemberCommandTest {
                 String invalidCategoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(1L, nickname, invalidCategoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of(1L, nickname, null, invalidCategoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID.getMessage());
         }
@@ -139,6 +168,25 @@ class MemberCommandTest {
                     of("categoryCode가 공백인 경우", "tester", "   "),
                     of("categoryCode가 10자를 초과하는 경우", "tester", "a".repeat(11))
             );
+        }
+
+        @Test
+        @DisplayName("name이 20자를 초과하면 수정 실패 [fail]")
+        void update_fail_invalid_name() {
+            // when & then
+            assertThatThrownBy(() -> MemberCommand.Update.of(1L, "tester", "a".repeat(21), "DEV"))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NAME_INVALID.getMessage());
+        }
+
+        @Test
+        @DisplayName("name이 null이면 수정 성공 (선택값) [success]")
+        void update_success_name_null() {
+            // when
+            MemberCommand.Update command = MemberCommand.Update.of(1L, "tester", null, "DEV");
+
+            // then
+            assertThat(command.getName()).isNull();
         }
     }
 

@@ -56,9 +56,9 @@ class MemberControllerTest {
             String nickname = "test_member";
             String categoryCode = "DEV";
 
-            var request = new MemberRequest.MemberCreateDto(nickname, categoryCode);
+            var request = new MemberRequest.MemberCreateDto(nickname, "test-name", categoryCode);
 
-            var savedMember = MemberResult.Detail.of(id, nickname, categoryCode, LocalDateTime.now(), false);
+            var savedMember = MemberResult.Detail.of(id, nickname, "test-name", categoryCode, LocalDateTime.now(), false);
             given(memberService.create(any(MemberCommand.Create.class)))
                     .willReturn(savedMember);
 
@@ -71,7 +71,7 @@ class MemberControllerTest {
         @MethodSource("provideCreateMemberFailureCases")
         void createMember_fail(String scenario, String nickname, String categoryCode, ErrorCode errorCode) {
             // given
-            var request = new MemberRequest.MemberCreateDto(nickname, categoryCode);
+            var request = new MemberRequest.MemberCreateDto(nickname, "test-name", categoryCode);
 
             // 서비스 로직 에러인 경우에만 Mocking (유효성 검사 실패는 서비스 호출 전 발생)
             if (errorCode == MemberErrorCode.MEMBER_NICKNAME_ALREADY_EXISTS || errorCode == CategoryErrorCode.CATEGORY_NOT_FOUND) {
@@ -136,7 +136,7 @@ class MemberControllerTest {
         void getMember_success() {
             // given
             Long id = 1L;
-            var result = MemberResult.Detail.of(id, "test_member", "DEV", LocalDateTime.now(), false);
+            var result = MemberResult.Detail.of(id, "test_member", "test-name", "DEV", LocalDateTime.now(), false);
             given(memberService.findById(id))
                     .willReturn(result);
 

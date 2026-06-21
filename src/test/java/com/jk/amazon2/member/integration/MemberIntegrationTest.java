@@ -64,7 +64,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             // 닉네임 길이 제한(50자)에 맞게 자르기
             if (nickname.length() > 50) nickname = nickname.substring(0, 50);
 
-            var requestDto = new MemberRequest.MemberCreateDto(nickname, categoryCode);
+            var requestDto = new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
 
             // when & then (API 검증)
             RestAssuredMockMvc
@@ -104,7 +104,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                 // 이미 존재하면 무시
             }
 
-            var requestDto = new MemberRequest.MemberCreateDto(nickname, categoryCode);
+            var requestDto = new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
 
             // when & then
             RestAssuredMockMvc
@@ -134,7 +134,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
 
             String nickname = "new_user";
             // 존재하지 않는 카테고리 코드 (10자 이하)
-            var requestDto = new MemberRequest.MemberCreateDto(nickname, categoryCode);
+            var requestDto = new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
 
             // when & then
             RestAssuredMockMvc
@@ -277,7 +277,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
 
             String updatedNickname = "updated_user";
             String updatedCategoryCode = "DESIGN";
-            var requestDto = new MemberRequest.MemberDto(updatedNickname, updatedCategoryCode);
+            var requestDto = new MemberRequest.MemberDto(updatedNickname, null, updatedCategoryCode);
 
             // when & then
             RestAssuredMockMvc

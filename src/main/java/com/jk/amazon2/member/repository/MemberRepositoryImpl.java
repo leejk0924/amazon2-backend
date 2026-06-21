@@ -26,6 +26,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 .select(Projections.constructor(
                         MemberResult.Summary.class,
                         member.nickname,
+                        member.name,
                         category.name,
                         member.createdAt,
                         member.deleted
