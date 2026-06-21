@@ -34,7 +34,7 @@ class MemberCommandTest {
             String categoryCode = "DEV";
 
             // when
-            MemberCommand.Create command = MemberCommand.Create.of(nickname, categoryCode);
+            MemberCommand.Create command = MemberCommand.Create.of(nickname, null, categoryCode);
 
             // then
             assertSoftly(softly -> {
@@ -51,7 +51,7 @@ class MemberCommandTest {
                 String invalidNickname
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Create.of(invalidNickname, "DEV"))
+            assertThatThrownBy(() -> MemberCommand.Create.of(invalidNickname, null, "DEV"))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage());
         }
@@ -78,7 +78,7 @@ class MemberCommandTest {
                 String categoryCode
         ) {
             // when
-            MemberCommand.Update command = MemberCommand.Update.of(1L, nickname, categoryCode);
+            MemberCommand.Update command = MemberCommand.Update.of(1L, nickname, null, categoryCode);
 
             // then
             assertThat(command).isNotNull();
@@ -105,7 +105,7 @@ class MemberCommandTest {
                 String categoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(1L, invalidNickname, categoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of(1L, invalidNickname, null, categoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage());
         }
@@ -128,7 +128,7 @@ class MemberCommandTest {
                 String invalidCategoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(1L, nickname, invalidCategoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of(1L, nickname, null, invalidCategoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID.getMessage());
         }

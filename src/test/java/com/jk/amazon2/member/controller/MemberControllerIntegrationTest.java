@@ -60,8 +60,8 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
             String nickname = "updated_member";
             String categoryCode = "DESIGN";
 
-            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, categoryCode);
-            MemberResult.Update updateResult = MemberResult.Update.of(nickname, categoryCode);
+            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, null, categoryCode);
+            MemberResult.Update updateResult = MemberResult.Update.of(nickname, null, categoryCode);
 
             given(memberService.update(any(MemberCommand.Update.class)))
                     .willReturn(updateResult);
@@ -84,8 +84,8 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
             Long memberId = 1L;
             String nickname = "updated_member";
 
-            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, null);
-            MemberResult.Update updateResult = MemberResult.Update.of(nickname, null);
+            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, null, null);
+            MemberResult.Update updateResult = MemberResult.Update.of(nickname, null, null);
 
             given(memberService.update(any(MemberCommand.Update.class)))
                     .willReturn(updateResult);
@@ -106,7 +106,7 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
         void updateMember_fail(String scenario, String nickname, String categoryCode, MemberErrorCode errorCode) throws Exception {
             // given
             Long memberId = 1L;
-            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, categoryCode);
+            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, null, categoryCode);
 
             given(memberService.update(any(MemberCommand.Update.class)))
                     .willThrow(new RestApiException(errorCode));
@@ -185,11 +185,11 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
                 int expectedCount
         ) {
             List<MemberResult.Summary> allData = List.of(
-                    new MemberResult.Summary("dev_user1", "DEV", LocalDateTime.now(), false),
-                    new MemberResult.Summary("dev_user2", "DEV", LocalDateTime.now(), false),
-                    new MemberResult.Summary("design_user", "DESIGN", LocalDateTime.now(), false),
-                    new MemberResult.Summary("deleted_dev_user", "DEV", LocalDateTime.now(), true),
-                    new MemberResult.Summary("deleted_design_user", "DESIGN", LocalDateTime.now(), true)
+                    new MemberResult.Summary("dev_user1", null, "DEV", LocalDateTime.now(), false),
+                    new MemberResult.Summary("dev_user2", null, "DEV", LocalDateTime.now(), false),
+                    new MemberResult.Summary("design_user", null, "DESIGN", LocalDateTime.now(), false),
+                    new MemberResult.Summary("deleted_dev_user", null, "DEV", LocalDateTime.now(), true),
+                    new MemberResult.Summary("deleted_design_user", null, "DESIGN", LocalDateTime.now(), true)
             );
 
             return allData.stream()
@@ -214,7 +214,7 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
             int start = pageNumber * pageSize;
             int end = Math.min(start + pageSize, totalElements);
             for (int i = start; i < end; i++) {
-                content.add(new MemberResult.Summary("user" + i, "DEV", LocalDateTime.now(), false));
+                content.add(new MemberResult.Summary("user" + i, null, "DEV", LocalDateTime.now(), false));
             }
 
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
@@ -269,8 +269,8 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
         void getMembers_success_status_conversion() throws Exception {
             // given
             List<MemberResult.Summary> content = List.of(
-                    new MemberResult.Summary("dev_user1", "DEV", LocalDateTime.now(), false),
-                    new MemberResult.Summary("deleted_dev_user", "DEV", LocalDateTime.now(), true)
+                    new MemberResult.Summary("dev_user1", null, "DEV", LocalDateTime.now(), false),
+                    new MemberResult.Summary("deleted_dev_user", null, "DEV", LocalDateTime.now(), true)
             );
             Page<MemberResult.Summary> pageResult = new PageImpl<>(content, PageRequest.of(0, 10), 2);
 

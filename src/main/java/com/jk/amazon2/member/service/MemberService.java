@@ -30,6 +30,7 @@ public class MemberService {
 
         Member member = Member.of(
                 command.getNickname(),
+                command.getName(),
                 command.getCategoryCode()
         );
 
@@ -45,8 +46,8 @@ public class MemberService {
 
         categoryValidationPort.validateCategoryExists(command.getCategoryCode());
 
-        member.update(command.getNickname(), command.getCategoryCode());
-        return MemberResult.Update.of(member.getNickname(), member.getCategoryCode());
+        member.update(command.getNickname(), command.getName(), command.getCategoryCode());
+        return MemberResult.Update.of(member.getNickname(), member.getName(), member.getCategoryCode());
     }
 
     @Transactional

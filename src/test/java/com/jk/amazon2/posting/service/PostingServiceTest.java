@@ -81,7 +81,7 @@ class PostingServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Posting posting = new Posting(1L, startDate, 1, 2, 3, 4, 5, 6, 7, "admin");
         Page<Posting> postingPage = new PageImpl<>(List.of(posting), pageable, 1);
-        Member member = Member.of("testUser", "CAT01");
+        Member member = Member.of("testUser", null, "CAT01");
         ReflectionTestUtils.setField(member, "id", 1L);
 
         when(postingRepository.findAllBySearchCondition(eq(startDate), eq(startDate), eq(null), eq(pageable)))
@@ -109,7 +109,7 @@ class PostingServiceTest {
         Posting posting1 = new Posting(1L, LocalDate.of(2026, 6, 2), 1, 0, 0, 0, 0, 0, 0, "admin");
         Posting posting2 = new Posting(1L, LocalDate.of(2026, 6, 9), 0, 1, 0, 0, 0, 0, 0, "admin");
         Page<Posting> postingPage = new PageImpl<>(List.of(posting1, posting2), pageable, 2);
-        Member member = Member.of("testUser", "CAT01");
+        Member member = Member.of("testUser", null, "CAT01");
         ReflectionTestUtils.setField(member, "id", 1L);
 
         when(postingRepository.findAllBySearchCondition(eq(startDate), eq(endDate), eq(null), eq(pageable)))
@@ -133,7 +133,7 @@ class PostingServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Posting posting = new Posting(memberId, startDate, 3, 3, 3, 3, 3, 3, 3, "admin");
         Page<Posting> postingPage = new PageImpl<>(List.of(posting), pageable, 1);
-        Member member = Member.of("targetUser", "CAT01");
+        Member member = Member.of("targetUser", null, "CAT01");
         ReflectionTestUtils.setField(member, "id", memberId);
 
         when(postingRepository.findAllBySearchCondition(eq(startDate), eq(startDate), eq(memberId), eq(pageable)))

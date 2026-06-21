@@ -21,20 +21,25 @@ public class Member extends BaseAudit {
     @Column(name = "nickname", nullable = false, unique = true, length = 50)
     private String nickname;
 
+    @Column(name = "name", length = 50)
+    private String name;
+
     @Column(name = "deleted", nullable = false, columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
     private boolean deleted = Boolean.FALSE;
 
-    public static Member of(String nickname, String categoryCode) {
+    public static Member of(String nickname, String name, String categoryCode) {
         Member member = new Member();
         member.nickname = nickname;
+        member.name = name;
         member.categoryCode = categoryCode;
         return member;
     }
 
-    public void update(String nickname, String categoryCode) {
+    public void update(String nickname, String name, String categoryCode) {
         if (nickname != null) {
             this.nickname = nickname;
         }
+        this.name = name;
         this.categoryCode = categoryCode;
     }
 

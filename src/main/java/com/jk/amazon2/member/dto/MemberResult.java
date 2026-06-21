@@ -17,6 +17,7 @@ public class MemberResult {
     public static class Detail {
         private Long id;
         private String nickname;
+        private String name;
         private String categoryCode;
         private LocalDateTime createdAt;
         private boolean deleted;
@@ -25,6 +26,7 @@ public class MemberResult {
             return new Detail(
                     member.getId(),
                     member.getNickname(),
+                    member.getName(),
                     member.getCategoryCode(),
                     member.getCreatedAt(),
                     member.isDeleted()
@@ -34,15 +36,17 @@ public class MemberResult {
 
     public record Update(
             String nickname,
+            String name,
             String categoryCode
     ) {
-        public static Update of(String nickname, String categoryCode) {
-            return new Update(nickname, categoryCode);
+        public static Update of(String nickname, String name, String categoryCode) {
+            return new Update(nickname, name, categoryCode);
         }
     }
 
     public record Summary(
             String nickname,
+            String name,
             String categoryName,
             LocalDateTime createdAt,
             boolean deleted
