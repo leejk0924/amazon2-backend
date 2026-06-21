@@ -1,5 +1,7 @@
 package com.jk.amazon2.posting.service;
 
+import com.jk.amazon2.member.entity.Member;
+import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.posting.dto.PostingResponse;
 import com.jk.amazon2.posting.entity.Posting;
 import com.jk.amazon2.posting.repository.PostingRepository;
@@ -12,6 +14,10 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -19,11 +25,20 @@ import java.time.LocalDate;
 public class PostingService {
 
     private final PostingRepository postingRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
     public Page<PostingResponse.PostingDto> getPostings(LocalDate startDate, Pageable pageable) {
-        return postingRepository.findAllByWeekStartDate(startDate, pageable)
-            .map(PostingResponse.PostingDto::from);
+        Page<Posting> postings = postingRepository.findAllByWeekStartDate(startDate, pageable);
+
+        Set<Long> memberIds = postings.getContent().stream()
+            .map(Posting::getMemberId)
+            .collect(Collectors.toSet());
+
+        Map<Long, String> nicknameMap = memberRepository.findAllById(memberIds).stream()
+            .collect(Collectors.toMap(Member::getId, Member::getNickname));
+
+        return postings.map(p -> PostingResponse.PostingDto.from(p, nicknameMap.get(p.getMemberId())));
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
