@@ -69,6 +69,7 @@ class PostingServiceIntegrationTest {
         // Then
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).memberNickname()).isEqualTo("active-user");
+        assertThat(result.getContent().get(0).memberName()).isEqualTo("활성멤버");
     }
 
     @Test
@@ -92,5 +93,8 @@ class PostingServiceIntegrationTest {
         assertThat(result.getContent())
             .extracting(PostingResponse.PostingDto::memberNickname)
             .containsExactlyInAnyOrder("user-a", "user-b");
+        assertThat(result.getContent())
+            .extracting(PostingResponse.PostingDto::memberName)
+            .containsExactlyInAnyOrder("멤버A", "멤버B");
     }
 }

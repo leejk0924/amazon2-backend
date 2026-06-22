@@ -96,6 +96,7 @@ class PostingServiceTest {
         PostingResponse.PostingDto dto = result.getContent().get(0);
         assertThat(dto.weekStartDate()).isEqualTo(startDate);
         assertThat(dto.memberNickname()).isEqualTo("testUser");
+        assertThat(dto.memberName()).isEqualTo("test-name");
         verify(postingRepository).findAllBySearchCondition(startDate, startDate, null, pageable);
     }
 
@@ -147,6 +148,7 @@ class PostingServiceTest {
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).memberId()).isEqualTo(memberId);
         assertThat(result.getContent().get(0).memberNickname()).isEqualTo("targetUser");
+        assertThat(result.getContent().get(0).memberName()).isEqualTo("test-name");
         verify(postingRepository).findAllBySearchCondition(startDate, startDate, memberId, pageable);
     }
 

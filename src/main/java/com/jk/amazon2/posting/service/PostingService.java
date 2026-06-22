@@ -40,10 +40,17 @@ public class PostingService {
             .map(Posting::getMemberId)
             .collect(Collectors.toSet());
 
-        Map<Long, String> nicknameMap = memberRepository.findAllById(memberIds).stream()
-            .collect(Collectors.toMap(Member::getId, Member::getNickname));
+        Map<Long, Member> memberMap = memberRepository.findAllById(memberIds).stream()
+            .collect(Collectors.toMap(Member::getId, m -> m));
 
-        return postings.map(p -> PostingResponse.PostingDto.from(p, nicknameMap.get(p.getMemberId())));
+        return postings.map(p -> {
+            Member member = memberMap.get(p.getMemberId());
+            return PostingResponse.PostingDto.from(
+                p,
+                member != null ? member.getNickname() : null,
+                member != null ? member.getName() : null
+            );
+        });
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)

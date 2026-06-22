@@ -8,6 +8,7 @@ public class PostingResponse {
     public record PostingDto(
             Long memberId,
             String memberNickname,
+            String memberName,
             LocalDate weekStartDate,
             int mon,
             int tue,
@@ -17,10 +18,11 @@ public class PostingResponse {
             int sat,
             int sun
     ) {
-        public static PostingDto from(Posting posting, String memberNickname) {
+        public static PostingDto from(Posting posting, String memberNickname, String memberName) {
             return new PostingDto(
                 posting.getMemberId(),
                 memberNickname,
+                memberName,
                 posting.getWeekStartDate(),
                 posting.getMon(),
                 posting.getTue(),
