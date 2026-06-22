@@ -1,5 +1,6 @@
 package com.jk.amazon2.posting.dto;
 
+import com.jk.amazon2.member.entity.Member;
 import com.jk.amazon2.posting.entity.Posting;
 
 import java.time.LocalDate;
@@ -18,19 +19,19 @@ public class PostingResponse {
             int sat,
             int sun
     ) {
-        public static PostingDto from(Posting posting, String memberNickname, String memberName) {
+        public static PostingDto from(Member member, Posting posting, LocalDate weekStartDate) {
             return new PostingDto(
-                posting.getMemberId(),
-                memberNickname,
-                memberName,
-                posting.getWeekStartDate(),
-                posting.getMon(),
-                posting.getTue(),
-                posting.getWed(),
-                posting.getThu(),
-                posting.getFri(),
-                posting.getSat(),
-                posting.getSun()
+                member.getId(),
+                member.getNickname(),
+                member.getName(),
+                posting != null ? posting.getWeekStartDate() : weekStartDate,
+                posting != null ? posting.getMon() : 0,
+                posting != null ? posting.getTue() : 0,
+                posting != null ? posting.getWed() : 0,
+                posting != null ? posting.getThu() : 0,
+                posting != null ? posting.getFri() : 0,
+                posting != null ? posting.getSat() : 0,
+                posting != null ? posting.getSun() : 0
             );
         }
     }

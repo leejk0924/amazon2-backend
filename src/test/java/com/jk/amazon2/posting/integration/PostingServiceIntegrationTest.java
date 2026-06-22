@@ -73,6 +73,34 @@ class PostingServiceIntegrationTest {
     }
 
     @Test
+    @DisplayName("[통합] 해당 주차 포스팅이 없는 멤버는 0으로 반환됨 [success]")
+    void getPostings_포스팅_없는_멤버_0으로_반환() {
+        // Given
+        memberRepository.save(Member.of("has-posting", "포스팅있음", "TECH"));
+        memberRepository.save(Member.of("no-posting", "포스팅없음", "TECH"));
+
+        LocalDate weekStart = LocalDate.of(2026, 6, 9);
+        Member withPosting = memberRepository.findByNickname("has-posting").orElseThrow();
+        postingRepository.save(new Posting(withPosting.getId(), weekStart, 3, 2, 1, 0, 0, 0, 0, "admin"));
+
+        // When
+        Page<PostingResponse.PostingDto> result = postingService.getPostings(
+            weekStart, null, null, PageRequest.of(0, 10)
+        );
+
+        // Then
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        PostingResponse.PostingDto noPostDto = result.getContent().stream()
+            .filter(d -> "no-posting".equals(d.memberNickname()))
+            .findFirst()
+            .orElseThrow();
+        assertThat(noPostDto.mon()).isZero();
+        assertThat(noPostDto.tue()).isZero();
+        assertThat(noPostDto.sun()).isZero();
+        assertThat(noPostDto.weekStartDate()).isEqualTo(weekStart);
+    }
+
+    @Test
     @DisplayName("[통합] 활성 멤버의 포스팅은 정상 조회됨 [success]")
     void getPostings_활성_멤버_포스팅_정상_조회() {
         // Given
