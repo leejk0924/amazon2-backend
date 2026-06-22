@@ -13,6 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,7 +51,7 @@ public class NaverBlogScraper {
 
     private String buildUrl(String blogId, LocalDate date) {
         return String.format("%s?blogId=%s&viewdate=%s",
-            NAVER_BLOG_BASE_URL, blogId, date);
+            NAVER_BLOG_BASE_URL, blogId, date.format(DateTimeFormatter.BASIC_ISO_DATE));
     }
 
     private ScrapingResult<Document> fetchAndParse(String url) throws InterruptedException {
