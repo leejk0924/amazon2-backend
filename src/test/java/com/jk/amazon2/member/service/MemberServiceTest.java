@@ -25,7 +25,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -42,13 +41,12 @@ class MemberServiceTest {
     @BeforeEach
     void setUp() {
         memberService = new MemberService(memberRepository, categoryValidationPort);
-
     }
 
     @Nested
     @DisplayName("Member 생성 - 단위 테스트")
     class CreateMember {
-        @DisplayName("유저 생성 시, 일력된 정보가 엔티티로 변환되어 저장 [success]")
+        @DisplayName("유저 생성 시, 입력된 정보가 엔티티로 변환되어 저장 [success]")
         @Test
         void member_create_success() {
             // given
@@ -74,14 +72,13 @@ class MemberServiceTest {
 
             // then
             assertThat(savedMember).isNotNull();
-            SoftAssertions.assertSoftly(softly ->{
+            SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(savedMember.getNickname()).isEqualTo(nickname);
                 softly.assertThat(savedMember.getName()).isEqualTo(name);
                 softly.assertThat(savedMember.getCategoryCode()).isEqualTo(categoryCode);
                 softly.assertThat(savedMember.getId()).isEqualTo(id);
             });
 
-            // Verify Service Call
             ArgumentCaptor<Member> commandCaptor = ArgumentCaptor.forClass(Member.class);
             verify(memberRepository).save(commandCaptor.capture());
             Member capturedCommand = commandCaptor.getValue();
@@ -136,15 +133,14 @@ class MemberServiceTest {
         @Test
         void update_success() {
             // given
-            Long id = 1L;
+            String currentNickname = "test_member";
             String newNickname = "updated_member";
             String newName = "updated-name";
             String newCategoryCode = "UPDATED";
-            Member member = Member.of("test_member", "test-name", "DEV");
-            ReflectionTestUtils.setField(member, "id", id);
+            Member member = Member.of(currentNickname, "test-name", "DEV");
 
-            var updateCommand = MemberCommand.Update.of(id, newNickname, newName, newCategoryCode);
-            given(memberRepository.findById(id))
+            var updateCommand = MemberCommand.Update.of(currentNickname, newNickname, newName, newCategoryCode);
+            given(memberRepository.findByNickname(currentNickname))
                     .willReturn(Optional.of(member));
 
             // when
@@ -159,16 +155,14 @@ class MemberServiceTest {
             verify(categoryValidationPort).validateCategoryExists(newCategoryCode);
         }
 
-        @DisplayName("회원 업데이트 실패 - 존재하지 않는 회원 [fail]")
+        @DisplayName("회원 업데이트 실패 - 존재하지 않는 닉네임 [fail]")
         @Test
         void update_fail_not_found() {
             // given
-            Long id = 999L;
-            String newNickname = "updated_member";
-            String newCategoryCode = "UPDATED";
-            var updateCommand = MemberCommand.Update.of(id, newNickname, "updated-name", newCategoryCode);
+            String currentNickname = "non_existent";
+            var updateCommand = MemberCommand.Update.of(currentNickname, "updated_member", "updated-name", "UPDATED");
 
-            given(memberRepository.findById(id))
+            given(memberRepository.findByNickname(currentNickname))
                     .willReturn(Optional.empty());
 
             // when & then
@@ -181,14 +175,12 @@ class MemberServiceTest {
         @Test
         void update_fail_category_not_found() {
             // given
-            Long id = 1L;
-            String newNickname = "updated_member";
+            String currentNickname = "test_member";
             String newCategoryCode = "NOTEXIST";
-            Member member = Member.of("test_member", "test-name", "DEV");
-            ReflectionTestUtils.setField(member, "id", id);
-            var updateCommand = MemberCommand.Update.of(id, newNickname, "updated-name", newCategoryCode);
+            Member member = Member.of(currentNickname, "test-name", "DEV");
+            var updateCommand = MemberCommand.Update.of(currentNickname, "updated_member", "updated-name", newCategoryCode);
 
-            given(memberRepository.findById(id))
+            given(memberRepository.findByNickname(currentNickname))
                     .willReturn(Optional.of(member));
             doThrow(new RestApiException(CategoryErrorCode.CATEGORY_NOT_FOUND))
                     .when(categoryValidationPort).validateCategoryExists(newCategoryCode);
@@ -207,14 +199,13 @@ class MemberServiceTest {
         @DisplayName("회원 삭제 성공 [success]")
         void delete_success() {
             // given
-            Long id = 1L;
-            Member member = Member.of("test_member", "test-name", "DEV");
-            ReflectionTestUtils.setField(member, "id", id);
-            given(memberRepository.findById(id))
+            String nickname = "test_member";
+            Member member = Member.of(nickname, "test-name", "DEV");
+            given(memberRepository.findByNickname(nickname))
                     .willReturn(Optional.of(member));
 
             // when
-            memberService.delete(id);
+            memberService.delete(nickname);
 
             // then
             assertThat(member.isDeleted()).isTrue();
@@ -224,30 +215,29 @@ class MemberServiceTest {
         @DisplayName("이미 삭제된 회원 재삭제 성공 - 멱등성 [success]")
         void delete_success_already_deleted() {
             // given
-            Long id = 1L;
-            Member member = Member.of("test_member", "test-name", "DEV");
-            ReflectionTestUtils.setField(member, "id", id);
+            String nickname = "test_member";
+            Member member = Member.of(nickname, "test-name", "DEV");
             member.softDelete();
-            given(memberRepository.findById(id))
+            given(memberRepository.findByNickname(nickname))
                     .willReturn(Optional.of(member));
 
             // when
-            memberService.delete(id);
+            memberService.delete(nickname);
 
             // then
             assertThat(member.isDeleted()).isTrue();
         }
 
         @Test
-        @DisplayName("회원 삭제 실패 - 존재하지 않는 회원 [fail]")
+        @DisplayName("회원 삭제 실패 - 존재하지 않는 닉네임 [fail]")
         void delete_fail_not_found() {
             // given
-            Long id = 999L;
-            given(memberRepository.findById(id))
+            String nickname = "non_existent";
+            given(memberRepository.findByNickname(nickname))
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> memberService.delete(id))
+            assertThatThrownBy(() -> memberService.delete(nickname))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
         }
@@ -257,38 +247,39 @@ class MemberServiceTest {
     @DisplayName("Member 조회 - 단위 테스트")
     class GetMember {
         @Test
-        @DisplayName("회원 조회 성공 [success]")
-        void findById_success() {
+        @DisplayName("닉네임으로 회원 조회 성공 [success]")
+        void findByNickname_success() {
             // given
             Long id = 1L;
-            Member member = Member.of("test_member", "test-name", "DEV");
+            String nickname = "test_member";
+            Member member = Member.of(nickname, "test-name", "DEV");
             ReflectionTestUtils.setField(member, "id", id);
-            given(memberRepository.findById(id))
+            given(memberRepository.findByNickname(nickname))
                     .willReturn(Optional.of(member));
 
             // when
-            MemberResult.Detail result = memberService.findById(id);
+            MemberResult.Detail result = memberService.findByNickname(nickname);
 
             // then
             assertThat(result).isNotNull();
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(result.getId()).isEqualTo(id);
-                softly.assertThat(result.getNickname()).isEqualTo("test_member");
+                softly.assertThat(result.getNickname()).isEqualTo(nickname);
                 softly.assertThat(result.getCategoryCode()).isEqualTo("DEV");
                 softly.assertThat(result.isDeleted()).isFalse();
             });
         }
 
         @Test
-        @DisplayName("회원 조회 실패 - 존재하지 않는 회원 [fail]")
-        void findById_fail_not_found() {
+        @DisplayName("닉네임으로 회원 조회 실패 - 존재하지 않는 닉네임 [fail]")
+        void findByNickname_fail_not_found() {
             // given
-            Long id = 999L;
-            given(memberRepository.findById(id))
+            String nickname = "non_existent";
+            given(memberRepository.findByNickname(nickname))
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> memberService.findById(id))
+            assertThatThrownBy(() -> memberService.findByNickname(nickname))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
         }
@@ -301,30 +292,29 @@ class MemberServiceTest {
         @DisplayName("회원 영구 삭제 성공 [success]")
         void hardDelete_success() {
             // given
-            Long id = 1L;
-            Member member = Member.of("test_member", "test-name", "DEV");
-            ReflectionTestUtils.setField(member, "id", id);
+            String nickname = "test_member";
+            Member member = Member.of(nickname, "test-name", "DEV");
             member.softDelete();
-            given(memberRepository.findById(id))
+            given(memberRepository.findByNickname(nickname))
                     .willReturn(Optional.of(member));
 
             // when
-            memberService.hardDelete(id);
+            memberService.hardDelete(nickname);
 
             // then
             verify(memberRepository).delete(member);
         }
 
         @Test
-        @DisplayName("회원 영구 삭제 실패 - 존재하지 않는 회원 [fail]")
+        @DisplayName("회원 영구 삭제 실패 - 존재하지 않는 닉네임 [fail]")
         void hardDelete_fail_not_found() {
             // given
-            Long id = 999L;
-            given(memberRepository.findById(id))
+            String nickname = "non_existent";
+            given(memberRepository.findByNickname(nickname))
                     .willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> memberService.hardDelete(id))
+            assertThatThrownBy(() -> memberService.hardDelete(nickname))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
         }
@@ -333,14 +323,13 @@ class MemberServiceTest {
         @DisplayName("회원 영구 삭제 실패 - 소프트 삭제되지 않은 회원 [fail]")
         void hardDelete_fail_not_deleted() {
             // given
-            Long id = 1L;
-            Member member = Member.of("test_member", "test-name", "DEV");
-            ReflectionTestUtils.setField(member, "id", id);
-            given(memberRepository.findById(id))
+            String nickname = "test_member";
+            Member member = Member.of(nickname, "test-name", "DEV");
+            given(memberRepository.findByNickname(nickname))
                     .willReturn(Optional.of(member));
 
             // when & then
-            assertThatThrownBy(() -> memberService.hardDelete(id))
+            assertThatThrownBy(() -> memberService.hardDelete(nickname))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_DELETED.getMessage());
         }

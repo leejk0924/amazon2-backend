@@ -22,9 +22,9 @@ public class MemberController implements MemberApiSpec {
     private final MemberService memberService;
 
     @Override
-    @GetMapping("/members/{id}")
-    public ResponseEntity<MemberResponse.MemberDetailDto> getMember(@PathVariable Long id) {
-        MemberResult.Detail result = memberService.findById(id);
+    @GetMapping("/members/{nickname}")
+    public ResponseEntity<MemberResponse.MemberDetailDto> getMember(@PathVariable String nickname) {
+        MemberResult.Detail result = memberService.findByNickname(nickname);
         return ResponseEntity.ok(MemberResponse.MemberDetailDto.from(result));
     }
 
@@ -58,12 +58,12 @@ public class MemberController implements MemberApiSpec {
     }
 
     @Override
-    @PutMapping("/members/{id}")
+    @PutMapping("/members/{nickname}")
     public ResponseEntity<MemberResponse.MemberUpdateDto> updateMember(
-            @PathVariable Long id,
+            @PathVariable String nickname,
             @RequestBody MemberRequest.MemberDto member
     ) {
-        var update = MemberCommand.Update.of(id, member.nickname(), member.name(), member.categoryCode());
+        var update = MemberCommand.Update.of(nickname, member.nickname(), member.name(), member.categoryCode());
 
         var response = MemberResponse.MemberUpdateDto.from(memberService.update(update));
         return ResponseEntity
@@ -72,22 +72,22 @@ public class MemberController implements MemberApiSpec {
     }
 
     @Override
-    @DeleteMapping("/members/{id}")
+    @DeleteMapping("/members/{nickname}")
     public ResponseEntity<Void> deleteMember(
-            @PathVariable Long id
+            @PathVariable String nickname
     ) {
-        memberService.delete(id);
+        memberService.delete(nickname);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
 
     @Override
-    @DeleteMapping("/members/{id}/permanent")
+    @DeleteMapping("/members/{nickname}/permanent")
     public ResponseEntity<Void> hardDeleteMember(
-            @PathVariable Long id
+            @PathVariable String nickname
     ) {
-        memberService.hardDelete(id);
+        memberService.hardDelete(nickname);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();

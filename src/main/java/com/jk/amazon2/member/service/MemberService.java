@@ -41,7 +41,7 @@ public class MemberService {
     @Transactional
     public MemberResult.Update update(MemberCommand.Update command) {
         Member member = memberRepository
-                .findById(command.getId())
+                .findByNickname(command.getCurrentNickname())
                 .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         categoryValidationPort.validateCategoryExists(command.getCategoryCode());
@@ -51,15 +51,15 @@ public class MemberService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        Member member = memberRepository.findById(id)
+    public void delete(String nickname) {
+        Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
         member.softDelete();
     }
 
     @Transactional(readOnly = true)
-    public MemberResult.Detail findById(Long id) {
-        Member member = memberRepository.findById(id)
+    public MemberResult.Detail findByNickname(String nickname) {
+        Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
         return MemberResult.Detail.from(member);
     }
@@ -71,8 +71,8 @@ public class MemberService {
     }
 
     @Transactional
-    public void hardDelete(Long id) {
-        Member member = memberRepository.findById(id)
+    public void hardDelete(String nickname) {
+        Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
         if (!member.isDeleted()) {
             throw new RestApiException(MemberErrorCode.MEMBER_NOT_DELETED);

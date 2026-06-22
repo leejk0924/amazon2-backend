@@ -107,7 +107,7 @@ class MemberCommandTest {
                 String categoryCode
         ) {
             // when
-            MemberCommand.Update command = MemberCommand.Update.of(1L, nickname, null, categoryCode);
+            MemberCommand.Update command = MemberCommand.Update.of("currentNickname", nickname, null, categoryCode);
 
             // then
             assertThat(command).isNotNull();
@@ -134,7 +134,7 @@ class MemberCommandTest {
                 String categoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(1L, invalidNickname, null, categoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of("currentNickname", invalidNickname, null, categoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage());
         }
@@ -157,7 +157,7 @@ class MemberCommandTest {
                 String invalidCategoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(1L, nickname, null, invalidCategoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of("currentNickname", nickname, null, invalidCategoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID.getMessage());
         }
@@ -174,7 +174,7 @@ class MemberCommandTest {
         @DisplayName("name이 20자를 초과하면 수정 실패 [fail]")
         void update_fail_invalid_name() {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of(1L, "tester", "a".repeat(21), "DEV"))
+            assertThatThrownBy(() -> MemberCommand.Update.of("currentNickname", "tester", "a".repeat(21), "DEV"))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NAME_INVALID.getMessage());
         }
@@ -183,7 +183,7 @@ class MemberCommandTest {
         @DisplayName("name이 null이면 수정 성공 (선택값) [success]")
         void update_success_name_null() {
             // when
-            MemberCommand.Update command = MemberCommand.Update.of(1L, "tester", null, "DEV");
+            MemberCommand.Update command = MemberCommand.Update.of("currentNickname", "tester", null, "DEV");
 
             // then
             assertThat(command.getName()).isNull();

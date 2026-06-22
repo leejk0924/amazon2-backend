@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 public interface MemberApiSpec {
     @Operation(summary = "유저 단건 조회")
     @ApiResponse(responseCode = "200", description = "조회 성공")
-    ResponseEntity<MemberResponse.MemberDetailDto> getMember(Long id);
+    ResponseEntity<MemberResponse.MemberDetailDto> getMember(String nickname);
     @Operation(summary = "유저 조회 및 검색")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     ResponseEntity<Page<MemberResponse.MemberListDto>> getMembers(
@@ -26,11 +26,11 @@ public interface MemberApiSpec {
     ResponseEntity<MemberResponse.MemberCreateDto> createMember(MemberRequest.MemberCreateDto memberDto);
     @Operation(summary = "유저 수정")
     @ApiResponse(responseCode = "200", description = "유저 수정 성공")
-    ResponseEntity<MemberResponse.MemberUpdateDto> updateMember(Long id, MemberRequest.MemberDto memberDto);
+    ResponseEntity<MemberResponse.MemberUpdateDto> updateMember(String nickname, MemberRequest.MemberDto memberDto);
     @Operation(summary = "유저 삭제")
     @ApiResponse(responseCode = "204", description = "유저 삭제 성공")
-    ResponseEntity<Void> deleteMember(Long memberId);
+    ResponseEntity<Void> deleteMember(String nickname);
     @Operation(summary = "유저 영구 삭제")
     @ApiResponse(responseCode = "204", description = "유저 영구 삭제 성공")
-    ResponseEntity<Void> hardDeleteMember(Long memberId);
+    ResponseEntity<Void> hardDeleteMember(String nickname);
 }
