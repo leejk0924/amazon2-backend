@@ -67,7 +67,7 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
                     .willReturn(updateResult);
 
             // when & then
-            mockMvc.perform(put("/members/{id}", memberId)
+            mockMvc.perform(put("/members/{nickname}", nickname)
                             .contentType(APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -81,7 +81,6 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
         @DisplayName("회원 수정 성공 - categoryCode null [success]")
         void updateMember_success_with_null_categoryCode() throws Exception {
             // given
-            Long memberId = 1L;
             String nickname = "updated_member";
 
             MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, "test-name", null);
@@ -91,7 +90,7 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
                     .willReturn(updateResult);
 
             // when & then
-            mockMvc.perform(put("/members/{id}", memberId)
+            mockMvc.perform(put("/members/{nickname}", nickname)
                             .contentType(APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -105,14 +104,13 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
         @MethodSource("provideUpdateMemberFailureCases")
         void updateMember_fail(String scenario, String nickname, String categoryCode, MemberErrorCode errorCode) throws Exception {
             // given
-            Long memberId = 1L;
             MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, "test-name", categoryCode);
 
             given(memberService.update(any(MemberCommand.Update.class)))
                     .willThrow(new RestApiException(errorCode));
 
             // when & then
-            mockMvc.perform(put("/members/{id}", memberId)
+            mockMvc.perform(put("/members/{nickname}", "test_member")
                             .contentType(APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().is4xxClientError());
@@ -295,25 +293,25 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
         @DisplayName("회원 영구 삭제 성공 [success]")
         void hardDeleteMember_success() throws Exception {
             // given
-            Long memberId = 1L;
+            String nickname = "test_member";
 
             // when & then
-            mockMvc.perform(delete("/members/{id}/permanent", memberId))
+            mockMvc.perform(delete("/members/{nickname}/permanent", nickname))
                     .andExpect(status().isNoContent());
 
-            verify(memberService).hardDelete(memberId);
+            verify(memberService).hardDelete(nickname);
         }
 
         @Test
         @DisplayName("회원 영구 삭제 실패 - 소프트 삭제되지 않은 회원 [fail]")
         void hardDeleteMember_fail_not_deleted() throws Exception {
             // given
-            Long memberId = 1L;
+            String nickname = "test_member";
             org.mockito.Mockito.doThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_DELETED))
-                    .when(memberService).hardDelete(memberId);
+                    .when(memberService).hardDelete(nickname);
 
             // when & then
-            mockMvc.perform(delete("/members/{id}/permanent", memberId))
+            mockMvc.perform(delete("/members/{nickname}/permanent", nickname))
                     .andExpect(status().isBadRequest());
         }
     }

@@ -11,18 +11,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.Locale;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -50,7 +45,6 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         @Test
         void createMember_Integration_Success() {
             // given
-            // 1. 카테고리 미리 생성
             String categoryCode = "DEV_TEST";
             String categoryName = "개발";
             String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
@@ -61,7 +55,6 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             }
 
             String nickname = faker.name().fullName();
-            // 닉네임 길이 제한(50자)에 맞게 자르기
             if (nickname.length() > 50) nickname = nickname.substring(0, 50);
 
             var requestDto = new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
@@ -123,17 +116,8 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         @org.junit.jupiter.api.Disabled("카테고리 검증 부분 수정 필요 - 별도 PR에서 해결")
         void createMember_Integration_Fail_CategoryNotFound() {
             // given
-            // 카테고리 10자 이상 코드는 검증 에러가 발생하므로, 10자 이하로 설정
             String categoryCode = "UNKNOWN";
-            String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            try {
-                jdbcTemplate.update(insertCategorySql, "VALID_CAT", "유효한카테고리", "설명");
-            } catch (Exception e) {
-                // 이미 존재하면 무시
-            }
-
             String nickname = "new_user";
-            // 존재하지 않는 카테고리 코드 (10자 이하)
             var requestDto = new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
 
             // when & then
@@ -164,7 +148,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             }
         }
 
-        @DisplayName("[통합] GET /members/{id} - 회원 단건 조회 성공 [200 OK]")
+        @DisplayName("[통합] GET /members/{nickname} - 회원 단건 조회 성공 [200 OK]")
         @Test
         void getMember_Integration_Success() {
             // given
@@ -172,14 +156,11 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
             jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
 
-            String selectIdSql = "SELECT id FROM member WHERE nickname = ?";
-            Long memberId = jdbcTemplate.queryForObject(selectIdSql, Long.class, nickname);
-
             // when & then
             RestAssuredMockMvc
                     .given()
                     .when()
-                    .get("/members/{id}", memberId)
+                    .get("/members/{nickname}", nickname)
                     .then()
                     .statusCode(HttpStatus.OK.value())
                     .body("nickname", equalTo(nickname))
@@ -264,16 +245,13 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             }
         }
 
-        @DisplayName("[통합] PUT /members/{id} - 회원 수정 성공 [200 OK]")
+        @DisplayName("[통합] PUT /members/{nickname} - 회원 수정 성공 [200 OK]")
         @Test
         void updateMember_Integration_Success() {
             // given
             String nickname = "original_user";
             String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
             jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
-
-            String selectIdSql = "SELECT id FROM member WHERE nickname = ?";
-            Long memberId = jdbcTemplate.queryForObject(selectIdSql, Long.class, nickname);
 
             String updatedNickname = "updated_user";
             String updatedCategoryCode = "DESIGN";
@@ -285,7 +263,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                     .contentType(ContentType.JSON)
                     .body(requestDto)
                     .when()
-                    .put("/members/{id}", memberId)
+                    .put("/members/{nickname}", nickname)
                     .then()
                     .statusCode(HttpStatus.OK.value())
                     .body("nickname", equalTo(updatedNickname))
@@ -308,7 +286,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             }
         }
 
-        @DisplayName("[통합] DELETE /members/{id} - 회원 소프트 삭제 성공 [204 No Content]")
+        @DisplayName("[통합] DELETE /members/{nickname} - 회원 소프트 삭제 성공 [204 No Content]")
         @Test
         void deleteMember_Integration_Success() {
             // given
@@ -316,25 +294,22 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
             jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
 
-            String selectIdSql = "SELECT id FROM member WHERE nickname = ?";
-            Long memberId = jdbcTemplate.queryForObject(selectIdSql, Long.class, nickname);
-
             // when & then
             RestAssuredMockMvc
                     .given()
                     .when()
-                    .delete("/members/{id}", memberId)
+                    .delete("/members/{nickname}", nickname)
                     .then()
                     .statusCode(HttpStatus.NO_CONTENT.value());
 
-            // DB 검증 - deleted = true (flush 후 확인)
+            // DB 검증 - deleted = true (JPA flush 후 확인)
             em.flush();
-            String selectDeletedSql = "SELECT deleted FROM member WHERE id = ?";
-            Boolean deleted = jdbcTemplate.queryForObject(selectDeletedSql, Boolean.class, memberId);
+            String selectDeletedSql = "SELECT deleted FROM member WHERE nickname = ?";
+            Boolean deleted = jdbcTemplate.queryForObject(selectDeletedSql, Boolean.class, nickname);
             assertThat(deleted).isTrue();
         }
 
-        @DisplayName("[통합] DELETE /members/{id}/permanent - 회원 영구 삭제 성공 [204 No Content]")
+        @DisplayName("[통합] DELETE /members/{nickname}/permanent - 회원 영구 삭제 성공 [204 No Content]")
         @Test
         void hardDeleteMember_Integration_Success() {
             // given
@@ -342,25 +317,22 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, NOW(), 'system', NOW(), 'system')";
             jdbcTemplate.update(insertMemberSql, nickname, categoryCode, true);
 
-            String selectIdSql = "SELECT id FROM member WHERE nickname = ?";
-            Long memberId = jdbcTemplate.queryForObject(selectIdSql, Long.class, nickname);
-
             // when & then
             RestAssuredMockMvc
                     .given()
                     .when()
-                    .delete("/members/{id}/permanent", memberId)
+                    .delete("/members/{nickname}/permanent", nickname)
                     .then()
                     .statusCode(HttpStatus.NO_CONTENT.value());
 
-            // DB 검증 - 완전 삭제 (flush 후 확인)
+            // DB 검증 - 완전 삭제 (JPA flush 후 확인)
             em.flush();
-            String selectSql = "SELECT count(*) FROM member WHERE id = ?";
-            Integer count = jdbcTemplate.queryForObject(selectSql, Integer.class, memberId);
+            String selectSql = "SELECT count(*) FROM member WHERE nickname = ?";
+            Integer count = jdbcTemplate.queryForObject(selectSql, Integer.class, nickname);
             assertThat(count).isEqualTo(0);
         }
 
-        @DisplayName("[통합] DELETE /members/{id}/permanent - 소프트 삭제되지 않은 회원 영구 삭제 실패 [400 Bad Request]")
+        @DisplayName("[통합] DELETE /members/{nickname}/permanent - 소프트 삭제되지 않은 회원 영구 삭제 실패 [400 Bad Request]")
         @Test
         void hardDeleteMember_Integration_Fail_NotDeleted() {
             // given
@@ -368,14 +340,11 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
             jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
 
-            String selectIdSql = "SELECT id FROM member WHERE nickname = ?";
-            Long memberId = jdbcTemplate.queryForObject(selectIdSql, Long.class, nickname);
-
             // when & then
             RestAssuredMockMvc
                     .given()
                     .when()
-                    .delete("/members/{id}/permanent", memberId)
+                    .delete("/members/{nickname}/permanent", nickname)
                     .then()
                     .statusCode(HttpStatus.BAD_REQUEST.value())
                     .body("code", equalTo(MemberErrorCode.MEMBER_NOT_DELETED.name()));

@@ -19,6 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
@@ -73,7 +74,6 @@ class MemberControllerTest {
             // given
             var request = new MemberRequest.MemberCreateDto(nickname, "test-name", categoryCode);
 
-            // 서비스 로직 에러인 경우에만 Mocking (유효성 검사 실패는 서비스 호출 전 발생)
             if (errorCode == MemberErrorCode.MEMBER_NICKNAME_ALREADY_EXISTS || errorCode == CategoryErrorCode.CATEGORY_NOT_FOUND) {
                 given(memberService.create(any(MemberCommand.Create.class)))
                         .willThrow(new RestApiException(errorCode));
@@ -103,26 +103,26 @@ class MemberControllerTest {
         @DisplayName("회원 삭제 성공")
         void deleteMember_success() {
             // given
-            Long id = 1L;
+            String nickname = "test_member";
 
             // when
-            ResponseEntity<Void> response = memberController.deleteMember(id);
+            ResponseEntity<Void> response = memberController.deleteMember(nickname);
 
             // then
             assertThat(response.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.NO_CONTENT);
-            verify(memberService).delete(id);
+            verify(memberService).delete(nickname);
         }
 
         @Test
-        @DisplayName("회원 삭제 실패 - 존재하지 않는 회원")
+        @DisplayName("회원 삭제 실패 - 존재하지 않는 닉네임")
         void deleteMember_fail_not_found() {
             // given
-            Long id = 999L;
-            org.mockito.Mockito.doThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND))
-                    .when(memberService).delete(id);
+            String nickname = "non_existent";
+            Mockito.doThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND))
+                    .when(memberService).delete(nickname);
 
             // when & then
-            assertThatThrownBy(() -> memberController.deleteMember(id))
+            assertThatThrownBy(() -> memberController.deleteMember(nickname))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
         }
@@ -132,36 +132,37 @@ class MemberControllerTest {
     @DisplayName("Member 조회 - 단위 테스트")
     class GetMember {
         @Test
-        @DisplayName("회원 조회 성공")
+        @DisplayName("닉네임으로 회원 조회 성공")
         void getMember_success() {
             // given
             Long id = 1L;
-            var result = MemberResult.Detail.of(id, "test_member", "test-name", "DEV", LocalDateTime.now(), false);
-            given(memberService.findById(id))
+            String nickname = "test_member";
+            var result = MemberResult.Detail.of(id, nickname, "test-name", "DEV", LocalDateTime.now(), false);
+            given(memberService.findByNickname(nickname))
                     .willReturn(result);
 
             // when
-            ResponseEntity<MemberResponse.MemberDetailDto> response = memberController.getMember(id);
+            ResponseEntity<MemberResponse.MemberDetailDto> response = memberController.getMember(nickname);
 
             // then
             assertThat(response.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
             assertThat(response.getBody().id()).isEqualTo(id);
-            assertThat(response.getBody().nickname()).isEqualTo("test_member");
+            assertThat(response.getBody().nickname()).isEqualTo(nickname);
             assertThat(response.getBody().categoryCode()).isEqualTo("DEV");
             assertThat(response.getBody().status()).isEqualTo("active");
         }
 
         @Test
-        @DisplayName("회원 조회 실패 - 존재하지 않는 회원")
+        @DisplayName("닉네임으로 회원 조회 실패 - 존재하지 않는 닉네임")
         void getMember_fail_not_found() {
             // given
-            Long id = 999L;
-            given(memberService.findById(id))
+            String nickname = "non_existent";
+            given(memberService.findByNickname(nickname))
                     .willThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
             // when & then
-            assertThatThrownBy(() -> memberController.getMember(id))
+            assertThatThrownBy(() -> memberController.getMember(nickname))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
         }
@@ -174,29 +175,28 @@ class MemberControllerTest {
         @DisplayName("회원 영구 삭제 성공")
         void hardDeleteMember_success() {
             // given
-            Long id = 1L;
+            String nickname = "test_member";
 
             // when
-            ResponseEntity<Void> response = memberController.hardDeleteMember(id);
+            ResponseEntity<Void> response = memberController.hardDeleteMember(nickname);
 
             // then
             assertThat(response.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.NO_CONTENT);
-            verify(memberService).hardDelete(id);
+            verify(memberService).hardDelete(nickname);
         }
 
         @Test
         @DisplayName("회원 영구 삭제 실패 - 소프트 삭제되지 않은 회원")
         void hardDeleteMember_fail_not_deleted() {
             // given
-            Long id = 1L;
+            String nickname = "test_member";
             doThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_DELETED))
-                    .when(memberService).hardDelete(id);
+                    .when(memberService).hardDelete(nickname);
 
             // when & then
-            assertThatThrownBy(() -> memberController.hardDeleteMember(id))
+            assertThatThrownBy(() -> memberController.hardDeleteMember(nickname))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NOT_DELETED.getMessage());
         }
     }
-
 }

@@ -46,16 +46,20 @@ public class MemberCommand {
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Update {
 
-        private Long id;
+        private String currentNickname;
         private String nickname;
         private String name;
         private String categoryCode;
 
-        public static Update of(Long id, String nickname, String name, String categoryCode) {
-            return new Update(id, nickname, name, categoryCode);
+        public static Update of(String currentNickname, String nickname, String name, String categoryCode) {
+            return new Update(currentNickname, nickname, name, categoryCode);
         }
 
-        private Update(Long id, String nickname, String name, String categoryCode) {
+        private Update(String currentNickname, String nickname, String name, String categoryCode) {
+            if (currentNickname == null || currentNickname.isBlank()) {
+                log.warn("[VALIDATION_FAILED] MemberCommand.Update - Invalid currentNickname. currentNickname={}", currentNickname);
+                throw new RestApiException(MemberErrorCode.MEMBER_NICKNAME_INVALID);
+            }
             if (nickname == null || nickname.isBlank() || nickname.length() > 50) {
                 log.warn("[VALIDATION_FAILED] MemberCommand.Update - Invalid nickname. nickname={}", nickname);
                 throw new RestApiException(MemberErrorCode.MEMBER_NICKNAME_INVALID);
@@ -69,7 +73,7 @@ public class MemberCommand {
                 throw new RestApiException(MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID);
             }
 
-            this.id = id;
+            this.currentNickname = currentNickname;
             this.nickname = nickname;
             this.name = name;
             this.categoryCode = categoryCode;
