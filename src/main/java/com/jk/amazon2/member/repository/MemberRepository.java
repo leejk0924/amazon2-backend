@@ -15,4 +15,6 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
 
     @Query("SELECT m FROM Member m WHERE m.deleted = false AND (:memberId IS NULL OR m.id = :memberId)")
     Page<Member> findActiveMembers(@Param("memberId") Long memberId, Pageable pageable);
+
+    long countByDeletedFalse();
 }
