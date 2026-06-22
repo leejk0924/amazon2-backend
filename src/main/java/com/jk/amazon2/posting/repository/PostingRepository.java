@@ -22,7 +22,8 @@ public interface PostingRepository extends JpaRepository<Posting, Long> {
 
     @Query("""
             SELECT p FROM Posting p
-            WHERE (:startDate IS NULL OR p.weekStartDate >= :startDate)
+            WHERE EXISTS (SELECT m FROM Member m WHERE m.id = p.memberId AND m.deleted = false)
+              AND (:startDate IS NULL OR p.weekStartDate >= :startDate)
               AND (:endDate IS NULL OR p.weekStartDate <= :endDate)
               AND (:memberId IS NULL OR p.memberId = :memberId)
             """)
