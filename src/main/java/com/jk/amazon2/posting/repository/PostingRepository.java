@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface PostingRepository extends JpaRepository<Posting, Long> {
@@ -32,6 +34,18 @@ public interface PostingRepository extends JpaRepository<Posting, Long> {
         @Param("endDate") LocalDate endDate,
         @Param("memberId") Long memberId,
         Pageable pageable
+    );
+
+    @Query("""
+            SELECT p FROM Posting p
+            WHERE p.memberId IN :memberIds
+              AND p.weekStartDate >= :startDate
+              AND p.weekStartDate <= :endDate
+            """)
+    List<Posting> findAllByMemberIdsAndDateRange(
+        @Param("memberIds") Collection<Long> memberIds,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate
     );
 
     @Query("SELECT p FROM Posting p WHERE p.memberId = :memberId AND p.weekStartDate = :weekStartDate")

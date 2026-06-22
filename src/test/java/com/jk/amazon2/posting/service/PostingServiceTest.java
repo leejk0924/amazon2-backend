@@ -74,19 +74,19 @@ class PostingServiceTest {
     }
 
     @Test
-    @DisplayName("startDate만 전달하면 정확 일치 조회 (effectiveEndDate = startDate)")
-    void getPostings_startDate만_전달시_정확일치_조회() {
+    @DisplayName("포스팅이 있는 멤버는 실제 값으로 반환")
+    void getPostings_포스팅_있는_멤버_실제값_반환() {
         // Given
         LocalDate startDate = LocalDate.of(2026, 6, 9);
         Pageable pageable = PageRequest.of(0, 10);
-        Posting posting = new Posting(1L, startDate, 1, 2, 3, 4, 5, 6, 7, "admin");
-        Page<Posting> postingPage = new PageImpl<>(List.of(posting), pageable, 1);
         Member member = Member.of("testUser", "test-name", "CAT01");
         ReflectionTestUtils.setField(member, "id", 1L);
+        Posting posting = new Posting(1L, startDate, 1, 2, 3, 4, 5, 6, 7, "admin");
+        Page<Member> memberPage = new PageImpl<>(List.of(member), pageable, 1);
 
-        when(postingRepository.findAllBySearchCondition(eq(startDate), eq(startDate), eq(null), eq(pageable)))
-            .thenReturn(postingPage);
-        when(memberRepository.findAllById(anyCollection())).thenReturn(List.of(member));
+        when(memberRepository.findActiveMembers(eq(null), eq(pageable))).thenReturn(memberPage);
+        when(postingRepository.findAllByMemberIdsAndDateRange(anyCollection(), eq(startDate), eq(startDate)))
+            .thenReturn(List.of(posting));
 
         // When
         Page<PostingResponse.PostingDto> result = postingService.getPostings(startDate, null, null, pageable);
@@ -97,32 +97,38 @@ class PostingServiceTest {
         assertThat(dto.weekStartDate()).isEqualTo(startDate);
         assertThat(dto.memberNickname()).isEqualTo("testUser");
         assertThat(dto.memberName()).isEqualTo("test-name");
-        verify(postingRepository).findAllBySearchCondition(startDate, startDate, null, pageable);
+        assertThat(dto.mon()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("startDate + endDate 전달 시 기간 범위 조회")
-    void getPostings_기간범위_조회() {
+    @DisplayName("포스팅이 없는 멤버는 0으로 반환")
+    void getPostings_포스팅_없는_멤버_0으로_반환() {
         // Given
-        LocalDate startDate = LocalDate.of(2026, 6, 2);
-        LocalDate endDate = LocalDate.of(2026, 6, 23);
+        LocalDate startDate = LocalDate.of(2026, 6, 9);
         Pageable pageable = PageRequest.of(0, 10);
-        Posting posting1 = new Posting(1L, LocalDate.of(2026, 6, 2), 1, 0, 0, 0, 0, 0, 0, "admin");
-        Posting posting2 = new Posting(1L, LocalDate.of(2026, 6, 9), 0, 1, 0, 0, 0, 0, 0, "admin");
-        Page<Posting> postingPage = new PageImpl<>(List.of(posting1, posting2), pageable, 2);
-        Member member = Member.of("testUser", "test-name", "CAT01");
+        Member member = Member.of("noPostUser", "무포스팅", "CAT01");
         ReflectionTestUtils.setField(member, "id", 1L);
+        Page<Member> memberPage = new PageImpl<>(List.of(member), pageable, 1);
 
-        when(postingRepository.findAllBySearchCondition(eq(startDate), eq(endDate), eq(null), eq(pageable)))
-            .thenReturn(postingPage);
-        when(memberRepository.findAllById(anyCollection())).thenReturn(List.of(member));
+        when(memberRepository.findActiveMembers(eq(null), eq(pageable))).thenReturn(memberPage);
+        when(postingRepository.findAllByMemberIdsAndDateRange(anyCollection(), eq(startDate), eq(startDate)))
+            .thenReturn(List.of());
 
         // When
-        Page<PostingResponse.PostingDto> result = postingService.getPostings(startDate, endDate, null, pageable);
+        Page<PostingResponse.PostingDto> result = postingService.getPostings(startDate, null, null, pageable);
 
         // Then
-        assertThat(result.getTotalElements()).isEqualTo(2);
-        verify(postingRepository).findAllBySearchCondition(startDate, endDate, null, pageable);
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        PostingResponse.PostingDto dto = result.getContent().get(0);
+        assertThat(dto.memberNickname()).isEqualTo("noPostUser");
+        assertThat(dto.weekStartDate()).isEqualTo(startDate);
+        assertThat(dto.mon()).isZero();
+        assertThat(dto.tue()).isZero();
+        assertThat(dto.wed()).isZero();
+        assertThat(dto.thu()).isZero();
+        assertThat(dto.fri()).isZero();
+        assertThat(dto.sat()).isZero();
+        assertThat(dto.sun()).isZero();
     }
 
     @Test
@@ -132,14 +138,14 @@ class PostingServiceTest {
         LocalDate startDate = LocalDate.of(2026, 6, 9);
         Long memberId = 2L;
         Pageable pageable = PageRequest.of(0, 10);
-        Posting posting = new Posting(memberId, startDate, 3, 3, 3, 3, 3, 3, 3, "admin");
-        Page<Posting> postingPage = new PageImpl<>(List.of(posting), pageable, 1);
         Member member = Member.of("targetUser", "test-name", "CAT01");
         ReflectionTestUtils.setField(member, "id", memberId);
+        Posting posting = new Posting(memberId, startDate, 3, 3, 3, 3, 3, 3, 3, "admin");
+        Page<Member> memberPage = new PageImpl<>(List.of(member), pageable, 1);
 
-        when(postingRepository.findAllBySearchCondition(eq(startDate), eq(startDate), eq(memberId), eq(pageable)))
-            .thenReturn(postingPage);
-        when(memberRepository.findAllById(anyCollection())).thenReturn(List.of(member));
+        when(memberRepository.findActiveMembers(eq(memberId), eq(pageable))).thenReturn(memberPage);
+        when(postingRepository.findAllByMemberIdsAndDateRange(anyCollection(), eq(startDate), eq(startDate)))
+            .thenReturn(List.of(posting));
 
         // When
         Page<PostingResponse.PostingDto> result = postingService.getPostings(startDate, null, memberId, pageable);
@@ -149,17 +155,15 @@ class PostingServiceTest {
         assertThat(result.getContent().get(0).memberId()).isEqualTo(memberId);
         assertThat(result.getContent().get(0).memberNickname()).isEqualTo("targetUser");
         assertThat(result.getContent().get(0).memberName()).isEqualTo("test-name");
-        verify(postingRepository).findAllBySearchCondition(startDate, startDate, memberId, pageable);
     }
 
     @Test
-    @DisplayName("조건 없으면 빈 페이지 반환")
-    void getPostings_데이터_없으면_빈_페이지_반환() {
+    @DisplayName("활성 멤버가 없으면 빈 페이지 반환")
+    void getPostings_활성멤버_없으면_빈_페이지_반환() {
         // Given
         LocalDate startDate = LocalDate.of(2026, 6, 9);
         Pageable pageable = PageRequest.of(0, 10);
-        when(postingRepository.findAllBySearchCondition(eq(startDate), eq(startDate), eq(null), eq(pageable)))
-            .thenReturn(Page.empty(pageable));
+        when(memberRepository.findActiveMembers(eq(null), eq(pageable))).thenReturn(Page.empty(pageable));
 
         // When
         Page<PostingResponse.PostingDto> result = postingService.getPostings(startDate, null, null, pageable);
@@ -167,5 +171,6 @@ class PostingServiceTest {
         // Then
         assertThat(result.isEmpty()).isTrue();
         assertThat(result.getTotalElements()).isZero();
+        verifyNoInteractions(postingRepository);
     }
 }
