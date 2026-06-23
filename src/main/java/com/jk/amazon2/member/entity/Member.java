@@ -46,4 +46,8 @@ public class Member extends BaseAudit {
     public void softDelete() {
         this.deleted = true;
     }
+
+    public void restore() {
+        this.deleted = false;
+    }
 }

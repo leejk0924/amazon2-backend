@@ -33,4 +33,10 @@ public interface MemberApiSpec {
     @Operation(summary = "유저 영구 삭제")
     @ApiResponse(responseCode = "204", description = "유저 영구 삭제 성공")
     ResponseEntity<Void> hardDeleteMember(String nickname);
+
+    @Operation(summary = "soft delete된 유저 복구")
+    @ApiResponse(responseCode = "204", description = "유저 복구 성공")
+    @ApiResponse(responseCode = "400", description = "이미 활성 상태인 회원")
+    @ApiResponse(responseCode = "404", description = "존재하지 않는 회원")
+    ResponseEntity<Void> restoreMember(String nickname);
 }

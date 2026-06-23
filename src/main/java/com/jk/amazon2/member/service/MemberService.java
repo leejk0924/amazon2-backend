@@ -71,6 +71,16 @@ public class MemberService {
     }
 
     @Transactional
+    public void restore(String nickname) {
+        Member member = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+        if (!member.isDeleted()) {
+            throw new RestApiException(MemberErrorCode.MEMBER_ALREADY_ACTIVE);
+        }
+        member.restore();
+    }
+
+    @Transactional
     public void hardDelete(String nickname) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
