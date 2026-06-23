@@ -3,6 +3,7 @@ package com.jk.amazon2.posting.controller;
 import com.jk.amazon2.posting.dto.BatchStatusResponse;
 import com.jk.amazon2.posting.dto.ErrorLogDto;
 import com.jk.amazon2.posting.dto.StatisticsResponse;
+import com.jk.amazon2.posting.dto.WeeklyStatisticsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,6 +60,14 @@ public class MonitoringController implements MonitoringApiSpec {
         @RequestParam LocalDate endDate
     ) {
         StatisticsResponse stats = statisticsService.getStatistics(startDate, endDate);
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/weekly-statistics")
+    public ResponseEntity<WeeklyStatisticsResponse> getWeeklyStatistics(
+        @RequestParam LocalDate weekStartDate
+    ) {
+        WeeklyStatisticsResponse stats = statisticsService.getWeeklyStatistics(weekStartDate);
         return ResponseEntity.ok(stats);
     }
 }

@@ -54,4 +54,7 @@ public interface PostingRepository extends JpaRepository<Posting, Long> {
         @Param("memberId") Long memberId,
         @Param("weekStartDate") LocalDate weekStartDate
     );
+
+    @Query("SELECT p FROM Posting p WHERE p.weekStartDate = :weekStartDate")
+    List<Posting> findAllByWeekStartDate(@Param("weekStartDate") LocalDate weekStartDate);
 }
