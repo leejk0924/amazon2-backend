@@ -75,6 +75,7 @@ src/main/java/com/jk/amazon2/
 | **기여 규칙** | 커밋 메시지 형식 (Feat/Fix/Docs) | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 | **에러 관리** | 프로젝트별 에러 코드 | `.claude/errors/ERRORS.md` |
 | **프로젝트 메모리** | 대화 간 지속되는 컨텍스트 | `.claude/projects/...memory/` |
+| **코드 리뷰 출력** | 리뷰 결과는 Notion에 저장 (로컬 파일 금지) | `.claude/rules/code-review-output.md` |
 
 ---
 

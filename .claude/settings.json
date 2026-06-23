@@ -18,6 +18,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -er '.tool_input.command | select(startswith(\"git commit\"))' > /dev/null 2>&1 && printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"git commit 완료 감지. 지금 바로 senior-code-reviewer 에이전트를 자동 실행하여 방금 커밋된 변경사항을 코드 리뷰하고, 리뷰 결과를 Notion Amazon2-backend > 코드 리뷰 페이지에 저장하세요. 완료 후 리뷰 결과 요약을 사용자에게 보여주세요.\"}}' || true",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }
