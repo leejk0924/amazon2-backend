@@ -169,6 +169,52 @@ class MemberControllerTest {
     }
 
     @Nested
+    @DisplayName("Member 복구 - 단위 테스트")
+    class RestoreMember {
+        @Test
+        @DisplayName("회원 복구 성공 [success]")
+        void restoreMember_success() {
+            // Given
+            String nickname = "test_member";
+
+            // When
+            ResponseEntity<Void> response = memberController.restoreMember(nickname);
+
+            // Then
+            assertThat(response.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.NO_CONTENT);
+            verify(memberService).restore(nickname);
+        }
+
+        @Test
+        @DisplayName("회원 복구 실패 - 존재하지 않는 닉네임 [fail]")
+        void restoreMember_fail_not_found() {
+            // Given
+            String nickname = "non_existent";
+            doThrow(new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND))
+                    .when(memberService).restore(nickname);
+
+            // When & Then
+            assertThatThrownBy(() -> memberController.restoreMember(nickname))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
+        }
+
+        @Test
+        @DisplayName("회원 복구 실패 - 이미 활성 상태인 회원 [fail]")
+        void restoreMember_fail_already_active() {
+            // Given
+            String nickname = "active_member";
+            doThrow(new RestApiException(MemberErrorCode.MEMBER_ALREADY_ACTIVE))
+                    .when(memberService).restore(nickname);
+
+            // When & Then
+            assertThatThrownBy(() -> memberController.restoreMember(nickname))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_ALREADY_ACTIVE.getMessage());
+        }
+    }
+
+    @Nested
     @DisplayName("Member 영구 삭제 - 단위 테스트")
     class HardDeleteMember {
         @Test
