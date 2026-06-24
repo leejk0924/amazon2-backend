@@ -1,11 +1,10 @@
 package com.jk.amazon2.category.integration;
 
-import com.jk.amazon2.category.dto.CategoryRequest;
 import com.jk.amazon2.category.exception.CategoryErrorCode;
+import com.jk.amazon2.testsupport.CategoryMother;
 import com.jk.amazon2.testsupport.IntegrationTestSupport;
 import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
-import jakarta.persistence.EntityManager;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,8 +30,6 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
     private MockMvc mockMvc;
     @Autowired
     private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private EntityManager entityManager;
 
     private final Faker faker = new Faker(Locale.of("ko"));
 
@@ -49,13 +46,11 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
         String name = faker.company().industry();
         String description = faker.lorem().sentence();
 
-        var requestDto = new CategoryRequest.CategoryCreateDto(code, name, description);
-
         // when & then (API 검증)
         RestAssuredMockMvc
                 .given()
                 .contentType(ContentType.JSON)
-                .body(requestDto)
+                .body(CategoryMother.createDto(code, name, description))
                 .when()
                 .post("/categories")
                 .then()
@@ -63,11 +58,10 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
                 .body("categoryCode", equalTo(code))
                 .body("categoryName", equalTo(name))
                 .body("description", equalTo(description));
-        entityManager.flush();
 
         // then (DB에 저장되었는지 검증)
-        var sql = "SELECT name FROM blog_category WHERE code = ?";
-        String savedName = jdbcTemplate.queryForObject(sql, String.class, code);
+        String savedName = jdbcTemplate.queryForObject(
+                "SELECT name FROM blog_category WHERE code = ?", String.class, code);
         assertThat(savedName).isEqualTo(name);
     }
 
@@ -79,18 +73,13 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
         String name = faker.company().industry();
         String description = faker.lorem().sentence();
 
-        String initSql = """
-                    INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES(?, ?, ?, NOW(), "system")
-                """;
-        jdbcTemplate.update(initSql, code, name,description);
-
-        var requestSameCodeDto = new CategoryRequest.CategoryCreateDto(code, name, description);
+        jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.fullParams(code, name, description));
 
         // when & then
         RestAssuredMockMvc
                 .given()
                 .contentType(ContentType.JSON)
-                .body(requestSameCodeDto)
+                .body(CategoryMother.createDto(code, name, description))
                 .when()
                 .post("/categories")
                 .then()
@@ -99,35 +88,31 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
                 .body("message", equalTo(CategoryErrorCode.CATEGORY_ALREADY_EXISTS.getMessage()));
 
         // then - DB에 하나만 존재하는지 확인
-        var testSql = "SELECT count(*) FROM blog_category";
-        Integer count = jdbcTemplate.queryForObject(testSql, Integer.class);
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM blog_category", Integer.class);
         assertThat(count).isEqualTo(1);
     }
 
     @Nested
     @DisplayName("Category 수정 통합 테스트")
-    class UpdateCategory{
+    class UpdateCategory {
 
         @DisplayName("[통합] PUT /categories/{code} - 수정 성공 및 DB 반영 확인 [200 OK]")
         @Test
         void updateCategory_Integration_Success() {
             // given
             String code = "TECH";
-            String originalName = "Original Name";
-            String originalDesc = "Original Description";
-            String insertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            jdbcTemplate.update(insertSql, code, originalName, originalDesc);
+            jdbcTemplate.update(CategoryMother.INSERT_SQL,
+                    CategoryMother.fullParams(code, "Original Name", "Original Description"));
 
-            // 2. 수정할 데이터 준비
             String updateName = "Updated Name";
             String updateDesc = "Updated Description";
-            var requestDto = CategoryRequest.CategoryUpdateDto.of(updateName, updateDesc);
 
             // when & then (API 호출 및 응답 검증)
             RestAssuredMockMvc
                     .given()
                     .contentType(ContentType.JSON)
-                    .body(requestDto)
+                    .body(CategoryMother.updateDto(updateName, updateDesc))
                     .when()
                     .put("/categories/{code}", code)
                     .then()
@@ -135,12 +120,10 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
                     .body("categoryCode", equalTo(code))
                     .body("categoryName", equalTo(updateName))
                     .body("description", equalTo(updateDesc));
-            entityManager.flush();
 
             // then (DB 데이터 변경 확인)
-            String selectSql = "SELECT name, description FROM blog_category WHERE code = ?";
-            Map<String, Object> result = jdbcTemplate.queryForMap(selectSql, code);
-
+            Map<String, Object> result = jdbcTemplate.queryForMap(
+                    "SELECT name, description FROM blog_category WHERE code = ?", code);
             assertThat(result.get("name")).isEqualTo(updateName);
             assertThat(result.get("description")).isEqualTo(updateDesc);
         }
@@ -155,23 +138,15 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
                 String expectedErrorMessage
         ) {
             // given
-            // 필요한 경우 사전 데이터 세팅
             String code = "VALID_TEST";
-            String insertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-
-            try {
-                jdbcTemplate.update(insertSql, code, "Original", "Original Description");
-            } catch (Exception e) {
-                // 데이터가 DB에 이미 존재 시 무시
-            }
-
-            var requestDto = CategoryRequest.CategoryUpdateDto.of(name, description);
+            jdbcTemplate.update(CategoryMother.INSERT_SQL,
+                    CategoryMother.fullParams(code, "Original", "Original Description"));
 
             // when & then
             RestAssuredMockMvc
                     .given()
                     .contentType(ContentType.JSON)
-                    .body(requestDto)
+                    .body(CategoryMother.updateDto(name, description))
                     .when()
                     .put("/categories/{code}", code)
                     .then()
@@ -193,14 +168,6 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
     @DisplayName("Category 조회 통합 테스트")
     class GetCategory {
 
-        @BeforeEach
-        void setUp() {
-            RestAssuredMockMvc.mockMvc(mockMvc);
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=0");
-            jdbcTemplate.execute("TRUNCATE TABLE blog_category");
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=1");
-        }
-
         @DisplayName("[통합] GET /categories/{code} - 단건 조회 성공 [200 OK]")
         @Test
         void getCategory_Integration_Success() {
@@ -208,9 +175,7 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
             String code = "READ_TEST";
             String name = "Read Name";
             String description = "Read Desc";
-
-            String insertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            jdbcTemplate.update(insertSql, code, name, description);
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.fullParams(code, name, description));
 
             // when & then
             RestAssuredMockMvc
@@ -245,10 +210,9 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
         @Test
         void getCategories_Integration_Success() {
             // given
-            String insertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            jdbcTemplate.update(insertSql, "SEARCH_1", "Search Target 1", "Desc 1");
-            jdbcTemplate.update(insertSql, "SEARCH_2", "Search Target 2", "Desc 2");
-            jdbcTemplate.update(insertSql, "OTHER_3", "Other Category", "Desc 3");
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.fullParams("SEARCH_1", "Search Target 1", "Desc 1"));
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.fullParams("SEARCH_2", "Search Target 2", "Desc 2"));
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.fullParams("OTHER_3", "Other Category", "Desc 3"));
 
             // when & then
             RestAssuredMockMvc
@@ -260,7 +224,7 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
                     .get("/categories")
                     .then()
                     .statusCode(HttpStatus.OK.value())
-                    .body("content.size()", equalTo(2)) // 2개만 조회되어야 함
+                    .body("content.size()", equalTo(2))
                     .body("content[0].categoryCode", equalTo("SEARCH_1"))
                     .body("content[1].categoryCode", equalTo("SEARCH_2"))
                     .body("totalElements", equalTo(2));
@@ -269,15 +233,14 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
         @DisplayName("[통합] GET /categories - 페이징 및 정렬 동작 확인 [200 OK]")
         @Test
         void getCategories_Integration_PagingAndSorting() {
-            // given
-            //테스트 데이터 15개
-            String insertSql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
+            // given — 테스트 데이터 15개
             for (int i = 1; i <= 15; i++) {
                 String suffix = String.format("%02d", i);
-                jdbcTemplate.update(insertSql, "CODE" + suffix, "Name" + suffix,"Desc" + suffix);
+                jdbcTemplate.update(CategoryMother.INSERT_SQL,
+                        CategoryMother.fullParams("CODE" + suffix, "Name" + suffix, "Desc" + suffix));
             }
-            // when & then
-            // 첫 번째 페이지 조회 (size=10, name 역순 정렬)
+
+            // when & then — 첫 번째 페이지 (size=10, name 역순)
             RestAssuredMockMvc
                     .given()
                     .param("page", 0)
@@ -314,13 +277,10 @@ public class CategoryIntegrationTest extends IntegrationTestSupport {
         @DisplayName("[통합] GET /categories - 검색 결과가 없을 경우 빈 목록 반환 [200 OK]")
         @Test
         void getCategories_Integration_EmptyResult() {
-            // given
-            // 데이터가 없는 상태 (또는 검색 조건에 맞지 않는 데이터만 있는 상태)
-
             // when & then
             RestAssuredMockMvc
                     .given()
-                    .param("name", "NonExistentName") // 존재하지 않는 이름으로 검색
+                    .param("name", "NonExistentName")
                     .when()
                     .get("/categories")
                     .then()

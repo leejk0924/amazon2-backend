@@ -1,9 +1,10 @@
 package com.jk.amazon2.member.integration;
 
-import com.jk.amazon2.member.dto.MemberRequest;
 import com.jk.amazon2.category.exception.CategoryErrorCode;
 import com.jk.amazon2.member.exception.MemberErrorCode;
+import com.jk.amazon2.testsupport.CategoryMother;
 import com.jk.amazon2.testsupport.IntegrationTestSupport;
+import com.jk.amazon2.testsupport.MemberMother;
 import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import net.datafaker.Faker;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,8 +28,6 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
     private MockMvc mockMvc;
     @Autowired
     private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private EntityManager em;
 
     private final Faker faker = new Faker(Locale.of("ko"));
 
@@ -46,24 +44,16 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         void createMember_Integration_Success() {
             // given
             String categoryCode = "DEV_TEST";
-            String categoryName = "개발";
-            String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            try {
-                jdbcTemplate.update(insertCategorySql, categoryCode, categoryName, "카테고리");
-            } catch (Exception e) {
-                // 이미 존재하면 무시
-            }
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.defaultParams(categoryCode, "개발"));
 
             String nickname = faker.name().fullName();
             if (nickname.length() > 50) nickname = nickname.substring(0, 50);
-
-            var requestDto = new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
 
             // when & then (API 검증)
             RestAssuredMockMvc
                     .given()
                     .contentType(ContentType.JSON)
-                    .body(requestDto)
+                    .body(MemberMother.createDto(nickname, categoryCode))
                     .when()
                     .post("/members")
                     .then()
@@ -72,8 +62,9 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                     .body("categoryCode", equalTo(categoryCode));
 
             // then (DB 검증)
-            String selectSql = "SELECT count(*) FROM member WHERE nickname = ? AND category_code = ?";
-            Integer count = jdbcTemplate.queryForObject(selectSql, Integer.class, nickname, categoryCode);
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM member WHERE nickname = ? AND category_code = ?",
+                    Integer.class, nickname, categoryCode);
             assertThat(count).isEqualTo(1);
         }
 
@@ -82,28 +73,16 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         void createMember_Integration_Fail_DuplicateNickname() {
             // given
             String categoryCode = "DEV_DUP";
-            String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            try {
-                jdbcTemplate.update(insertCategorySql, categoryCode, "중복테스트용", "설명");
-            } catch (Exception e) {
-                // 이미 존재하면 무시
-            }
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.defaultParams(categoryCode, "중복테스트용"));
 
             String nickname = "duplicate_user";
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
-            try {
-                jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
-            } catch (Exception e) {
-                // 이미 존재하면 무시
-            }
-
-            var requestDto = new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams(nickname, categoryCode));
 
             // when & then
             RestAssuredMockMvc
                     .given()
                     .contentType(ContentType.JSON)
-                    .body(requestDto)
+                    .body(MemberMother.createDto(nickname, categoryCode))
                     .when()
                     .post("/members")
                     .then()
@@ -118,13 +97,12 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             // given
             String categoryCode = "UNKNOWN";
             String nickname = "new_user";
-            var requestDto = new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
 
             // when & then
             RestAssuredMockMvc
                     .given()
                     .contentType(ContentType.JSON)
-                    .body(requestDto)
+                    .body(MemberMother.createDto(nickname, categoryCode))
                     .when()
                     .post("/members")
                     .then()
@@ -140,12 +118,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
 
         @BeforeEach
         void setUp() {
-            String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            try {
-                jdbcTemplate.update(insertCategorySql, categoryCode, "팀", "팀 카테고리");
-            } catch (Exception e) {
-                // 이미 존재하면 무시
-            }
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.defaultParams(categoryCode, "팀"));
         }
 
         @DisplayName("[통합] GET /members/{nickname} - 회원 단건 조회 성공 [200 OK]")
@@ -153,8 +126,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         void getMember_Integration_Success() {
             // given
             String nickname = "test_user_001";
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams(nickname, categoryCode));
 
             // when & then
             RestAssuredMockMvc
@@ -171,9 +143,8 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         @Test
         void getMembers_Integration_Success() {
             // given
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
             for (int i = 0; i < 5; i++) {
-                jdbcTemplate.update(insertMemberSql, "user_" + i, categoryCode);
+                jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams("user_" + i, categoryCode));
             }
 
             // when & then
@@ -191,9 +162,8 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         @Test
         void getMembers_Integration_Filter_Nickname() {
             // given
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, "filter_user", categoryCode);
-            jdbcTemplate.update(insertMemberSql, "other_user", categoryCode);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams("filter_user", categoryCode));
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams("other_user", categoryCode));
 
             // when & then
             RestAssuredMockMvc
@@ -211,9 +181,8 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         @Test
         void getMembers_Integration_Filter_Status() {
             // given
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, "active_user", categoryCode, false);
-            jdbcTemplate.update(insertMemberSql, "deleted_user", categoryCode, true);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams("active_user", categoryCode));
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.deletedParams("deleted_user", categoryCode));
 
             // when & then
             RestAssuredMockMvc
@@ -236,13 +205,8 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
 
         @BeforeEach
         void setUp() {
-            String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            try {
-                jdbcTemplate.update(insertCategorySql, categoryCode, "개발", "개발팀");
-                jdbcTemplate.update(insertCategorySql, "DESIGN", "디자인", "디자인팀");
-            } catch (Exception e) {
-                // 이미 존재하면 무시
-            }
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.defaultParams(categoryCode, "개발"));
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.defaultParams("DESIGN", "디자인"));
         }
 
         @DisplayName("[통합] PUT /members/{nickname} - 회원 수정 성공 [200 OK]")
@@ -250,18 +214,16 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         void updateMember_Integration_Success() {
             // given
             String nickname = "original_user";
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams(nickname, categoryCode));
 
             String updatedNickname = "updated_user";
             String updatedCategoryCode = "DESIGN";
-            var requestDto = new MemberRequest.MemberDto(updatedNickname, null, updatedCategoryCode);
 
             // when & then
             RestAssuredMockMvc
                     .given()
                     .contentType(ContentType.JSON)
-                    .body(requestDto)
+                    .body(MemberMother.updateDto(updatedNickname, updatedCategoryCode))
                     .when()
                     .put("/members/{nickname}", nickname)
                     .then()
@@ -278,23 +240,17 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
 
         @BeforeEach
         void setUp() {
-            String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            try {
-                jdbcTemplate.update(insertCategorySql, categoryCode, "개발", "개발팀");
-            } catch (Exception e) {
-                // 이미 존재하면 무시
-            }
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.defaultParams(categoryCode, "개발"));
         }
 
         @DisplayName("[통합] PATCH /members/{nickname}/restore - soft delete된 회원 복구 성공 [204 No Content]")
         @Test
         void restoreMember_Integration_Success() {
-            // Given
+            // given
             String nickname = "restore_user";
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, true, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.deletedParams(nickname, categoryCode));
 
-            // When & Then (API 검증)
+            // when & then (API 검증)
             RestAssuredMockMvc
                     .given()
                     .when()
@@ -303,19 +259,18 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                     .statusCode(HttpStatus.NO_CONTENT.value());
 
             // DB 검증 - deleted = false
-            em.flush();
-            String selectSql = "SELECT deleted FROM member WHERE nickname = ?";
-            Boolean deleted = jdbcTemplate.queryForObject(selectSql, Boolean.class, nickname);
+            Boolean deleted = jdbcTemplate.queryForObject(
+                    "SELECT deleted FROM member WHERE nickname = ?", Boolean.class, nickname);
             assertThat(deleted).isFalse();
         }
 
         @DisplayName("[통합] PATCH /members/{nickname}/restore - 존재하지 않는 회원 복구 실패 [404 Not Found]")
         @Test
         void restoreMember_Integration_Fail_NotFound() {
-            // Given
+            // given
             String nickname = "non_existent_restore_user";
 
-            // When & Then
+            // when & then
             RestAssuredMockMvc
                     .given()
                     .when()
@@ -328,12 +283,11 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         @DisplayName("[통합] PATCH /members/{nickname}/restore - 이미 활성 상태인 회원 복구 실패 [400 Bad Request]")
         @Test
         void restoreMember_Integration_Fail_AlreadyActive() {
-            // Given
+            // given
             String nickname = "already_active_user";
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams(nickname, categoryCode));
 
-            // When & Then
+            // when & then
             RestAssuredMockMvc
                     .given()
                     .when()
@@ -351,12 +305,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
 
         @BeforeEach
         void setUp() {
-            String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
-            try {
-                jdbcTemplate.update(insertCategorySql, categoryCode, "개발", "개발팀");
-            } catch (Exception e) {
-                // 이미 존재하면 무시
-            }
+            jdbcTemplate.update(CategoryMother.INSERT_SQL, CategoryMother.defaultParams(categoryCode, "개발"));
         }
 
         @DisplayName("[통합] DELETE /members/{nickname} - 회원 소프트 삭제 성공 [204 No Content]")
@@ -364,8 +313,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         void deleteMember_Integration_Success() {
             // given
             String nickname = "delete_user";
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams(nickname, categoryCode));
 
             // when & then
             RestAssuredMockMvc
@@ -375,10 +323,9 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                     .then()
                     .statusCode(HttpStatus.NO_CONTENT.value());
 
-            // DB 검증 - deleted = true (JPA flush 후 확인)
-            em.flush();
-            String selectDeletedSql = "SELECT deleted FROM member WHERE nickname = ?";
-            Boolean deleted = jdbcTemplate.queryForObject(selectDeletedSql, Boolean.class, nickname);
+            // DB 검증 - deleted = true
+            Boolean deleted = jdbcTemplate.queryForObject(
+                    "SELECT deleted FROM member WHERE nickname = ?", Boolean.class, nickname);
             assertThat(deleted).isTrue();
         }
 
@@ -387,8 +334,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         void hardDeleteMember_Integration_Success() {
             // given
             String nickname = "hard_delete_user";
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, ?, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, nickname, categoryCode, true);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.deletedParams(nickname, categoryCode));
 
             // when & then
             RestAssuredMockMvc
@@ -398,10 +344,9 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
                     .then()
                     .statusCode(HttpStatus.NO_CONTENT.value());
 
-            // DB 검증 - 완전 삭제 (JPA flush 후 확인)
-            em.flush();
-            String selectSql = "SELECT count(*) FROM member WHERE nickname = ?";
-            Integer count = jdbcTemplate.queryForObject(selectSql, Integer.class, nickname);
+            // DB 검증 - 완전 삭제
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM member WHERE nickname = ?", Integer.class, nickname);
             assertThat(count).isEqualTo(0);
         }
 
@@ -410,8 +355,7 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
         void hardDeleteMember_Integration_Fail_NotDeleted() {
             // given
             String nickname = "not_deleted_user";
-            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
-            jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
+            jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams(nickname, categoryCode));
 
             // when & then
             RestAssuredMockMvc
