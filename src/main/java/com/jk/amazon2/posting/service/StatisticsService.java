@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,14 +24,25 @@ public class StatisticsService {
     private final PostingRepository postingRepository;
     private final MemberRepository memberRepository;
 
+    @Transactional(readOnly = true)
     public StatisticsResponse getStatistics(LocalDate startDate, LocalDate endDate) {
-        List<Member> members = memberRepository.findAll();
-        List<Posting> postings = postingRepository.findAll();
+        List<Member> members = memberRepository.findAllByDeletedFalse();
+        if (members.isEmpty()) {
+            return new StatisticsResponse(startDate, endDate, 0, List.of());
+        }
+
+        List<Long> memberIds = members.stream().map(Member::getId).toList();
+        List<Posting> postings = postingRepository.findAllByMemberIdsAndDateRange(memberIds, startDate, endDate);
+
+        Map<Long, List<Posting>> postingsByMember = postings.stream()
+            .collect(Collectors.groupingBy(Posting::getMemberId));
 
         int totalPostings = 0;
         List<StatisticsResponse.UserStatistics> userStats = new ArrayList<>();
 
         for (Member member : members) {
+            List<Posting> memberPostings = postingsByMember.getOrDefault(member.getId(), List.of());
+
             int memberTotal = 0;
             Map<String, Integer> dayOfWeekCounts = new HashMap<>();
             dayOfWeekCounts.put("mon", 0);
@@ -41,21 +53,18 @@ public class StatisticsService {
             dayOfWeekCounts.put("sat", 0);
             dayOfWeekCounts.put("sun", 0);
 
-            for (Posting p : postings) {
-                if (p.getMemberId().equals(member.getId()) &&
-                    isInRange(p.getWeekStartDate(), startDate, endDate)) {
+            for (Posting p : memberPostings) {
+                memberTotal += nullToZero(p.getMon()) + nullToZero(p.getTue()) + nullToZero(p.getWed())
+                             + nullToZero(p.getThu()) + nullToZero(p.getFri())
+                             + nullToZero(p.getSat()) + nullToZero(p.getSun());
 
-                    memberTotal += p.getMon() + p.getTue() + p.getWed() + p.getThu() +
-                                 p.getFri() + p.getSat() + p.getSun();
-
-                    dayOfWeekCounts.put("mon", dayOfWeekCounts.get("mon") + p.getMon());
-                    dayOfWeekCounts.put("tue", dayOfWeekCounts.get("tue") + p.getTue());
-                    dayOfWeekCounts.put("wed", dayOfWeekCounts.get("wed") + p.getWed());
-                    dayOfWeekCounts.put("thu", dayOfWeekCounts.get("thu") + p.getThu());
-                    dayOfWeekCounts.put("fri", dayOfWeekCounts.get("fri") + p.getFri());
-                    dayOfWeekCounts.put("sat", dayOfWeekCounts.get("sat") + p.getSat());
-                    dayOfWeekCounts.put("sun", dayOfWeekCounts.get("sun") + p.getSun());
-                }
+                dayOfWeekCounts.put("mon", dayOfWeekCounts.get("mon") + nullToZero(p.getMon()));
+                dayOfWeekCounts.put("tue", dayOfWeekCounts.get("tue") + nullToZero(p.getTue()));
+                dayOfWeekCounts.put("wed", dayOfWeekCounts.get("wed") + nullToZero(p.getWed()));
+                dayOfWeekCounts.put("thu", dayOfWeekCounts.get("thu") + nullToZero(p.getThu()));
+                dayOfWeekCounts.put("fri", dayOfWeekCounts.get("fri") + nullToZero(p.getFri()));
+                dayOfWeekCounts.put("sat", dayOfWeekCounts.get("sat") + nullToZero(p.getSat()));
+                dayOfWeekCounts.put("sun", dayOfWeekCounts.get("sun") + nullToZero(p.getSun()));
             }
 
             if (memberTotal > 0) {
@@ -105,11 +114,6 @@ public class StatisticsService {
             activeMemberCount,
             average
         );
-    }
-
-    private boolean isInRange(LocalDate weekStart, LocalDate rangeStart, LocalDate rangeEnd) {
-        LocalDate weekEnd = weekStart.plusDays(6);
-        return !weekEnd.isBefore(rangeStart) && !weekStart.isAfter(rangeEnd);
     }
 
     private int nullToZero(Integer value) {
