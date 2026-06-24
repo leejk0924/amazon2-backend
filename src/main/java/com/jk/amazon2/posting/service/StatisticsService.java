@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,11 +27,15 @@ public class StatisticsService {
     @Transactional(readOnly = true)
     public StatisticsResponse getStatistics(LocalDate startDate, LocalDate endDate) {
         List<Member> members = memberRepository.findAllByDeletedFalse();
+        if (members.isEmpty()) {
+            return new StatisticsResponse(startDate, endDate, 0, List.of());
+        }
+
         List<Long> memberIds = members.stream().map(Member::getId).toList();
         List<Posting> postings = postingRepository.findAllByMemberIdsAndDateRange(memberIds, startDate, endDate);
 
         Map<Long, List<Posting>> postingsByMember = postings.stream()
-            .collect(java.util.stream.Collectors.groupingBy(Posting::getMemberId));
+            .collect(Collectors.groupingBy(Posting::getMemberId));
 
         int totalPostings = 0;
         List<StatisticsResponse.UserStatistics> userStats = new ArrayList<>();
@@ -49,16 +54,17 @@ public class StatisticsService {
             dayOfWeekCounts.put("sun", 0);
 
             for (Posting p : memberPostings) {
-                memberTotal += p.getMon() + p.getTue() + p.getWed() + p.getThu() +
-                             p.getFri() + p.getSat() + p.getSun();
+                memberTotal += nullToZero(p.getMon()) + nullToZero(p.getTue()) + nullToZero(p.getWed())
+                             + nullToZero(p.getThu()) + nullToZero(p.getFri())
+                             + nullToZero(p.getSat()) + nullToZero(p.getSun());
 
-                dayOfWeekCounts.put("mon", dayOfWeekCounts.get("mon") + p.getMon());
-                dayOfWeekCounts.put("tue", dayOfWeekCounts.get("tue") + p.getTue());
-                dayOfWeekCounts.put("wed", dayOfWeekCounts.get("wed") + p.getWed());
-                dayOfWeekCounts.put("thu", dayOfWeekCounts.get("thu") + p.getThu());
-                dayOfWeekCounts.put("fri", dayOfWeekCounts.get("fri") + p.getFri());
-                dayOfWeekCounts.put("sat", dayOfWeekCounts.get("sat") + p.getSat());
-                dayOfWeekCounts.put("sun", dayOfWeekCounts.get("sun") + p.getSun());
+                dayOfWeekCounts.put("mon", dayOfWeekCounts.get("mon") + nullToZero(p.getMon()));
+                dayOfWeekCounts.put("tue", dayOfWeekCounts.get("tue") + nullToZero(p.getTue()));
+                dayOfWeekCounts.put("wed", dayOfWeekCounts.get("wed") + nullToZero(p.getWed()));
+                dayOfWeekCounts.put("thu", dayOfWeekCounts.get("thu") + nullToZero(p.getThu()));
+                dayOfWeekCounts.put("fri", dayOfWeekCounts.get("fri") + nullToZero(p.getFri()));
+                dayOfWeekCounts.put("sat", dayOfWeekCounts.get("sat") + nullToZero(p.getSat()));
+                dayOfWeekCounts.put("sun", dayOfWeekCounts.get("sun") + nullToZero(p.getSun()));
             }
 
             if (memberTotal > 0) {
