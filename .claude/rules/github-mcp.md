@@ -145,7 +145,7 @@ docker-compose logs github-mcp-wrapper
 
 ### 3. Claude Code 설정
 ```json
-// .claude/settings.local.json 참고
+// .claude/settings.json
 {
   "mcpServers": {
     "amazon2-github-mcp": {
