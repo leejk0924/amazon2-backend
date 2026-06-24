@@ -11,10 +11,11 @@
 - ✅ 반드시 따라야 하는 필수 규칙입니다
 - 🔴 위반 시 작업 품질 저하 및 버그 발생 위험
 
-특히 아래 3가지는 매번 확인하세요:
+특히 아래 4가지는 매번 확인하세요:
 1. **자동 커밋 금지** — 모든 git commit 전에 사용자 확인 필수!
 2. **Feature 브랜칭** — `feature/#<이슈>-<한글설명>` + git worktree 필수
 3. **GitHub MCP 활용** — 이슈 조회 → 작업 흐름 자동화 (이미 설정됨)
+4. **커밋 후 코드 리뷰 필수** — 커밋 완료 즉시 `senior-code-reviewer` 에이전트 실행 → Notion 저장
 
 ---
 
@@ -22,7 +23,7 @@ Amazon2 - 네이버 블로그 모임 관리 서비스 | Java 21, Spring Boot 4.0
 
 ---
 
-## ⚠️ 필수 3가지 규칙 (매번 확인!)
+## ⚠️ 필수 4가지 규칙 (매번 확인!)
 
 > 이전 실수를 방지하기 위한 최우선 규칙입니다.
 
@@ -37,6 +38,10 @@ Amazon2 - 네이버 블로그 모임 관리 서비스 | Java 21, Spring Boot 4.0
 3. **✅ 메모리 우선** — 규칙은 `.claude/` 메모리에 저장, 구현 결정은 논의 후
    - 프로젝트 메모리: `.claude/projects/.../memory/`
    - GitHub 자동화: `.claude/rules/github-mcp.md`
+
+4. **✅ 커밋 후 코드 리뷰 필수** — 커밋 완료 즉시 `senior-code-reviewer` 실행
+   - 리뷰 결과는 Notion `Amazon2-backend > 코드 리뷰` 페이지에 저장
+   - `.claude/rules/code-review-output.md` 참고
 
 ---
 
