@@ -286,6 +286,56 @@ class MemberServiceTest {
     }
 
     @Nested
+    @DisplayName("Member 복구 - 단위 테스트")
+    class RestoreMember {
+        @Test
+        @DisplayName("soft delete된 회원 복구 성공 [success]")
+        void restore_success() {
+            // Given
+            String nickname = "test_member";
+            Member member = Member.of(nickname, "test-name", "DEV");
+            member.softDelete();
+            given(memberRepository.findByNickname(nickname))
+                    .willReturn(Optional.of(member));
+
+            // When
+            memberService.restore(nickname);
+
+            // Then
+            assertThat(member.isDeleted()).isFalse();
+        }
+
+        @Test
+        @DisplayName("회원 복구 실패 - 존재하지 않는 닉네임 [fail]")
+        void restore_fail_not_found() {
+            // Given
+            String nickname = "non_existent";
+            given(memberRepository.findByNickname(nickname))
+                    .willReturn(Optional.empty());
+
+            // When & Then
+            assertThatThrownBy(() -> memberService.restore(nickname))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_NOT_FOUND.getMessage());
+        }
+
+        @Test
+        @DisplayName("회원 복구 실패 - 이미 활성 상태인 회원 [fail]")
+        void restore_fail_already_active() {
+            // Given
+            String nickname = "test_member";
+            Member member = Member.of(nickname, "test-name", "DEV");
+            given(memberRepository.findByNickname(nickname))
+                    .willReturn(Optional.of(member));
+
+            // When & Then
+            assertThatThrownBy(() -> memberService.restore(nickname))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(MemberErrorCode.MEMBER_ALREADY_ACTIVE.getMessage());
+        }
+    }
+
+    @Nested
     @DisplayName("Member 영구 삭제 - 단위 테스트")
     class HardDeleteMember {
         @Test

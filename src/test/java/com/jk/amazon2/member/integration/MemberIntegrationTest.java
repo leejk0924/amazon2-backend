@@ -272,6 +272,79 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
     }
 
     @Nested
+    @DisplayName("Member 복구 통합 테스트")
+    class RestoreMember {
+        private String categoryCode = "DEV";
+
+        @BeforeEach
+        void setUp() {
+            String insertCategorySql = "INSERT INTO blog_category (code, name, description, created_at, created_by) VALUES (?, ?, ?, NOW(), 'system')";
+            try {
+                jdbcTemplate.update(insertCategorySql, categoryCode, "개발", "개발팀");
+            } catch (Exception e) {
+                // 이미 존재하면 무시
+            }
+        }
+
+        @DisplayName("[통합] PATCH /members/{nickname}/restore - soft delete된 회원 복구 성공 [204 No Content]")
+        @Test
+        void restoreMember_Integration_Success() {
+            // Given
+            String nickname = "restore_user";
+            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, true, NOW(), 'system', NOW(), 'system')";
+            jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
+
+            // When & Then (API 검증)
+            RestAssuredMockMvc
+                    .given()
+                    .when()
+                    .patch("/members/{nickname}/restore", nickname)
+                    .then()
+                    .statusCode(HttpStatus.NO_CONTENT.value());
+
+            // DB 검증 - deleted = false
+            em.flush();
+            String selectSql = "SELECT deleted FROM member WHERE nickname = ?";
+            Boolean deleted = jdbcTemplate.queryForObject(selectSql, Boolean.class, nickname);
+            assertThat(deleted).isFalse();
+        }
+
+        @DisplayName("[통합] PATCH /members/{nickname}/restore - 존재하지 않는 회원 복구 실패 [404 Not Found]")
+        @Test
+        void restoreMember_Integration_Fail_NotFound() {
+            // Given
+            String nickname = "non_existent_restore_user";
+
+            // When & Then
+            RestAssuredMockMvc
+                    .given()
+                    .when()
+                    .patch("/members/{nickname}/restore", nickname)
+                    .then()
+                    .statusCode(HttpStatus.NOT_FOUND.value())
+                    .body("code", equalTo(MemberErrorCode.MEMBER_NOT_FOUND.name()));
+        }
+
+        @DisplayName("[통합] PATCH /members/{nickname}/restore - 이미 활성 상태인 회원 복구 실패 [400 Bad Request]")
+        @Test
+        void restoreMember_Integration_Fail_AlreadyActive() {
+            // Given
+            String nickname = "already_active_user";
+            String insertMemberSql = "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) VALUES (?, ?, false, NOW(), 'system', NOW(), 'system')";
+            jdbcTemplate.update(insertMemberSql, nickname, categoryCode);
+
+            // When & Then
+            RestAssuredMockMvc
+                    .given()
+                    .when()
+                    .patch("/members/{nickname}/restore", nickname)
+                    .then()
+                    .statusCode(HttpStatus.BAD_REQUEST.value())
+                    .body("code", equalTo(MemberErrorCode.MEMBER_ALREADY_ACTIVE.name()));
+        }
+    }
+
+    @Nested
     @DisplayName("Member 삭제 통합 테스트")
     class DeleteMember {
         private String categoryCode = "DEV";

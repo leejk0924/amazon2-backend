@@ -92,4 +92,15 @@ public class MemberController implements MemberApiSpec {
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
+
+    @Override
+    @PatchMapping("/members/{nickname}/restore")
+    public ResponseEntity<Void> restoreMember(
+            @PathVariable String nickname
+    ) {
+        memberService.restore(nickname);
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
+    }
 }
