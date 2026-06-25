@@ -45,6 +45,7 @@ infra/
 application-local.yml
 .env
 .env.local
+.env.prod
 ../.env
 
 ### Claude Code (로컬 전용) ###
