@@ -5,15 +5,15 @@ import com.jk.amazon2.member.dto.MemberRequest;
 public class MemberMother {
 
     public static final String INSERT_SQL =
-            "INSERT INTO member (nickname, category_code, deleted, created_at, created_by, updated_at, updated_by) " +
-            "VALUES (?, ?, ?, NOW(), 'system', NOW(), 'system')";
+            "INSERT INTO member (nickname, name, category_code, deleted, created_at, created_by, updated_at, updated_by) " +
+            "VALUES (?, ?, ?, ?, NOW(), 'system', NOW(), 'system')";
 
     public static Object[] activeParams(String nickname, String categoryCode) {
-        return new Object[]{nickname, categoryCode, false};
+        return new Object[]{nickname, "테스터", categoryCode, false};
     }
 
     public static Object[] deletedParams(String nickname, String categoryCode) {
-        return new Object[]{nickname, categoryCode, true};
+        return new Object[]{nickname, "테스터", categoryCode, true};
     }
 
     public static MemberRequest.MemberCreateDto createDto(String nickname, String categoryCode) {
