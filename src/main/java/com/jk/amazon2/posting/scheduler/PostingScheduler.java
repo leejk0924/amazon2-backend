@@ -19,7 +19,7 @@ public class PostingScheduler {
     /**
      * 매주 월요일 자정(00:00)에 지난주 데이터 수집
      */
-    @Scheduled(cron = "0 0 0 ? * MON")
+    @Scheduled(cron = "0 0 0 ? * MON", zone = "Asia/Seoul")
     public void scheduleWeeklyBatch() {
         log.info("[SCHEDULER] Weekly batch execution started");
 
