@@ -68,12 +68,12 @@ public class PostingService {
                 createdBy
             );
             postingRepository.save(newPosting);
-            log.info("Created posting - member={}, week={}, counts={}{}{}{}{}{}{}",
+            log.debug("Created posting - member={}, week={}, counts={}{}{}{}{}{}{}",
                 memberId, weekStartDate, mon, tue, wed, thu, fri, sat, sun);
         } else {
             existing.update(mon, tue, wed, thu, fri, sat, sun);
             postingRepository.save(existing);
-            log.info("Updated posting - member={}, week={}, counts={}{}{}{}{}{}{}",
+            log.debug("Updated posting - member={}, week={}, counts={}{}{}{}{}{}{}",
                 memberId, weekStartDate, mon, tue, wed, thu, fri, sat, sun);
         }
     }

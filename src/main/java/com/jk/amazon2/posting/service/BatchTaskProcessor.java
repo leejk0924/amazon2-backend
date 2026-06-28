@@ -37,7 +37,7 @@ public class BatchTaskProcessor {
                 updatePostingForDay(task.memberId(), weekStart, task.dayOfWeek(), success.value());
                 execution.incrementSuccessCount();
                 batchExecutionRepository.save(execution);
-                log.info("[BATCH] Saved posting - member={}, week={}, day={}, count={}",
+                log.debug("[BATCH] Saved posting - member={}, week={}, day={}, count={}",
                         task.memberId(), weekStart, task.dayOfWeek(), success.value());
             }
             case ScrapingResult.Failure<Integer> failure -> {
