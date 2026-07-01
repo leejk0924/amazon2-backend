@@ -56,11 +56,10 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
         @DisplayName("회원 수정 성공 [success]")
         void updateMember_success() throws Exception {
             // given
-            Long memberId = 1L;
-            String nickname = "updated_member";
+            String nickname = "test_member";
             String categoryCode = "DESIGN";
 
-            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, "test-name", categoryCode);
+            MemberRequest.MemberDto request = new MemberRequest.MemberDto("test-name", categoryCode);
             MemberResult.Update updateResult = MemberResult.Update.of(nickname, "test-name", categoryCode);
 
             given(memberService.update(any(MemberCommand.Update.class)))
@@ -81,9 +80,9 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
         @DisplayName("회원 수정 성공 - categoryCode null [success]")
         void updateMember_success_with_null_categoryCode() throws Exception {
             // given
-            String nickname = "updated_member";
+            String nickname = "test_member";
 
-            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, "test-name", null);
+            MemberRequest.MemberDto request = new MemberRequest.MemberDto("test-name", null);
             MemberResult.Update updateResult = MemberResult.Update.of(nickname, "test-name", null);
 
             given(memberService.update(any(MemberCommand.Update.class)))
@@ -102,9 +101,9 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
         @DisplayName("회원 수정 실패 케이스 [fail]")
         @ParameterizedTest(name = "[{index}] {0}")
         @MethodSource("provideUpdateMemberFailureCases")
-        void updateMember_fail(String scenario, String nickname, String categoryCode, MemberErrorCode errorCode) throws Exception {
+        void updateMember_fail(String scenario, String name, String categoryCode, MemberErrorCode errorCode) throws Exception {
             // given
-            MemberRequest.MemberDto request = new MemberRequest.MemberDto(nickname, "test-name", categoryCode);
+            MemberRequest.MemberDto request = new MemberRequest.MemberDto(name, categoryCode);
 
             given(memberService.update(any(MemberCommand.Update.class)))
                     .willThrow(new RestApiException(errorCode));
@@ -118,12 +117,12 @@ class MemberControllerIntegrationTest extends IntegrationTestSupport {
 
         private static Stream<Arguments> provideUpdateMemberFailureCases() {
             return Stream.of(
-                    Arguments.of("존재하지 않는 회원", "test_member", "DESIGN", MemberErrorCode.MEMBER_NOT_FOUND),
-                    Arguments.of("닉네임 공백", "", "DESIGN", MemberErrorCode.MEMBER_NICKNAME_INVALID),
-                    Arguments.of("닉네임 null", null, "DESIGN", MemberErrorCode.MEMBER_NICKNAME_INVALID),
-                    Arguments.of("닉네임 50자 초과", "a".repeat(51), "DESIGN", MemberErrorCode.MEMBER_NICKNAME_INVALID),
-                    Arguments.of("카테고리 코드 공백", "test_member", "", MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID),
-                    Arguments.of("카테고리 코드 10자 초과", "test_member", "a".repeat(11), MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID)
+                    Arguments.of("존재하지 않는 회원", "test-name", "DESIGN", MemberErrorCode.MEMBER_NOT_FOUND),
+                    Arguments.of("이름 null", null, "DESIGN", MemberErrorCode.MEMBER_NAME_INVALID),
+                    Arguments.of("이름 공백", "", "DESIGN", MemberErrorCode.MEMBER_NAME_INVALID),
+                    Arguments.of("이름 50자 초과", "a".repeat(51), "DESIGN", MemberErrorCode.MEMBER_NAME_INVALID),
+                    Arguments.of("카테고리 코드 공백", "test-name", "", MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID),
+                    Arguments.of("카테고리 코드 10자 초과", "test-name", "a".repeat(11), MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID)
             );
         }
     }

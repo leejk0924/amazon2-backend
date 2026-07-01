@@ -20,7 +20,7 @@ public class MemberMother {
         return new MemberRequest.MemberCreateDto(nickname, "테스터", categoryCode);
     }
 
-    public static MemberRequest.MemberDto updateDto(String nickname, String categoryCode) {
-        return new MemberRequest.MemberDto(nickname, null, categoryCode);
+    public static MemberRequest.MemberDto updateDto(String name, String categoryCode) {
+        return new MemberRequest.MemberDto(name, categoryCode);
     }
 }

@@ -97,6 +97,54 @@ class MemberControllerTest {
     }
 
     @Nested
+    @DisplayName("Member 수정 - 단위 테스트")
+    class UpdateMember {
+        @Test
+        @DisplayName("회원 수정 성공 [success]")
+        void updateMember_success() {
+            // given
+            String nickname = "test_member";
+            var request = new MemberRequest.MemberDto("updated-name", "DESIGN");
+            var updateResult = MemberResult.Update.of(nickname, "updated-name", "DESIGN");
+
+            given(memberService.update(any(MemberCommand.Update.class)))
+                    .willReturn(updateResult);
+
+            // when
+            ResponseEntity<MemberResponse.MemberUpdateDto> response = memberController.updateMember(nickname, request);
+
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(org.springframework.http.HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().nickname()).isEqualTo(nickname);
+            assertThat(response.getBody().name()).isEqualTo("updated-name");
+            assertThat(response.getBody().categoryCode()).isEqualTo("DESIGN");
+            verify(memberService).update(any(MemberCommand.Update.class));
+        }
+
+        @DisplayName("회원 수정 실패 케이스 [fail]")
+        @ParameterizedTest(name = "[{index}] {0}")
+        @MethodSource("provideUpdateMemberFailureCases")
+        void updateMember_fail(String scenario, String currentNickname, String name, MemberErrorCode errorCode) {
+            // when & then
+            assertThatThrownBy(() -> MemberCommand.Update.of(currentNickname, name, "DEV"))
+                    .isInstanceOf(RestApiException.class)
+                    .hasMessageContaining(errorCode.getMessage());
+        }
+
+        private static Stream<Arguments> provideUpdateMemberFailureCases() {
+            return Stream.of(
+                    Arguments.of("currentNickname null", null, "valid-name", MemberErrorCode.MEMBER_NICKNAME_INVALID),
+                    Arguments.of("currentNickname 공백", "", "valid-name", MemberErrorCode.MEMBER_NICKNAME_INVALID),
+                    Arguments.of("currentNickname 50자 초과", "a".repeat(51), "valid-name", MemberErrorCode.MEMBER_NICKNAME_INVALID),
+                    Arguments.of("name null", "valid_nick", null, MemberErrorCode.MEMBER_NAME_INVALID),
+                    Arguments.of("name 공백", "valid_nick", "", MemberErrorCode.MEMBER_NAME_INVALID),
+                    Arguments.of("name 50자 초과", "valid_nick", "a".repeat(51), MemberErrorCode.MEMBER_NAME_INVALID)
+            );
+        }
+    }
+
+    @Nested
     @DisplayName("Member 삭제 - 단위 테스트")
     class DeleteMember {
         @Test

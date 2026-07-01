@@ -44,9 +44,11 @@ public class MemberService {
                 .findByNickname(command.getCurrentNickname())
                 .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        categoryValidationPort.validateCategoryExists(command.getCategoryCode());
+        if (command.getCategoryCode() != null) {
+            categoryValidationPort.validateCategoryExists(command.getCategoryCode());
+        }
 
-        member.update(command.getNickname(), command.getName(), command.getCategoryCode());
+        member.update(command.getName(), command.getCategoryCode());
         return MemberResult.Update.of(member.getNickname(), member.getName(), member.getCategoryCode());
     }
 

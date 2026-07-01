@@ -5,8 +5,10 @@ import jakarta.validation.constraints.Size;
 
 public class MemberRequest {
     public record MemberDto(
-            String nickname,
+            @NotBlank(message = "이름은 필수 입니다.")
+            @Size(max = 50, message = "이름은 최대 50자까지 입력 가능합니다.")
             String name,
+            @Size(max = 10, message = "카테고리 코드는 최대 10자까지 입력 가능합니다.")
             String categoryCode
     ) {}
 
