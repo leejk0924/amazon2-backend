@@ -103,48 +103,47 @@ class MemberCommandTest {
         @MethodSource("provideValidUpdateCommands")
         void update_success(
                 String scenario,
-                String nickname,
+                String name,
                 String categoryCode
         ) {
             // when
-            MemberCommand.Update command = MemberCommand.Update.of("currentNickname", nickname, null, categoryCode);
+            MemberCommand.Update command = MemberCommand.Update.of("currentNickname", name, categoryCode);
 
             // then
             assertThat(command).isNotNull();
             assertSoftly(softly -> {
-                softly.assertThat(command.getNickname()).isEqualTo(nickname);
+                softly.assertThat(command.getName()).isEqualTo(name);
                 softly.assertThat(command.getCategoryCode()).isEqualTo(categoryCode);
             });
         }
 
         private static Stream<Arguments> provideValidUpdateCommands() {
             return Stream.of(
-                    of("기본 성공", "updatedNickname", "DESIGN"),
-                    of("categoryCode null", "updatedNickname", null),
-                    of("categoryCode 10자", "updatedNickname", "a".repeat(10))
+                    of("기본 성공", "updatedName", "DESIGN"),
+                    of("categoryCode null", "updatedName", null),
+                    of("categoryCode 10자", "updatedName", "a".repeat(10))
             );
         }
 
-        @DisplayName("닉네임 유효성 검사 실패 케이스 [fail]")
+        @DisplayName("currentNickname 유효성 검사 실패 케이스 [fail]")
         @ParameterizedTest(name = "[{index}] {0}")
-        @MethodSource("provideInvalidUpdateNicknames")
-        void update_fail_invalid_nickname(
+        @MethodSource("provideInvalidCurrentNicknames")
+        void update_fail_invalid_currentNickname(
                 String scenario,
-                String invalidNickname,
-                String categoryCode
+                String invalidCurrentNickname
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of("currentNickname", invalidNickname, null, categoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of(invalidCurrentNickname, "validName", "DESIGN"))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NICKNAME_INVALID.getMessage());
         }
 
-        private static Stream<Arguments> provideInvalidUpdateNicknames() {
+        private static Stream<Arguments> provideInvalidCurrentNicknames() {
             return Stream.of(
-                    of("nickname이 null인 경우", null, "DESIGN"),
-                    of("nickname이 빈 문자열인 경우", "", "DESIGN"),
-                    of("nickname이 공백인 경우", "   ", "DESIGN"),
-                    of("nickname이 50자를 초과하는 경우", "a".repeat(51), "DESIGN")
+                    of("currentNickname이 null인 경우", null),
+                    of("currentNickname이 빈 문자열인 경우", ""),
+                    of("currentNickname이 공백인 경우", "   "),
+                    of("currentNickname이 50자를 초과하는 경우", "a".repeat(51))
             );
         }
 
@@ -153,40 +152,42 @@ class MemberCommandTest {
         @MethodSource("provideInvalidUpdateCategoryCodes")
         void update_fail_invalid_categoryCode(
                 String scenario,
-                String nickname,
                 String invalidCategoryCode
         ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of("currentNickname", nickname, null, invalidCategoryCode))
+            assertThatThrownBy(() -> MemberCommand.Update.of("currentNickname", "validName", invalidCategoryCode))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_CATEGORY_CODE_INVALID.getMessage());
         }
 
         private static Stream<Arguments> provideInvalidUpdateCategoryCodes() {
             return Stream.of(
-                    of("categoryCode가 빈 문자열인 경우", "tester", ""),
-                    of("categoryCode가 공백인 경우", "tester", "   "),
-                    of("categoryCode가 10자를 초과하는 경우", "tester", "a".repeat(11))
+                    of("categoryCode가 빈 문자열인 경우", ""),
+                    of("categoryCode가 공백인 경우", "   "),
+                    of("categoryCode가 10자를 초과하는 경우", "a".repeat(11))
             );
         }
 
-        @Test
-        @DisplayName("name이 20자를 초과하면 수정 실패 [fail]")
-        void update_fail_invalid_name() {
+        @DisplayName("name 유효성 검사 실패 케이스 [fail]")
+        @ParameterizedTest(name = "[{index}] {0}")
+        @MethodSource("provideInvalidUpdateNames")
+        void update_fail_invalid_name(
+                String scenario,
+                String invalidName
+        ) {
             // when & then
-            assertThatThrownBy(() -> MemberCommand.Update.of("currentNickname", "tester", "a".repeat(21), "DEV"))
+            assertThatThrownBy(() -> MemberCommand.Update.of("currentNickname", invalidName, "DEV"))
                     .isInstanceOf(RestApiException.class)
                     .hasMessageContaining(MemberErrorCode.MEMBER_NAME_INVALID.getMessage());
         }
 
-        @Test
-        @DisplayName("name이 null이면 수정 성공 (선택값) [success]")
-        void update_success_name_null() {
-            // when
-            MemberCommand.Update command = MemberCommand.Update.of("currentNickname", "tester", null, "DEV");
-
-            // then
-            assertThat(command.getName()).isNull();
+        private static Stream<Arguments> provideInvalidUpdateNames() {
+            return Stream.of(
+                    of("name이 null인 경우", null),
+                    of("name이 빈 문자열인 경우", ""),
+                    of("name이 공백인 경우", "   "),
+                    of("name이 50자를 초과하는 경우", "a".repeat(51))
+            );
         }
     }
 

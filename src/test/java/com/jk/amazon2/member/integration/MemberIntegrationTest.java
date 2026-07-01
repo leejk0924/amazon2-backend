@@ -216,19 +216,20 @@ public class MemberIntegrationTest extends IntegrationTestSupport {
             String nickname = "original_user";
             jdbcTemplate.update(MemberMother.INSERT_SQL, MemberMother.activeParams(nickname, categoryCode));
 
-            String updatedNickname = "updated_user";
+            String updatedName = "수정된-이름";
             String updatedCategoryCode = "DESIGN";
 
             // when & then
             RestAssuredMockMvc
                     .given()
                     .contentType(ContentType.JSON)
-                    .body(MemberMother.updateDto(updatedNickname, updatedCategoryCode))
+                    .body(MemberMother.updateDto(updatedName, updatedCategoryCode))
                     .when()
                     .put("/members/{nickname}", nickname)
                     .then()
                     .statusCode(HttpStatus.OK.value())
-                    .body("nickname", equalTo(updatedNickname))
+                    .body("nickname", equalTo(nickname))
+                    .body("name", equalTo(updatedName))
                     .body("categoryCode", equalTo(updatedCategoryCode));
         }
     }

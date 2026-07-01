@@ -61,9 +61,9 @@ public class MemberController implements MemberApiSpec {
     @PutMapping("/members/{nickname}")
     public ResponseEntity<MemberResponse.MemberUpdateDto> updateMember(
             @PathVariable String nickname,
-            @RequestBody MemberRequest.MemberDto member
+            @RequestBody @Valid MemberRequest.MemberDto member
     ) {
-        var update = MemberCommand.Update.of(nickname, member.nickname(), member.name(), member.categoryCode());
+        var update = MemberCommand.Update.of(nickname, member.name(), member.categoryCode());
 
         var response = MemberResponse.MemberUpdateDto.from(memberService.update(update));
         return ResponseEntity

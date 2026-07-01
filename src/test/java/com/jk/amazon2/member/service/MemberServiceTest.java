@@ -134,12 +134,11 @@ class MemberServiceTest {
         void update_success() {
             // given
             String currentNickname = "test_member";
-            String newNickname = "updated_member";
             String newName = "updated-name";
             String newCategoryCode = "UPDATED";
             Member member = Member.of(currentNickname, "test-name", "DEV");
 
-            var updateCommand = MemberCommand.Update.of(currentNickname, newNickname, newName, newCategoryCode);
+            var updateCommand = MemberCommand.Update.of(currentNickname, newName, newCategoryCode);
             given(memberRepository.findByNickname(currentNickname))
                     .willReturn(Optional.of(member));
 
@@ -148,7 +147,7 @@ class MemberServiceTest {
 
             // then
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(result.nickname()).isEqualTo(newNickname);
+                softly.assertThat(result.nickname()).isEqualTo(currentNickname);
                 softly.assertThat(result.name()).isEqualTo(newName);
                 softly.assertThat(result.categoryCode()).isEqualTo(newCategoryCode);
             });
@@ -160,7 +159,7 @@ class MemberServiceTest {
         void update_fail_not_found() {
             // given
             String currentNickname = "non_existent";
-            var updateCommand = MemberCommand.Update.of(currentNickname, "updated_member", "updated-name", "UPDATED");
+            var updateCommand = MemberCommand.Update.of(currentNickname, "updated-name", "UPDATED");
 
             given(memberRepository.findByNickname(currentNickname))
                     .willReturn(Optional.empty());
@@ -178,7 +177,7 @@ class MemberServiceTest {
             String currentNickname = "test_member";
             String newCategoryCode = "NOTEXIST";
             Member member = Member.of(currentNickname, "test-name", "DEV");
-            var updateCommand = MemberCommand.Update.of(currentNickname, "updated_member", "updated-name", newCategoryCode);
+            var updateCommand = MemberCommand.Update.of(currentNickname, "updated-name", newCategoryCode);
 
             given(memberRepository.findByNickname(currentNickname))
                     .willReturn(Optional.of(member));
