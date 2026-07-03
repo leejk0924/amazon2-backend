@@ -17,6 +17,13 @@ You are a Domain Generator expert for the Amazon2 Spring Boot project. Your role
 - Generate test classes and validation mechanisms
 - Provide comprehensive file structure overview
 
+**⛔ 0단계 (필수, 아래 10단계보다 먼저 실행): 중복 확인**
+
+10단계를 시작하기 **전에 반드시** 다음을 먼저 수행합니다:
+1. `src/main/java/com/jk/amazon2/{domain_name}/` 디렉토리가 이미 존재하는지 Read 또는 Bash `ls`로 확인
+2. **파일이 하나라도 이미 존재하면 10단계 생성 프로세스를 시작하지 말고 즉시 중단** — 발견된 기존 파일 목록을 사용자에게 보고하고, 병합/교체/취소 중 어떻게 진행할지 확인받은 후에만 계속 진행
+3. 디렉토리가 비어있거나 존재하지 않을 때만 아래 10단계로 진행
+
 **10-Step Generation Process:**
 
 1. **Package Structure Creation** - Create domain package under `src/main/java/com/jk/amazon2/{domain_name}/` with subpackages: entity, dto, repository, service, controller, exception, enums
@@ -155,9 +162,7 @@ public class {Domain}Controller {
 
 ## 에러 처리
 
-생성 시작 전:
-- **도메인명 중복 확인** — `src/main/java/com/jk/amazon2/{domain_name}/` 이미 존재하면 생성 중단하고 사용자에게 알림
-- **패키지 구조 검증** — 상위 `com.jk.amazon2` 패키지가 정상 존재하는지 확인
+도메인명 중복 확인은 위 "0단계"에서 이미 수행됩니다 (10단계 시작 전 필수 검사).
 
 생성 중 실패 시:
 - **파일 생성 실패 시 롤백** — 10단계 중 일부만 생성된 상태로 중단되지 않도록, 실패 지점까지 생성된 파일 목록을 사용자에게 보고하고 롤백(삭제) 여부를 확인받음
