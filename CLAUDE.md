@@ -12,7 +12,7 @@
 - 🔴 위반 시 작업 품질 저하 및 버그 발생 위험
 
 특히 아래 4가지는 매번 확인하세요:
-1. **자동 커밋 금지** — 모든 git commit 전에 사용자 확인 필수!
+1. **기능별 분리 커밋** — 사용자 승인 없이 진행 가능, 단 목적이 다른 변경은 별도 커밋으로 작성
 2. **Feature 브랜칭** — `feature/#<이슈>-<한글설명>` + git worktree 필수
 3. **GitHub MCP 활용** — 이슈 조회 → 작업 흐름 자동화 (이미 설정됨)
 4. **커밋 후 코드 리뷰 필수** — 커밋 완료 즉시 `senior-code-reviewer` 에이전트 실행 → Notion 저장
@@ -27,8 +27,8 @@ Amazon2 - 네이버 블로그 모임 관리 서비스 | Java 21, Spring Boot 4.0
 
 > 이전 실수를 방지하기 위한 최우선 규칙입니다.
 
-1. **✅ 자동 커밋 금지** — 모든 git commit 전에 사용자 확인 필수!
-   - 파일 변경사항 → 사용자 승인 → 커밋 실행
+1. **✅ 기능별 분리 커밋** — 사용자 승인 없이 커밋 가능, 목적이 다른 변경은 별도 커밋
+   - 커밋 직후 변경 내역(파일 목록 + 메시지) 요약 보고
    - `.claude/rules/git-workflow.md` 참고
 
 2. **✅ Feature 브랜칭** — `feature/#<이슈>-<한글설명>` + git worktree 필수
@@ -73,7 +73,7 @@ src/main/java/com/jk/amazon2/
 
 | 항목 | 설명 | 상세 위치 |
 |------|------|---------|
-| **커밋 규칙** | 자동 커밋 금지, 반드시 사용자 확인 | `.claude/rules/git-workflow.md` |
+| **커밋 규칙** | 기능별 분리 커밋, 사용자 확인 없이 진행 가능 | `.claude/rules/git-workflow.md` |
 | **브랜칭** | feature/#이슈-설명 + git worktree | `.claude/rules/git-workflow.md` |
 | **GitHub MCP** | 이슈 조회 → 작업 흐름 자동화 | `.claude/rules/github-mcp.md` |
 | **의존성** | posting → category → member | [harnesses/README.md](harnesses/README.md) |
@@ -179,7 +179,7 @@ Claude: "Consistency Checker로 패키지 구조를 검증하겠습니다."
 
 1. **Git 워크플로우** - [`.claude/rules/git-workflow.md`](./.claude/rules/git-workflow.md) 읽기
 2. **프로젝트 메모리** - [feature_branch_workflow.md](https://github.com/leejk0924/amazon2-backend) 참고
-3. **커밋 확인** - 자동 커밋 금지, 반드시 사용자 승인 후 실행
+3. **커밋 원칙** - 기능별 분리 커밋, 사용자 확인 없이 진행 가능
 
 ---
 
