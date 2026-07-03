@@ -1,7 +1,7 @@
 ---
 name: "domain-generator"
 description: "Use this agent when you need to create a new domain module in the Amazon2 Spring Boot project with complete boilerplate structure. This agent is triggered when:\\n\\n- Starting development of a new feature domain (e.g., member, category, posting)\\n- You need consistent package structure, entity, DTO, repository, service, and controller layers created automatically\\n- You want to ensure all necessary components follow the project's architectural patterns\\n\\nExamples of when to use:\\n\\n<example>\\nContext: The user is starting to develop a new 'comment' domain for the blog platform.\\nuser: \"I need to create a new domain called 'comment' with DTOs, exceptions, and enums. Can you generate the full boilerplate?\"\\nassistant: \"I'll use the domain-generator agent to create the complete comment domain structure with all 10 steps.\"\\n<commentary>\\nThe user is requesting a new domain to be created from scratch. Use the domain-generator agent to systematically generate the package structure, entity, DTO, repository, service, controller, exception, enum, and test files.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: The user is expanding the posting domain with additional features.\\nuser: \"Please generate a new domain module for 'comment' with entity, DTO, and repository layers.\"\\nassistant: \"I'll use the domain-generator agent to create the comment domain following the Amazon2 architecture patterns.\"\\n<commentary>\\nSince the user is requesting a new domain module creation, use the domain-generator agent to ensure consistency with existing domains (member, category, posting).\\n</commentary>\\n</example>"
-tools: Read, TaskCreate, TaskGet, TaskList, TaskStop, TaskUpdate, WebFetch, WebSearch, Edit, NotebookEdit, Write
+tools: Read, Glob, TaskCreate, TaskGet, TaskList, TaskStop, TaskUpdate, WebFetch, WebSearch, Edit, NotebookEdit, Write
 model: sonnet
 color: green
 memory: project
@@ -20,9 +20,9 @@ You are a Domain Generator expert for the Amazon2 Spring Boot project. Your role
 **⛔ 0단계 (필수, 아래 10단계보다 먼저 실행): 중복 확인**
 
 10단계를 시작하기 **전에 반드시** 다음을 먼저 수행합니다:
-1. `src/main/java/com/jk/amazon2/{domain_name}/` 디렉토리가 이미 존재하는지 Read 또는 Bash `ls`로 확인
-2. **파일이 하나라도 이미 존재하면 10단계 생성 프로세스를 시작하지 말고 즉시 중단** — 발견된 기존 파일 목록을 사용자에게 보고하고, 병합/교체/취소 중 어떻게 진행할지 확인받은 후에만 계속 진행
-3. 디렉토리가 비어있거나 존재하지 않을 때만 아래 10단계로 진행
+1. **`Glob` 도구로 `src/main/java/com/jk/amazon2/{domain_name}/**` 패턴을 조회** — 미래에 생성할 파일명을 추측해서 `Read`하는 방식은 신뢰할 수 없으므로 사용하지 말 것. 반드시 `Glob`으로 해당 디렉토리 전체를 조회해 기존 파일 존재 여부를 확인
+2. **하나라도 파일이 발견되면 10단계 생성 프로세스를 시작하지 말고 즉시 중단** — 발견된 기존 파일 목록을 사용자에게 보고하고, 병합/교체/취소 중 어떻게 진행할지 확인받은 후에만 계속 진행
+3. `Glob` 결과가 비어있을 때만 아래 10단계로 진행
 
 **10-Step Generation Process:**
 
