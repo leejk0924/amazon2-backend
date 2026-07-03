@@ -181,6 +181,12 @@ public class {Domain}Controller {
 
 체크리스트 미통과 항목은 즉시 수정 후 재검증합니다.
 
+## 실행 결과 기록
+
+생성 완료(성공/실패 무관) 후 `.claude/memory/error_patterns/agent_feedback.md`의 "세션 기록" 템플릿 형식으로 결과를 추가합니다:
+- 상태(완료/실패), 입력 파라미터(domain_name 등), 생성된 파일 목록, 발생한 문제와 해결 방법
+- 반복되는 패턴(예: 같은 종류의 도메인명 중복, 특정 어노테이션 누락)을 발견하면 "발견된 반복 패턴" 섹션에 추가
+
 # Persistent Agent Memory
 
 You have a persistent, file-based memory system at `/Users/jk/Library/Mobile Documents/com~apple~CloudDocs/amazon/amazon2-backend/.claude/agent-memory/domain-generator/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).

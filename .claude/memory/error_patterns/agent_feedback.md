@@ -65,6 +65,14 @@
 
 ---
 
+## 세션 로그
+
+> domain-generator, harness-consistency-checker, dependency-analyzer가 실행될 때마다 위 "기록 구조" 템플릿 형식으로 이 섹션 아래에 실제 세션이 누적됩니다.
+
+(아직 기록된 실제 세션 없음)
+
+---
+
 ## 분석 대시보드
 
 ### 에러 분포
@@ -182,101 +190,13 @@
 
 ---
 
-## 성공/실패 사례
-
-### 성공 사례 (예시)
-
-**케이스 1: Domain Generator로 Product 도메인 생성**
-
-```
-날짜: 2024-01-15
-에이전트: Domain Generator
-도메인: product
-상태: 성공
-
-생성된 파일:
-- com/jk/amazon2/product/entity/Product.java
-- com/jk/amazon2/product/dto/ProductCreateRequest.java
-- com/jk/amazon2/product/dto/ProductUpdateRequest.java
-- com/jk/amazon2/product/dto/ProductResponse.java
-- com/jk/amazon2/product/repository/ProductRepository.java
-- com/jk/amazon2/product/service/ProductService.java
-- com/jk/amazon2/product/controller/ProductController.java
-
-Consistency Checker 검증: ✅ 패스
-- 패키지 구조: OK
-- 네이밍 규칙: OK
-- 어노테이션: OK
-- DTO 일관성: OK
-
-Dependency Analyzer 검증: ✅ 패스
-- 순환 의존성: 없음
-- 금지 의존성: 없음
-- Cross-domain: OK
-```
-
-### 실패 사례 (예시)
-
-**케이스 2: 수동으로 생성한 도메인에서 일관성 오류 감지**
-
-```
-날짜: 2024-01-20
-에이전트: Consistency Checker
-도메인: order (수동 생성)
-상태: 오류 감지
-
-발견된 이슈:
-- [ERROR] E100: 패키지 구조 불일치
-  - order/ 폴더에 직접 Java 파일 존재
-  - entity/, dto/, service/ 서브패키지 없음
-
-- [WARNING] E101: 메서드 네이밍 오류
-  - OrderService에 Find_By_Id() 메서드 (camelCase 위반)
-
-- [WARNING] E102: DTO 네이밍 오류
-  - OrderDTO.java (규칙: OrderCreateRequest, OrderResponse)
-
-- [ERROR] E300: @Table 어노테이션 누락
-  - Order.java에 @Entity는 있으나 @Table 없음
-
-조치:
-- Domain Generator 다시 실행으로 올바른 구조 생성
-- 기존 코드 병합
-
-결과: ✅ 이슈 모두 해결
-```
-
----
-
 ## 개선 사항 추적
 
 ### 발견된 반복 패턴
 
-**패턴**: Entity 클래스에 @Table 어노테이션 자주 누락
+> 위 "세션 로그"에 같은 유형의 이슈(같은 에러코드 또는 같은 근본 원인)가 3회 이상 누적되면, 아래에 패턴/근본 원인/해결책을 추가합니다.
 
-```
-발생 횟수: 3회
-영향도: 중간 (JPA 기본값으로 작동하지만 규칙 위반)
-근본 원인: 개발자가 수동으로 Entity 작성시 누락
-
-해결책:
-1. Domain Generator에 자동 @Table 추가 기능 포함 ✅
-2. Consistency Checker auto_fix로 자동 추가 ✅
-3. IDE 템플릿 업데이트 (선택)
-```
-
-**패턴**: DTO 네이밍 규칙 이해 부족
-
-```
-발생 횟수: 2회
-영향도: 낮음 (코드 동작에는 영향 없음)
-근본 원인: 신입 개발자의 규칙 미숙지
-
-해결책:
-1. DEVELOPING.md에 DTO 네이밍 규칙 추가 ✅
-2. harnesses/README.md 강화 ✅
-3. 코드 리뷰 체크리스트에 추가
-```
+(아직 반복 패턴 없음)
 
 ---
 
@@ -325,8 +245,13 @@ Dependency Analyzer 검증: ✅ 패스
 - 에러 정의: `.claude/errors/ERRORS.md`
 - 패턴 분석: `.claude/errors/ERROR_PATTERNS.md`
 - 에이전트 목록: `.claude/agents/`
-  - domain-generator-prompt.md
-  - test-generator-prompt.md
-  - api-documenter-prompt.md
-  - consistency-checker-prompt.md
-  - dependency-analyzer-prompt.md
+  - domain-generator.md
+  - test-generator.md
+  - api-doc-generator.md
+  - harness-consistency-checker.md
+  - dependency-analyzer.md
+  - senior-code-reviewer.md
+
+---
+
+**마지막 업데이트**: 2026-07-04 — 가짜 예시 데이터 제거, 깨진 파일 링크 수정, 실제 세션 기록이 쌓이도록 3개 에이전트(domain-generator, harness-consistency-checker, dependency-analyzer)에 기록 지시 연결

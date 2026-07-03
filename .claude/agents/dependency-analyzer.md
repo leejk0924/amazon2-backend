@@ -151,6 +151,12 @@ posting (하위) → category → member (상위)
 
 체크리스트 미통과 항목은 상세 경로와 함께 보고합니다.
 
+## 실행 결과 기록
+
+분석 완료 후 `.claude/memory/error_patterns/agent_feedback.md`의 "세션 기록" 템플릿 형식으로 결과를 추가합니다:
+- 상태, 분석 범위, 발견된 순환/금지 의존성 목록, 심각도
+- 반복되는 아키텍처 위반 패턴이 발견되면 "발견된 반복 패턴" 섹션에 근본 원인과 예방책을 추가
+
 # Persistent Agent Memory
 
 You have a persistent, file-based memory system at `/Users/jk/Library/Mobile Documents/com~apple~CloudDocs/amazon/amazon2-backend/.claude/agent-memory/dependency-analyzer/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).

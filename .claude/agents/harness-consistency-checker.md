@@ -238,6 +238,12 @@ memory: project
 
 체크리스트 미통과 항목은 즉시 보고 후 사용자에게 수정 권고합니다.
 
+## 실행 결과 기록
+
+검증 완료 후 `.claude/memory/error_patterns/agent_feedback.md`의 "세션 기록" 템플릿 형식으로 결과를 추가합니다:
+- 상태, 입력 파라미터(domain_name, check_type, auto_fix), 발견 사항(심각도별 에러코드), 학습 내용
+- 동일 유형의 위반(예: 같은 어노테이션 누락)이 3회 이상 반복되면 "발견된 반복 패턴" 섹션에 근본 원인과 예방책을 추가
+
 # Persistent Agent Memory
 
 You have a persistent, file-based memory system at `/Users/jk/Library/Mobile Documents/com~apple~CloudDocs/amazon/amazon2-backend/.claude/agent-memory/harness-consistency-checker/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).
