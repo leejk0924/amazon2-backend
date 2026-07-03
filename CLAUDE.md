@@ -4,44 +4,21 @@
 
 ---
 
-## ⚠️ CRITICAL: 이 파일의 모든 규칙은 필수입니다
-
-이 CLAUDE.md에 작성된 모든 규칙, 워크플로우, 에이전트 사용법은:
-- ❌ 선택사항이 아닙니다
-- ✅ 반드시 따라야 하는 필수 규칙입니다
-- 🔴 위반 시 작업 품질 저하 및 버그 발생 위험
-
-특히 아래 4가지는 매번 확인하세요:
-1. **기능별 분리 커밋** — 사용자 승인 없이 진행 가능, 단 목적이 다른 변경은 별도 커밋으로 작성
-2. **Feature 브랜칭** — `feature/#<이슈>-<한글설명>` + git worktree 필수
-3. **GitHub MCP 활용** — 이슈 조회 → 작업 흐름 자동화 (이미 설정됨)
-4. **커밋 후 코드 리뷰 필수** — 커밋 완료 즉시 `senior-code-reviewer` 에이전트 실행 → Notion 저장
-
----
-
 Amazon2 - 네이버 블로그 모임 관리 서비스 | Java 21, Spring Boot 4.0.0, MySQL 8.x
 
 ---
 
-## ⚠️ 필수 4가지 규칙 (매번 확인!)
+## 🧩 Skills (자동 활성화, 별도 지시 불필요)
 
-> 이전 실수를 방지하기 위한 최우선 규칙입니다.
+관련 요청이 오면 Claude가 아래 skill을 자동으로 활성화해 처리합니다:
 
-1. **✅ 기능별 분리 커밋** — 사용자 승인 없이 커밋 가능, 목적이 다른 변경은 별도 커밋
-   - 커밋 직후 변경 내역(파일 목록 + 메시지) 요약 보고
-   - `.claude/rules/git-workflow.md` 참고
+| Skill | 트리거 상황 | 정의 위치 |
+|-------|-----------|---------|
+| `github-issue` | 이슈 번호 언급, 이슈 조회/생성, PR 생성 | `.claude/skills/github-issue/SKILL.md` |
+| `git-workflow` | 커밋, feature 브랜치 생성, worktree 설정 | `.claude/skills/git-workflow/SKILL.md` |
+| `amazon2-code-review` | 코드 리뷰, PR 리뷰 요청 | `.claude/skills/amazon2-code-review/SKILL.md` |
 
-2. **✅ Feature 브랜칭** — `feature/#<이슈>-<한글설명>` + git worktree 필수
-   - Main 직접 수정 금지
-   - 병렬 작업 안전성 확보
-
-3. **✅ 메모리 우선** — 규칙은 `.claude/` 메모리에 저장, 구현 결정은 논의 후
-   - 프로젝트 메모리: `.claude/projects/.../memory/`
-   - GitHub 자동화: `.claude/rules/github-mcp.md`
-
-4. **✅ 커밋 후 코드 리뷰 필수** — 커밋 완료 즉시 `senior-code-reviewer` 실행
-   - 리뷰 결과는 Notion `Amazon2-backend > 코드 리뷰` 페이지에 저장
-   - `.claude/rules/code-review-output.md` 참고
+> 메모리 우선 원칙: 규칙은 `.claude/` 메모리에 저장, 구현 결정은 논의 후 진행 (`.claude/projects/.../memory/`)
 
 ---
 
@@ -73,14 +50,11 @@ src/main/java/com/jk/amazon2/
 
 | 항목 | 설명 | 상세 위치 |
 |------|------|---------|
-| **커밋 규칙** | 기능별 분리 커밋, 사용자 확인 없이 진행 가능 | `.claude/rules/git-workflow.md` |
-| **브랜칭** | feature/#이슈-설명 + git worktree | `.claude/rules/git-workflow.md` |
-| **GitHub MCP** | 이슈 조회 → 작업 흐름 자동화 | `.claude/rules/github-mcp.md` |
+| **GitHub MCP 설정** | Docker MCP 서버 연결 상세 | `.claude/rules/github-mcp.md` |
 | **의존성** | posting → category → member | [harnesses/README.md](harnesses/README.md) |
 | **기여 규칙** | 커밋 메시지 형식 (Feat/Fix/Docs) | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 | **에러 관리** | 프로젝트별 에러 코드 | `.claude/errors/ERRORS.md` |
 | **프로젝트 메모리** | 대화 간 지속되는 컨텍스트 | `.claude/projects/...memory/` |
-| **코드 리뷰 출력** | 리뷰 결과는 Notion에 저장 (로컬 파일 금지) | `.claude/rules/code-review-output.md` |
 
 ---
 
@@ -165,23 +139,14 @@ Claude: "Consistency Checker로 패키지 구조를 검증하겠습니다."
 
 ### 📖 상세 문서
 - [에이전트 사용 가이드](./.claude/rules/agent-usage.md)
-- [Domain Generator](./.claude/agents/domain-generator/main-prompt.md)
-- [Test Generator](./.claude/agents/test-generator/main-prompt.md)
-- [API Documenter](./.claude/agents/api-documenter/main-prompt.md)
-- [Consistency Checker](./.claude/agents/consistency-checker/main-prompt.md)
-- [Dependency Analyzer](./.claude/agents/dependency-analyzer/main-prompt.md)
+- [Domain Generator](./.claude/agents/domain-generator.md)
+- [Test Generator](./.claude/agents/test-generator.md)
+- [API Documenter](./.claude/agents/api-doc-generator.md)
+- [Consistency Checker](./.claude/agents/harness-consistency-checker.md)
+- [Dependency Analyzer](./.claude/agents/dependency-analyzer.md)
+- [Senior Code Reviewer](./.claude/agents/senior-code-reviewer.md)
 
 ---
 
-## ⚠️ 필수 확인사항
-
-기능 추가 전 반드시 이것들을 확인하세요:
-
-1. **Git 워크플로우** - [`.claude/rules/git-workflow.md`](./.claude/rules/git-workflow.md) 읽기
-2. **프로젝트 메모리** - [feature_branch_workflow.md](https://github.com/leejk0924/amazon2-backend) 참고
-3. **커밋 원칙** - 기능별 분리 커밋, 사용자 확인 없이 진행 가능
-
----
-
-**마지막 업데이트**: 2026-06-14  
-**구조**: 프로젝트 루트 CLAUDE.md (이 파일) ← `.claude/` 참고 → 규칙 상세 관리
+**마지막 업데이트**: 2026-07-04
+**구조**: 프로젝트 루트 CLAUDE.md (이 파일) ← `.claude/skills/` 자동 트리거 → `.claude/rules/` 상세 참고
