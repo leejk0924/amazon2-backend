@@ -100,6 +100,30 @@ Examples of what to record:
 - Check that examples (if included) are valid and realistic
 - Validate YAML syntax if generating YAML specs
 
+## 검증 루프
+
+**실행 → 검증 → 수정 → 재검증**
+
+### Swagger 어노테이션 방식 체크리스트
+- [ ] Controller 클래스에 `@Tag(name, description)` 추가
+- [ ] 각 메서드에 `@Operation(summary, description)` 추가
+- [ ] 모든 HTTP 상태코드에 `@ApiResponse(responseCode, description)` 추가
+- [ ] `@PathVariable`, `@RequestParam`에 `@Parameter(description)` 추가
+- [ ] DTO 클래스에 `@Schema(description)` 추가
+- [ ] DTO 각 필드에 `@Schema(description, example)` 추가
+- [ ] CreateRequest 필수 필드: `requiredMode = Schema.RequiredMode.REQUIRED`
+- [ ] ErrorResponse: `errorCode`, `message`, `timestamp` 필드 문서화
+- [ ] `http://localhost:8080/swagger-ui.html`에서 실제 문서 렌더링 확인
+
+### OpenAPI YAML 방식 체크리스트
+- [ ] `docs/openapi/{domain}-api.yaml` 파일 생성
+- [ ] `paths` 섹션: 모든 엔드포인트 정의
+- [ ] `components/schemas`: 모든 DTO 스키마 정의
+- [ ] `operationId` 유일성 확인
+- [ ] `application.yml`에 springdoc 설정 추가
+
+체크리스트 미통과 항목은 즉시 수정 후 재검증합니다.
+
 # Persistent Agent Memory
 
 You have a persistent, file-based memory system at `/Users/jk/Library/Mobile Documents/com~apple~CloudDocs/amazon/amazon2-backend/.claude/agent-memory/api-doc-generator/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).

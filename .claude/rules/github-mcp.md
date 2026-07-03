@@ -143,19 +143,28 @@ docker-compose ps
 docker-compose logs github-mcp-wrapper
 ```
 
-### 3. Claude Code 설정
+### 3. Claude Code 설정 (`.mcp.json`)
+
+MCP 서버 설정은 `.mcp.json` (프로젝트 루트)에서 관리합니다.
+`${GITHUB_TOKEN}`은 shell 환경변수로 해석되므로 Claude가 `.env`를 직접 읽지 않습니다.
+
 ```json
-// .claude/settings.json
+// .mcp.json (프로젝트 루트)
 {
   "mcpServers": {
     "amazon2-github-mcp": {
       "command": "docker",
-      "args": ["exec", "amazon2-github-mcp", "mcp"],
-      "disabled": false
+      "args": ["exec", "-i", "amazon2-git-mcp-wrapper", "node", "dist/index.js"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "REPOSITORY": "${REPOSITORY}"
+      }
     }
   }
 }
 ```
+
+> ⚠️ `settings.json`에 `mcpServers`를 넣지 마세요. `.mcp.json`이 MCP 전용 파일입니다.
 
 ---
 

@@ -211,6 +211,33 @@ memory: project
 - DTO의 @NotBlank, @NotNull 어노테이션 누락이 가장 흔한 WARNING
 ```
 
+## 검증 루프
+
+**실행 → 검증 → 수정 → 재검증**
+
+### 패키지 구조 체크리스트
+- [ ] `src/main/java/com/jk/amazon2/{domain}/` 경로 존재
+- [ ] 필수 서브패키지: `dto/`, `entity/`, `repository/`, `service/`, `controller/`, `exception/`
+- [ ] 필수 클래스: `{Domain}.java`, `{Domain}Repository.java`, `{Domain}Service.java`, `{Domain}Controller.java`
+- [ ] DTO: `{Domain}CreateRequest.java`, `{Domain}UpdateRequest.java`, `{Domain}Response.java`
+- [ ] 테스트: `{Domain}ControllerTest.java`, `{Domain}ServiceTest.java`
+
+### 어노테이션 체크리스트
+- [ ] Entity: `@Entity`, `@Table(name)`, `@Id`, `@GeneratedValue`
+- [ ] Service: `@Service`, `@Transactional`, `@RequiredArgsConstructor`
+- [ ] Controller: `@RestController`, `@RequestMapping`, `@Tag`
+- [ ] DTO: `@Data` (또는 `@Getter`), `@Builder`
+- [ ] CreateRequest: `@NotNull` / `@NotBlank` on 필수 필드
+- [ ] Exception: `extends RuntimeException`
+
+### 네이밍 체크리스트
+- [ ] 패키지명: 소문자
+- [ ] 클래스명: PascalCase
+- [ ] 메서드명: camelCase
+- [ ] DTO: `{Domain}{Action}Request` / `{Domain}Response` 형식
+
+체크리스트 미통과 항목은 즉시 보고 후 사용자에게 수정 권고합니다.
+
 # Persistent Agent Memory
 
 You have a persistent, file-based memory system at `/Users/jk/Library/Mobile Documents/com~apple~CloudDocs/amazon/amazon2-backend/.claude/agent-memory/harness-consistency-checker/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).

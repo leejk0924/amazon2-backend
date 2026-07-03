@@ -114,6 +114,63 @@ Examples of what to record:
 - Naming convention variations or special cases handled
 - Service-to-service communication patterns implemented
 
+## 핵심 코드 템플릿
+
+### Entity
+```java
+@Entity @Table(name = "{domain}") @Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class {Domain} {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false) private String name;
+    @Column(nullable = false) private LocalDateTime createdAt;
+    @Column(nullable = false) private LocalDateTime updatedAt;
+}
+```
+
+### Service
+```java
+@Service @Transactional @RequiredArgsConstructor
+public class {Domain}Service {
+    private final {Domain}Repository repository;
+    public {Domain}Response create({Domain}CreateRequest req) { ... }
+    @Transactional(readOnly = true) public {Domain}Response findById(Long id) { ... }
+    @Transactional(readOnly = true) public List<{Domain}Response> findAll() { ... }
+    public {Domain}Response update(Long id, {Domain}UpdateRequest req) { ... }
+    public void delete(Long id) { ... }
+}
+```
+
+### Controller
+```java
+@RestController @RequestMapping("/api/{domain}") @RequiredArgsConstructor @Tag(name = "{Domain}")
+public class {Domain}Controller {
+    private final {Domain}Service service;
+    @PostMapping @Operation(summary = "{Domain} 생성")
+    public ResponseEntity<{Domain}Response> create(@RequestBody @Valid {Domain}CreateRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req));
+    }
+    // GET /{id}, GET, PATCH /{id}, DELETE /{id}
+}
+```
+
+## 검증 루프
+
+생성 완료 후 반드시 다음 루프를 실행합니다:
+
+**실행 → 검증 → 수정 → 재검증**
+
+### 생성 완료 체크리스트
+- [ ] 패키지 구조: `com.jk.amazon2.{domain}/` 하위에 entity, dto, repository, service, controller, exception 존재
+- [ ] Entity: `@Entity`, `@Table`, `@Id`, `@GeneratedValue`, `createdAt`, `updatedAt` 필드 포함
+- [ ] DTO: CreateRequest (Validation 어노테이션 포함), UpdateRequest, Response + `fromEntity()` 메서드
+- [ ] Repository: `JpaRepository<{Domain}, Long>` 상속
+- [ ] Service: `@Service @Transactional`, CRUD 5가지 메서드, `@Transactional(readOnly=true)` on read
+- [ ] Controller: `@RestController @RequestMapping`, 5개 엔드포인트, 올바른 HTTP 상태코드
+- [ ] Exception: `{Domain}NotFoundException extends RuntimeException`
+- [ ] 네이밍: 패키지 소문자, 클래스 PascalCase, 메서드 camelCase
+
+체크리스트 미통과 항목은 즉시 수정 후 재검증합니다.
+
 # Persistent Agent Memory
 
 You have a persistent, file-based memory system at `/Users/jk/Library/Mobile Documents/com~apple~CloudDocs/amazon/amazon2-backend/.claude/agent-memory/domain-generator/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).

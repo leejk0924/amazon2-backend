@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "amazon2-github-mcp": {
+      "command": "docker",
+      "args": ["exec", "-i", "amazon2-git-mcp-wrapper", "node", "dist/index.js"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "REPOSITORY": "${REPOSITORY}"
+      }
+    }
+  }
+}
