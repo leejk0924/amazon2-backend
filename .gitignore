@@ -60,3 +60,4 @@ application-local.yml
 
 ### Git Worktrees ###
 .worktrees/
+worktrees/
