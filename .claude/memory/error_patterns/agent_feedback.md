@@ -69,7 +69,35 @@
 
 > domain-generator, harness-consistency-checker, dependency-analyzer가 실행될 때마다 위 "기록 구조" 템플릿 형식으로 이 섹션 아래에 실제 세션이 누적됩니다.
 
-(아직 기록된 실제 세션 없음)
+### 2026-07-04 dependency-analyzer - member/category/posting
+
+**상태**: 완료
+
+**입력 파라미터**:
+- analysis_type: comprehensive (circular + forbidden + graph)
+- include_transitive: true (circular 검사), false (forbidden 검사)
+- output_format: text + mermaid
+- module_scope: member, category, posting (common/config는 참고용으로 포함)
+
+**발견 사항**:
+- [INFO] CIRCULAR: 순환 의존성 없음 — member/category/posting/common import 그래프 전수 조사, DFS 기준 cycle 미검출
+- [ERROR] E003: `posting.service.PostingService`, `StatisticsService`, `BatchService`, `posting.dto.PostingResponse` 4개 파일이 `member.entity.Member` / `member.repository.MemberRepository`를 직접 import. posting→member 방향 자체는 허용되지만, Port/Adapter나 DTO 경유 없이 타 도메인 Repository·Entity를 직접 사용해 "cross-domain은 정의된 API로만" 원칙 위반
+- [WARNING] `member.service.MemberService` → `common.port.CategoryValidationPort`(구현체는 `category.adapter.CategoryValidationAdapter`) 의존. DIP로 컴파일 타임 순환/직접 import는 회피했지만, Member(상위 계층)가 Category(중간 계층) 존재 검증에 런타임으로 의존 — 문서화된 계층 규칙(member→category 금지)과 방향이 반대. `member.categoryCode` 컬럼 무결성 검증 목적으로 의도된 설계로 보이나 팀 확인 필요
+- [INFO] category 도메인은 현재 posting으로부터 전혀 참조되지 않음 (harnesses 상 posting→category는 허용되어 있으나 미구현/미사용 상태)
+- [INFO] `duplicatetest123/entity/Marker.java` — domain-generator 중복 확인 테스트용 더미 파일, 실제 도메인과 무관한 잔재
+
+**수정 사항**: 이번 세션은 분석 전용 (코드 수정 없음)
+
+**학습 내용**:
+- category 도메인은 `CategoryValidationPort`(common) + `CategoryValidationAdapter`(category.adapter) 패턴으로 cross-domain 검증을 노출 — 프로젝트 내 "권장 cross-domain 연동 템플릿"으로 삼을 만함
+- posting은 동일 패턴을 따르지 않고 `MemberRepository`/`Member` 엔티티를 3개 서비스 클래스에서 직접 사용 중 — 향후 `MemberQueryPort`/`MemberQueryAdapter`로 통일 권장 (동일 근본 원인이 3개 파일에 반복 — 다음 세션에서도 재발 시 "발견된 반복 패턴" 섹션으로 승격 검토)
+- Posting 엔티티들은 `BaseAudit`만 상속하고 Member/Category에 대한 JPA 연관관계(`@ManyToOne` 등)를 두지 않음 (ID만 저장) — 엔티티 레벨 결합은 없고 서비스 레벨 결합만 존재
+
+**다음 단계**:
+- [ ] `MemberQueryPort`/`MemberQueryAdapter` 도입 후 PostingService/StatisticsService/BatchService 리팩토링 여부 논의
+- [ ] member→category(`CategoryValidationPort`) 의존 방향이 의도된 설계인지 팀 확인 및 harnesses/README에 명시
+- [ ] `duplicatetest123` 디렉토리 삭제 여부 확인
+- [ ] posting→category 연동 필요 시 동일 Port/Adapter 패턴 적용
 
 ---
 
