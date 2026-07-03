@@ -33,4 +33,8 @@ Amazon2 프로젝트의 GitHub MCP Server(`amazon2-github-mcp`)를 통해 이슈
 - ❌ 사용자 확인 없이 이슈 생성/수정 금지
 - ❌ Repository에 직접 push 금지 (항상 PR 사용)
 - ❌ 여러 이슈를 한 브랜치에서 처리 금지
-- MCP 연결 설정은 프로젝트 루트 `.mcp.json`에서 관리 (환경변수 `${GITHUB_TOKEN}`, `${REPOSITORY}` 참조). 상세 설정은 `.claude/rules/github-mcp.md` 참고
+- MCP 연결 설정은 프로젝트 루트 `.mcp.json`에서 관리 (환경변수 `${GITHUB_TOKEN}`, `${REPOSITORY}` 참조)
+
+## 참고 자료
+
+초기 설정(Docker, 환경변수, `.mcp.json`), 연결 문제 진단, 전체 작업 흐름 예시가 필요하면 같은 디렉토리의 `reference.md`를 읽으세요.

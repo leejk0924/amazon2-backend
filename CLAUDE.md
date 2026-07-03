@@ -50,7 +50,7 @@ src/main/java/com/jk/amazon2/
 
 | 항목 | 설명 | 상세 위치 |
 |------|------|---------|
-| **GitHub MCP 설정** | Docker MCP 서버 연결 상세 | `.claude/rules/github-mcp.md` |
+| **GitHub MCP 설정** | Docker MCP 서버 연결 상세 | `.claude/skills/github-issue/reference.md` |
 | **의존성** | posting → category → member | [harnesses/README.md](harnesses/README.md) |
 | **기여 규칙** | 커밋 메시지 형식 (Feat/Fix/Docs) | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
 | **에러 관리** | 프로젝트별 에러 코드 | `.claude/errors/ERRORS.md` |
