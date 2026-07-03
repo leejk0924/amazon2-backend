@@ -23,6 +23,7 @@ memory: none
 - **TEST_COVERAGE**: 테스트 코드 작성 현황 및 커버리지 검증
 - **ERROR_HANDLING**: 적절한 예외 처리 및 에러 응답 메커니즘
 - **PERFORMANCE**: 불필요한 쿼리, N+1 문제, 리소스 누수 등 검사
+- **CONCURRENCY**: 레이스 컨디션 감지 (`@Transactional` 격리 수준, 낙관적/비관적 락, static 공유 가변 상태)
 - **CODE_READABILITY**: 변수명, 함수명 명확성 (영어), 코드 구조 가독성
 - **SECURITY**: SQL Injection, 인증/인가, 민감 정보 노출 등 검사
 - **DOCUMENTATION**: JavaDoc, 로직 설명 코멘트 (한국어), 복잡한 알고리즘 문서화
@@ -31,7 +32,7 @@ memory: none
 
 1. **코드 분석**: 제공된 코드를 줄 단위로 분석하며, harnesses의 각 도메인 가이드(harnesses/member/README.md 등)를 참조
 2. **아키텍처 검증**: PACKAGE_NAMING, LAYER_DEPENDENCY 등 5가지 규칙을 체계적으로 점검
-3. **Best Practices 검증**: NULL_SAFETY, TEST_COVERAGE 등 7가지 항목을 검토
+3. **Best Practices 검증**: NULL_SAFETY, TEST_COVERAGE 등 8가지 항목을 검토
 4. **심각도 분류**: 각 이슈를 ERROR (반드시 수정), WARNING (권장 수정), INFO (참고)로 분류
 5. **최종 평가**: PASS / MINOR_ISSUE / MAJOR_ISSUE 중 판정
 
@@ -158,3 +159,31 @@ memory: none
 코드 리뷰 결과는 로컬 파일에 저장하지 마세요. Notion Amazon2-backend > 코드 리뷰 페이지에만 저장하세요.
 
 로컬 파일로 메모리를 저장하지 마세요. 코드 리뷰 결과는 Notion에만 저장합니다.
+
+## 검증 루프
+
+**실행 → 검증 → 수정 → 재검증**
+
+### 아키텍처 규칙 체크리스트 (50%)
+- [ ] PACKAGE_NAMING: `com.jk.amazon2.{domain}.{layer}` 형식
+- [ ] LAYER_DEPENDENCY: Controller→Service→Repository→Entity 방향만 허용
+- [ ] CIRCULAR_DEPENDENCY: 양방향 참조 없음
+- [ ] DOMAIN_ISOLATION: 도메인 간 직접 import 없음 (common만 허용)
+- [ ] CLASS_NAMING: Entity/Controller/Service/Repository/Exception 네이밍 규칙
+
+### Best Practices 체크리스트 (50%)
+- [ ] NULL_SAFETY: `Optional` 사용, NPE 방어
+- [ ] TEST_COVERAGE: Controller/Service 테스트 존재
+- [ ] ERROR_HANDLING: `GlobalExceptionHandler` 통한 일관된 에러 응답
+- [ ] PERFORMANCE: N+1 쿼리 없음, 페이징 적용
+- [ ] CONCURRENCY: 레이스 컨디션 방지 (`@Transactional` 격리 수준, 낙관적/비관적 락, 공유 가변 상태 없음)
+- [ ] CODE_READABILITY: 메서드 30줄 이하, DRY 원칙
+- [ ] SECURITY: SQL Injection 없음, 민감정보 미노출
+- [ ] DOCUMENTATION: public 메서드 JavaDoc, 복잡 로직 한국어 주석
+
+### 최종 판정 기준
+- **PASS**: ERROR 없음, WARNING 3개 이하
+- **MINOR_ISSUE**: ERROR 없음, WARNING 4개 이상 또는 INFO 다수
+- **MAJOR_ISSUE**: ERROR 1개 이상
+
+리뷰 완료 후 Notion `Amazon2-backend > 코드 리뷰` 페이지에 저장합니다.

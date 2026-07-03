@@ -65,6 +65,42 @@
 
 ---
 
+## 세션 로그
+
+> domain-generator, harness-consistency-checker, dependency-analyzer가 실행될 때마다 위 "기록 구조" 템플릿 형식으로 이 섹션 아래에 실제 세션이 누적됩니다.
+
+### 2026-07-04 dependency-analyzer - member/category/posting
+
+**상태**: 완료
+
+**입력 파라미터**:
+- analysis_type: comprehensive (circular + forbidden + graph)
+- include_transitive: true (circular 검사), false (forbidden 검사)
+- output_format: text + mermaid
+- module_scope: member, category, posting (common/config는 참고용으로 포함)
+
+**발견 사항**:
+- [INFO] CIRCULAR: 순환 의존성 없음 — member/category/posting/common import 그래프 전수 조사, DFS 기준 cycle 미검출
+- [ERROR] E003: `posting.service.PostingService`, `StatisticsService`, `BatchService`, `posting.dto.PostingResponse` 4개 파일이 `member.entity.Member` / `member.repository.MemberRepository`를 직접 import. posting→member 방향 자체는 허용되지만, Port/Adapter나 DTO 경유 없이 타 도메인 Repository·Entity를 직접 사용해 "cross-domain은 정의된 API로만" 원칙 위반
+- [WARNING] `member.service.MemberService` → `common.port.CategoryValidationPort`(구현체는 `category.adapter.CategoryValidationAdapter`) 의존. DIP로 컴파일 타임 순환/직접 import는 회피했지만, Member(상위 계층)가 Category(중간 계층) 존재 검증에 런타임으로 의존 — 문서화된 계층 규칙(member→category 금지)과 방향이 반대. `member.categoryCode` 컬럼 무결성 검증 목적으로 의도된 설계로 보이나 팀 확인 필요
+- [INFO] category 도메인은 현재 posting으로부터 전혀 참조되지 않음 (harnesses 상 posting→category는 허용되어 있으나 미구현/미사용 상태)
+- [INFO] `duplicatetest123/entity/Marker.java` — domain-generator 중복 확인 테스트용 더미 파일, 실제 도메인과 무관한 잔재
+
+**수정 사항**: 이번 세션은 분석 전용 (코드 수정 없음)
+
+**학습 내용**:
+- category 도메인은 `CategoryValidationPort`(common) + `CategoryValidationAdapter`(category.adapter) 패턴으로 cross-domain 검증을 노출 — 프로젝트 내 "권장 cross-domain 연동 템플릿"으로 삼을 만함
+- posting은 동일 패턴을 따르지 않고 `MemberRepository`/`Member` 엔티티를 3개 서비스 클래스에서 직접 사용 중 — 향후 `MemberQueryPort`/`MemberQueryAdapter`로 통일 권장 (동일 근본 원인이 3개 파일에 반복 — 다음 세션에서도 재발 시 "발견된 반복 패턴" 섹션으로 승격 검토)
+- Posting 엔티티들은 `BaseAudit`만 상속하고 Member/Category에 대한 JPA 연관관계(`@ManyToOne` 등)를 두지 않음 (ID만 저장) — 엔티티 레벨 결합은 없고 서비스 레벨 결합만 존재
+
+**다음 단계**:
+- [ ] `MemberQueryPort`/`MemberQueryAdapter` 도입 후 PostingService/StatisticsService/BatchService 리팩토링 여부 논의
+- [ ] member→category(`CategoryValidationPort`) 의존 방향이 의도된 설계인지 팀 확인 및 harnesses/README에 명시
+- [ ] `duplicatetest123` 디렉토리 삭제 여부 확인
+- [ ] posting→category 연동 필요 시 동일 Port/Adapter 패턴 적용
+
+---
+
 ## 분석 대시보드
 
 ### 에러 분포
@@ -182,101 +218,13 @@
 
 ---
 
-## 성공/실패 사례
-
-### 성공 사례 (예시)
-
-**케이스 1: Domain Generator로 Product 도메인 생성**
-
-```
-날짜: 2024-01-15
-에이전트: Domain Generator
-도메인: product
-상태: 성공
-
-생성된 파일:
-- com/jk/amazon2/product/entity/Product.java
-- com/jk/amazon2/product/dto/ProductCreateRequest.java
-- com/jk/amazon2/product/dto/ProductUpdateRequest.java
-- com/jk/amazon2/product/dto/ProductResponse.java
-- com/jk/amazon2/product/repository/ProductRepository.java
-- com/jk/amazon2/product/service/ProductService.java
-- com/jk/amazon2/product/controller/ProductController.java
-
-Consistency Checker 검증: ✅ 패스
-- 패키지 구조: OK
-- 네이밍 규칙: OK
-- 어노테이션: OK
-- DTO 일관성: OK
-
-Dependency Analyzer 검증: ✅ 패스
-- 순환 의존성: 없음
-- 금지 의존성: 없음
-- Cross-domain: OK
-```
-
-### 실패 사례 (예시)
-
-**케이스 2: 수동으로 생성한 도메인에서 일관성 오류 감지**
-
-```
-날짜: 2024-01-20
-에이전트: Consistency Checker
-도메인: order (수동 생성)
-상태: 오류 감지
-
-발견된 이슈:
-- [ERROR] E100: 패키지 구조 불일치
-  - order/ 폴더에 직접 Java 파일 존재
-  - entity/, dto/, service/ 서브패키지 없음
-
-- [WARNING] E101: 메서드 네이밍 오류
-  - OrderService에 Find_By_Id() 메서드 (camelCase 위반)
-
-- [WARNING] E102: DTO 네이밍 오류
-  - OrderDTO.java (규칙: OrderCreateRequest, OrderResponse)
-
-- [ERROR] E300: @Table 어노테이션 누락
-  - Order.java에 @Entity는 있으나 @Table 없음
-
-조치:
-- Domain Generator 다시 실행으로 올바른 구조 생성
-- 기존 코드 병합
-
-결과: ✅ 이슈 모두 해결
-```
-
----
-
 ## 개선 사항 추적
 
 ### 발견된 반복 패턴
 
-**패턴**: Entity 클래스에 @Table 어노테이션 자주 누락
+> 위 "세션 로그"에 같은 유형의 이슈(같은 에러코드 또는 같은 근본 원인)가 3회 이상 누적되면, 아래에 패턴/근본 원인/해결책을 추가합니다.
 
-```
-발생 횟수: 3회
-영향도: 중간 (JPA 기본값으로 작동하지만 규칙 위반)
-근본 원인: 개발자가 수동으로 Entity 작성시 누락
-
-해결책:
-1. Domain Generator에 자동 @Table 추가 기능 포함 ✅
-2. Consistency Checker auto_fix로 자동 추가 ✅
-3. IDE 템플릿 업데이트 (선택)
-```
-
-**패턴**: DTO 네이밍 규칙 이해 부족
-
-```
-발생 횟수: 2회
-영향도: 낮음 (코드 동작에는 영향 없음)
-근본 원인: 신입 개발자의 규칙 미숙지
-
-해결책:
-1. DEVELOPING.md에 DTO 네이밍 규칙 추가 ✅
-2. harnesses/README.md 강화 ✅
-3. 코드 리뷰 체크리스트에 추가
-```
+(아직 반복 패턴 없음)
 
 ---
 
@@ -325,8 +273,13 @@ Dependency Analyzer 검증: ✅ 패스
 - 에러 정의: `.claude/errors/ERRORS.md`
 - 패턴 분석: `.claude/errors/ERROR_PATTERNS.md`
 - 에이전트 목록: `.claude/agents/`
-  - domain-generator-prompt.md
-  - test-generator-prompt.md
-  - api-documenter-prompt.md
-  - consistency-checker-prompt.md
-  - dependency-analyzer-prompt.md
+  - domain-generator.md
+  - test-generator.md
+  - api-doc-generator.md
+  - harness-consistency-checker.md
+  - dependency-analyzer.md
+  - senior-code-reviewer.md
+
+---
+
+**마지막 업데이트**: 2026-07-04 — 가짜 예시 데이터 제거, 깨진 파일 링크 수정, 실제 세션 기록이 쌓이도록 3개 에이전트(domain-generator, harness-consistency-checker, dependency-analyzer)에 기록 지시 연결

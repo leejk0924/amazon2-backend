@@ -117,6 +117,46 @@ Examples of what to record:
 - Common circular dependency patterns and their typical resolutions
 - Module boundaries and integration points
 
+## 에러 코드 정의
+
+| 코드 | 규칙 | 심각도 |
+|------|------|-------|
+| CIRCULAR_XXX | 순환 의존성 감지 (A→B→A) | ERROR |
+| E001 | Entity → Service (금지) | ERROR |
+| E002 | Service → Controller (금지) | ERROR |
+| E003 | 금지된 cross-domain 의존성 | ERROR |
+| E004 | 순환 cross-domain 의존성 | ERROR |
+| E005 | Entity → DTO (금지) | ERROR |
+
+## 도메인 계층 (Amazon2)
+
+```
+posting (하위) → category → member (상위)
+✅ posting → category, member  ✅ category → member
+❌ member → category  ❌ category → posting
+```
+
+## 검증 루프
+
+**실행 → 검증 → 수정 → 재검증**
+
+### 분석 완료 체크리스트
+- [ ] 순환 의존성 없음 (CIRCULAR_XXX 없음)
+- [ ] 계층 의존성 정상 (Controller→Service→Repository→Entity만 허용)
+- [ ] cross-domain 의존성이 도메인 계층 방향 준수 (posting→category→member)
+- [ ] 도메인 간 직접 의존 없음 (common 통해서만 공유)
+- [ ] 의존성 그래프 시각화 완료 (Mermaid 또는 text 형식)
+- [ ] 위반 항목별 심각도 분류 (ERROR / WARNING / INFO)
+- [ ] 각 위반에 대한 수정 방안 제시
+
+체크리스트 미통과 항목은 상세 경로와 함께 보고합니다.
+
+## 실행 결과 기록
+
+분석 완료 후 `.claude/memory/error_patterns/agent_feedback.md`의 "세션 기록" 템플릿 형식으로 결과를 추가합니다:
+- 상태, 분석 범위, 발견된 순환/금지 의존성 목록, 심각도
+- 반복되는 아키텍처 위반 패턴이 발견되면 "발견된 반복 패턴" 섹션에 근본 원인과 예방책을 추가
+
 # Persistent Agent Memory
 
 You have a persistent, file-based memory system at `/Users/jk/Library/Mobile Documents/com~apple~CloudDocs/amazon/amazon2-backend/.claude/agent-memory/dependency-analyzer/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).

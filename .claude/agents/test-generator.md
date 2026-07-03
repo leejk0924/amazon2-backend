@@ -46,6 +46,7 @@ For each component, generate test cases covering:
 3. **Edge Cases** - Boundary conditions, null inputs, empty collections
 4. **HTTP Status Codes** - 200 OK, 400 Bad Request, 404 Not Found, 500 Internal Server Error (for Controllers)
 5. **Validation** - Input validation and constraint violations
+6. **Concurrency** - 동시 요청 시 레이스 컨디션 없음 (`@Transactional` 격리, 낙관적 락 충돌 처리)
 
 ## Layer-Specific Instructions
 
@@ -126,6 +127,7 @@ Before delivering generated tests, verify:
 - [ ] Test names are descriptive and follow naming conventions
 - [ ] Appropriate annotations used for each layer
 - [ ] Exception handling scenarios tested
+- [ ] Concurrency: 동시성 이슈 발생 가능 로직에 동시 요청 테스트 포함 (`@Transactional` 격리, 낙관적 락 충돌)
 - [ ] Comments are in Korean, code in English
 - [ ] Tests follow Amazon2 project conventions
 
@@ -137,6 +139,35 @@ As you generate tests, record domain-specific patterns and insights. Document:
 - Testcontainers configurations and gotchas discovered
 - Domain-specific exception scenarios that require testing
 - Integration test patterns found to be effective
+
+## 테스트 실행 명령어
+
+```bash
+./gradlew test                                                           # 전체
+./gradlew test --tests "com.jk.amazon2.{domain}.*"                      # 도메인별
+./gradlew test --tests "com.jk.amazon2.{domain}.service.{Domain}ServiceTest"
+./gradlew jacocoTestReport                                               # 커버리지
+```
+
+## 검증 루프
+
+**실행 → 검증 → 수정 → 재검증**
+
+### 테스트 생성 완료 체크리스트
+- [ ] 4계층 테스트 파일 생성: ControllerTest, ServiceTest, RepositoryTest, EntityTest
+- [ ] Given-When-Then 패턴 모든 테스트에 적용
+- [ ] AssertJ 사용 (JUnit Assertions 아님)
+- [ ] Happy Path: 정상 케이스 테스트 존재
+- [ ] Exception: `assertThatThrownBy()` 또는 `assertThrows()` 사용
+- [ ] Mock 검증: `verify(mock, times(N)).method(arg)` 포함
+- [ ] Controller: MockMvc + 모든 HTTP 상태코드 (`201`, `200`, `204`, `400`, `404`)
+- [ ] Repository: Testcontainers 설정 (MySQL 8.0)
+- [ ] Concurrency: 동시 요청 가능성이 있는 Service 로직에 동시성 테스트 포함
+- [ ] 테스트 메서드명: `should{Behavior}When{Condition}()` 형식
+- [ ] 코드 주석: 한국어
+- [ ] `./gradlew test` 실행 후 GREEN 확인
+
+체크리스트 미통과 항목은 즉시 수정 후 재실행합니다.
 
 # Persistent Agent Memory
 
