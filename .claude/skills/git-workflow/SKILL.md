@@ -19,7 +19,7 @@ description: Git 커밋 작성, feature 브랜치 생성, git worktree 설정이
 ## Feature 브랜칭 전략
 
 1. GitHub 이슈 생성/확인 (`github-issue` skill 참고)
-2. Feature 브랜치 생성: `git checkout -b feature/#<이슈번호>-<한글설명>`
+2. Feature 브랜치 생성: `git checkout -b feature/#<이슈번호>-<영어설명>`
 3. 작업 & 기능별 분리 커밋
 4. PR 생성: `gh pr create --title "#<이슈번호>: <설명>" --body "Closes #<이슈번호>"`
 
@@ -41,15 +41,15 @@ description: Git 커밋 작성, feature 브랜치 생성, git worktree 설정이
 - 목표: PR에 리뷰하기 좋은 논리적 단위의 커밋만 남기기
 
 **규칙:**
-- 브랜치명 형식: `feature/#<이슈번호>-<한글설명>`
+- 브랜치명 형식: `feature/#<이슈번호>-<영어설명>`
 - ❌ main/master 직접 수정 금지
 - ✅ Git worktree 필수 — 병렬 작업 안전성 확보
 - ⚠️ **worktree는 반드시 프로젝트 외부에 생성** — 프로젝트 내부에 생성 시 Gradle이 워크트리 build 디렉토리를 스캔해 중복 클래스 오류 발생
 
 ```bash
 # ✅ 올바른 예 — 프로젝트 외부
-git worktree add ~/worktrees/amazon2/feature/#42-포스팅-api -b feature/#42-포스팅-api
+git worktree add ~/worktrees/amazon2/feature/#42-posting-api -b feature/#42-posting-api
 
 # ❌ 잘못된 예 — 프로젝트 내부 (.worktrees/)
-git worktree add .worktrees/feature/#42-포스팅-api -b feature/#42-포스팅-api
+git worktree add .worktrees/feature/#42-posting-api -b feature/#42-posting-api
 ```
