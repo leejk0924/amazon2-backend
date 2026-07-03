@@ -1,6 +1,6 @@
 ---
-name: code-review
-description: 코드 리뷰, PR 리뷰 요청 시 사용합니다. senior-code-reviewer 에이전트 실행 및 결과를 Notion에 저장하는 절차를 안내합니다. "코드 리뷰해줘", "이 코드 검토해줄래", "PR 리뷰해줘" 등에 활성화하세요.
+name: amazon2-code-review
+description: Amazon2 프로젝트 코드 리뷰, PR 리뷰 요청 시 사용합니다. senior-code-reviewer 에이전트 실행 및 결과를 Notion에 저장하는 절차를 안내합니다. "코드 리뷰해줘", "이 코드 검토해줄래", "PR 리뷰해줘" 등에 활성화하세요.
 ---
 
 # 코드 리뷰 절차
