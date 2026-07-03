@@ -226,7 +226,7 @@ MCP 서버 설정은 `.mcp.json` (프로젝트 루트)에서 관리합니다.
 
 ## 🔗 관련 문서
 
-- [Git 워크플로우](./git-workflow.md) - Feature 브랜칭 규칙
+- [Git 워크플로우 skill](../skills/git-workflow/SKILL.md) - Feature 브랜칭 규칙
 - [CONTRIBUTING.md](../../docs/CONTRIBUTING.md) - 커밋/이슈/PR 작성 규칙
   - Section 3: 이슈 작성 (타입별 템플릿)
   - Section 4: PR 작성 (체크리스트)
