@@ -46,3 +46,22 @@ git worktree add ~/worktrees/amazon2/feature/#42-포스팅-api -b feature/#42-�
 # ❌ 잘못된 예 — 프로젝트 내부 (.worktrees/)
 git worktree add .worktrees/feature/#42-포스팅-api -b feature/#42-포스팅-api
 ```
+
+---
+
+## PR 생성/업데이트 전 커밋 정리
+
+잦은 수정으로 커밋이 여러 개 쌓인 경우, PR을 열거나 업데이트하기 전에 정리합니다:
+
+- `git rebase -i`는 사용 금지 (비대화형 환경이라 상호작용 불가)
+- 대신 base 커밋까지 soft reset 후 재커밋으로 정리:
+  ```bash
+  git log --oneline <base-branch>..HEAD   # 정리 범위 먼저 확인
+  git reset --soft <base-commit-or-branch>
+  git commit -m "정리된 커밋 메시지"
+  ```
+- `--soft`는 작업 디렉토리/스테이징 내용을 건드리지 않아 파일 손실 위험은 없음 (히스토리만 재작성)
+- ⚠️ **feature 브랜치에서만 사용** — main/master에서는 절대 금지
+- ⚠️ **다른 사람과 공유 중인 브랜치인지 먼저 확인** — 공유 브랜치면 rebase 후 force push가 상대방 커밋을 덮어쓸 수 있음
+- 이미 push된 브랜치는 `git push --force`가 아닌 `git push --force-with-lease`로 갱신 (원격이 예상과 다르면 실패해 덮어쓰기 방지)
+- 목표: PR에 리뷰하기 좋은 논리적 단위의 커밋만 남기기
