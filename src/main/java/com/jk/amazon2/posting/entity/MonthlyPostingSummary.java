@@ -21,7 +21,6 @@ public class MonthlyPostingSummary {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    // 해당 월의 1일로 정규화된 값 (예: 2026-06-01)
     @Column(name = "summary_month", nullable = false)
     private LocalDate summaryMonth;
 
