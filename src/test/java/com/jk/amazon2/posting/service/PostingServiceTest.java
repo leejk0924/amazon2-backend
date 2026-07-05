@@ -4,6 +4,7 @@ import com.jk.amazon2.member.entity.Member;
 import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.posting.dto.PostingResponse;
 import com.jk.amazon2.posting.entity.Posting;
+import com.jk.amazon2.posting.event.StatisticsUpdateEvent;
 import com.jk.amazon2.posting.repository.PostingRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +37,9 @@ class PostingServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PostingService postingService;
@@ -71,6 +76,22 @@ class PostingServiceTest {
         // Then
         assertThat(existing.getMon()).isEqualTo(5);
         assertThat(existing.getTue()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("포스팅 저장 후 통계 갱신 이벤트를 발행한다")
+    void savePosting_통계갱신_이벤트_발행() {
+        // Given
+        Long memberId = 1L;
+        LocalDate weekStart = LocalDate.of(2026, 6, 9);
+        when(postingRepository.findByMemberIdAndWeekStartDateWithLock(memberId, weekStart))
+            .thenReturn(Optional.empty());
+
+        // When
+        postingService.savePosting(memberId, weekStart, 1, 2, 3, 4, 5, 6, 7, "admin");
+
+        // Then
+        verify(eventPublisher).publishEvent(new StatisticsUpdateEvent(memberId, weekStart));
     }
 
     @Test

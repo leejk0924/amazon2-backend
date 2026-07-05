@@ -57,4 +57,20 @@ public interface PostingRepository extends JpaRepository<Posting, Long> {
 
     @Query("SELECT p FROM Posting p WHERE p.weekStartDate = :weekStartDate")
     List<Posting> findAllByWeekStartDate(@Param("weekStartDate") LocalDate weekStartDate);
+
+    @Query("""
+            SELECT COALESCE(SUM(
+                COALESCE(p.mon,0) + COALESCE(p.tue,0) + COALESCE(p.wed,0) + COALESCE(p.thu,0)
+                + COALESCE(p.fri,0) + COALESCE(p.sat,0) + COALESCE(p.sun,0)
+            ), 0)
+            FROM Posting p
+            WHERE p.memberId = :memberId
+              AND p.weekStartDate >= :monthStart
+              AND p.weekStartDate <= :monthEnd
+            """)
+    int sumTotalByMemberAndMonth(
+        @Param("memberId") Long memberId,
+        @Param("monthStart") LocalDate monthStart,
+        @Param("monthEnd") LocalDate monthEnd
+    );
 }

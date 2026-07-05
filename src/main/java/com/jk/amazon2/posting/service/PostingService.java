@@ -4,9 +4,11 @@ import com.jk.amazon2.member.entity.Member;
 import com.jk.amazon2.member.repository.MemberRepository;
 import com.jk.amazon2.posting.dto.PostingResponse;
 import com.jk.amazon2.posting.entity.Posting;
+import com.jk.amazon2.posting.event.StatisticsUpdateEvent;
 import com.jk.amazon2.posting.repository.PostingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class PostingService {
 
     private final PostingRepository postingRepository;
     private final MemberRepository memberRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<PostingResponse.PostingDto> getPostings(
@@ -76,5 +79,7 @@ public class PostingService {
             log.debug("Updated posting - member={}, week={}, counts={}{}{}{}{}{}{}",
                 memberId, weekStartDate, mon, tue, wed, thu, fri, sat, sun);
         }
+
+        eventPublisher.publishEvent(new StatisticsUpdateEvent(memberId, weekStartDate));
     }
 }
