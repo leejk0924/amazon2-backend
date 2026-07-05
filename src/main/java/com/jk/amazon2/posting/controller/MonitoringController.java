@@ -2,6 +2,7 @@ package com.jk.amazon2.posting.controller;
 
 import com.jk.amazon2.posting.dto.BatchStatusResponse;
 import com.jk.amazon2.posting.dto.ErrorLogDto;
+import com.jk.amazon2.posting.dto.MonthlyRankingResponse;
 import com.jk.amazon2.posting.dto.StatisticsResponse;
 import com.jk.amazon2.posting.dto.WeeklyStatisticsResponse;
 import lombok.RequiredArgsConstructor;
@@ -69,5 +70,13 @@ public class MonitoringController implements MonitoringApiSpec {
     ) {
         WeeklyStatisticsResponse stats = statisticsService.getWeeklyStatistics(weekStartDate);
         return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/monthly-ranking")
+    public ResponseEntity<MonthlyRankingResponse> getMonthlyRanking(
+        @RequestParam LocalDate yearMonth
+    ) {
+        MonthlyRankingResponse ranking = statisticsService.getMonthlyRanking(yearMonth);
+        return ResponseEntity.ok(ranking);
     }
 }
