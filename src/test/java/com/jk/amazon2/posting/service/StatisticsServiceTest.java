@@ -2,10 +2,12 @@ package com.jk.amazon2.posting.service;
 
 import com.jk.amazon2.member.entity.Member;
 import com.jk.amazon2.member.repository.MemberRepository;
+import com.jk.amazon2.posting.dto.MonthlyRankingResponse;
 import com.jk.amazon2.posting.dto.StatisticsResponse;
 import com.jk.amazon2.posting.dto.WeeklyStatisticsResponse;
 import com.jk.amazon2.posting.entity.Posting;
 import com.jk.amazon2.posting.exception.PostingException;
+import com.jk.amazon2.posting.repository.MonthlyPostingSummaryRepository;
 import com.jk.amazon2.posting.repository.PostingRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,8 +36,31 @@ class StatisticsServiceTest {
     @Mock
     private MemberRepository memberRepository;
 
+    @Mock
+    private MonthlyPostingSummaryRepository monthlyPostingSummaryRepository;
+
     @InjectMocks
     private StatisticsService statisticsService;
+
+    private MonthlyPostingSummaryRepository.MonthlyRankingRow createRankingRow(
+            Long memberId, String nickname, int totalCount) {
+        return new MonthlyPostingSummaryRepository.MonthlyRankingRow() {
+            @Override
+            public Long getMemberId() {
+                return memberId;
+            }
+
+            @Override
+            public String getNickname() {
+                return nickname;
+            }
+
+            @Override
+            public Integer getTotalCount() {
+                return totalCount;
+            }
+        };
+    }
 
     private Posting createPosting(Long memberId, LocalDate weekStart,
                                   int mon, int tue, int wed, int thu, int fri, int sat, int sun) {
@@ -275,5 +300,60 @@ class StatisticsServiceTest {
         assertThatThrownBy(() -> statisticsService.getWeeklyStatistics(tuesday))
             .isInstanceOf(PostingException.class)
             .hasMessage("주간 시작일은 월요일이어야 합니다");
+    }
+
+    // ==================== getMonthlyRanking ====================
+
+    @Test
+    @DisplayName("월별 랭킹 - 순위(rank)는 1부터 순서대로 매겨진다")
+    void getMonthlyRanking_순위_순서대로_매겨짐() {
+        // Given
+        LocalDate yearMonth = LocalDate.of(2026, 6, 15); // 월의 아무 날짜
+        LocalDate normalized = LocalDate.of(2026, 6, 1);
+        when(monthlyPostingSummaryRepository.findTop10ByYearMonth(normalized)).thenReturn(List.of(
+            createRankingRow(1L, "alice", 20),
+            createRankingRow(2L, "bob", 15)
+        ));
+
+        // When
+        MonthlyRankingResponse result = statisticsService.getMonthlyRanking(yearMonth);
+
+        // Then
+        assertThat(result.yearMonth()).isEqualTo(normalized);
+        assertThat(result.rankings()).hasSize(2);
+        assertThat(result.rankings().get(0).rank()).isEqualTo(1);
+        assertThat(result.rankings().get(0).nickname()).isEqualTo("alice");
+        assertThat(result.rankings().get(0).totalCount()).isEqualTo(20);
+        assertThat(result.rankings().get(1).rank()).isEqualTo(2);
+        assertThat(result.rankings().get(1).nickname()).isEqualTo("bob");
+    }
+
+    @Test
+    @DisplayName("월별 랭킹 - 해당 월 데이터가 없으면 빈 랭킹을 반환한다")
+    void getMonthlyRanking_데이터없으면_빈랭킹() {
+        // Given
+        LocalDate yearMonth = LocalDate.of(2026, 6, 1);
+        when(monthlyPostingSummaryRepository.findTop10ByYearMonth(yearMonth)).thenReturn(List.of());
+
+        // When
+        MonthlyRankingResponse result = statisticsService.getMonthlyRanking(yearMonth);
+
+        // Then
+        assertThat(result.rankings()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("월별 랭킹 - 입력 날짜가 어느 날이든 해당 월의 1일로 정규화되어 조회된다")
+    void getMonthlyRanking_입력날짜_월_1일로_정규화() {
+        // Given
+        LocalDate lastDayOfMonth = LocalDate.of(2026, 6, 30);
+        LocalDate normalized = LocalDate.of(2026, 6, 1);
+        when(monthlyPostingSummaryRepository.findTop10ByYearMonth(normalized)).thenReturn(List.of());
+
+        // When
+        statisticsService.getMonthlyRanking(lastDayOfMonth);
+
+        // Then
+        verify(monthlyPostingSummaryRepository).findTop10ByYearMonth(normalized);
     }
 }

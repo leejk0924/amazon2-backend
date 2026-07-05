@@ -1,10 +1,12 @@
 package com.jk.amazon2.posting.service;
 
+import com.jk.amazon2.posting.dto.MonthlyRankingResponse;
 import com.jk.amazon2.posting.dto.StatisticsResponse;
 import com.jk.amazon2.posting.dto.WeeklyStatisticsResponse;
 import com.jk.amazon2.posting.entity.Posting;
 import com.jk.amazon2.posting.exception.PostingErrorCode;
 import com.jk.amazon2.posting.exception.PostingException;
+import com.jk.amazon2.posting.repository.MonthlyPostingSummaryRepository;
 import com.jk.amazon2.posting.repository.PostingRepository;
 import com.jk.amazon2.member.entity.Member;
 import com.jk.amazon2.member.repository.MemberRepository;
@@ -23,6 +25,7 @@ public class StatisticsService {
 
     private final PostingRepository postingRepository;
     private final MemberRepository memberRepository;
+    private final MonthlyPostingSummaryRepository monthlyPostingSummaryRepository;
 
     @Transactional(readOnly = true)
     public StatisticsResponse getStatistics(LocalDate startDate, LocalDate endDate) {
@@ -114,6 +117,20 @@ public class StatisticsService {
             activeMemberCount,
             average
         );
+    }
+
+    @Transactional(readOnly = true)
+    public MonthlyRankingResponse getMonthlyRanking(LocalDate yearMonth) {
+        LocalDate normalized = yearMonth.withDayOfMonth(1);
+
+        List<MonthlyRankingResponse.Entry> rankings = new ArrayList<>();
+        int rank = 1;
+        for (MonthlyPostingSummaryRepository.MonthlyRankingRow row
+                : monthlyPostingSummaryRepository.findTop10ByYearMonth(normalized)) {
+            rankings.add(new MonthlyRankingResponse.Entry(rank++, row.getMemberId(), row.getNickname(), row.getTotalCount()));
+        }
+
+        return new MonthlyRankingResponse(normalized, rankings);
     }
 
     private int nullToZero(Integer value) {

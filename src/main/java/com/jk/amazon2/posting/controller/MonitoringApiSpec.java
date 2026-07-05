@@ -2,6 +2,7 @@ package com.jk.amazon2.posting.controller;
 
 import com.jk.amazon2.posting.dto.BatchStatusResponse;
 import com.jk.amazon2.posting.dto.ErrorLogDto;
+import com.jk.amazon2.posting.dto.MonthlyRankingResponse;
 import com.jk.amazon2.posting.dto.StatisticsResponse;
 import com.jk.amazon2.posting.dto.WeeklyStatisticsResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,5 +56,11 @@ public interface MonitoringApiSpec {
     @ApiResponse(responseCode = "200", description = "조회 성공")
     ResponseEntity<WeeklyStatisticsResponse> getWeeklyStatistics(
             @Parameter(description = "주 시작일 (yyyy-MM-dd, 월요일)") LocalDate weekStartDate
+    );
+
+    @Operation(summary = "월별 포스팅 랭킹 조회", description = "탈퇴하지 않은 회원 중 해당 월 포스팅 수 상위 10명을 반환합니다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    ResponseEntity<MonthlyRankingResponse> getMonthlyRanking(
+            @Parameter(description = "연월의 1일 (yyyy-MM-01)") LocalDate yearMonth
     );
 }
