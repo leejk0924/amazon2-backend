@@ -17,18 +17,95 @@
 ---
 ## 3. 기술 스택
 ### Backend / Database
-- Java 21, SpringBoot 3.x
-- JPA (Hibernate 6), MySQL 8.x
+- Java 21, Spring Boot 4.0.0
+- JPA (Hibernate 6), QueryDSL 7.1, MySQL 8.x, Flyway
+- SpringDoc OpenAPI 3.0.0 (Swagger), Jsoup (네이버 블로그 크롤링)
 
 ### Frontend
 - 현재: HTML/CSS/JS (Nginx 정적 제공)
 - 향후: React 기반 SPA 전환 및 AWS CloudFront/S3 배포 예정
 
-### Infra
+### Infra / Test
 - Docker, Docker Compose, Nginx
+- Testcontainers (MySQL 기반 통합 테스트)
 
 ## 4. 시스템 아키텍처
-(추후 다이어그램으로 추가 예정)
+
+### 4.1 레이어드 아키텍처
+
+도메인별로 `controller → service → repository → entity` 계층을 따르며, `common`은 감사(auditing) 필드·공통 예외·도메인 간 포트 인터페이스를 제공한다. 도메인별 상세 구현 규칙은 [harnesses/](harnesses/README.md)를 참고한다.
+
+```
+src/main/java/com/jk/amazon2/
+├── member/      controller · service · repository · entity · dto · exception
+├── category/    controller · service · repository · entity · dto · exception · adapter
+├── posting/     controller · service · repository · entity · dto · event · scheduler · config
+├── common/      공통 엔티티(BaseAudit/BaseCreation) · 공통 예외 · 도메인 간 포트(port)
+└── config/      CORS, Swagger, QueryDSL, Flyway, JPA Auditing 등 Spring 설정
+```
+
+### 4.2 도메인 의존성 구조
+
+`posting`은 `member`를 직접 참조하지만, `member`는 `category`를 직접 참조하지 않는다. 대신 `common.port.CategoryValidationPort` 인터페이스에만 의존하고, `category` 모듈이 `CategoryValidationAdapter`로 이를 구현한다 (의존성 역전).
+
+```mermaid
+graph LR
+    posting["posting"] -->|MemberRepository| member["member"]
+    posting --> common["common"]
+    member --> common
+    category["category"] --> common
+    member -.->|"인터페이스 의존"| Port
+    category -.->|"CategoryValidationAdapter로 구현"| Port
+    Port[["common.port.CategoryValidationPort"]]
+```
+
+### 4.3 포스팅 수집 배치 파이프라인
+
+`posting` 도메인의 핵심은 네이버 블로그 포스팅 수를 주기적으로 수집하는 배치 파이프라인이다. 실패는 재시도 후 Dead Letter로 격리되며, 저장 성공 시 이벤트 기반으로 월별 집계를 갱신한다.
+
+```mermaid
+flowchart TD
+    A["PostingScheduler\n매주 월요일 00:00 (Asia/Seoul cron)"] --> B["BatchService.executeBatch"]
+    B --> C["회원 x 날짜별 PostingTask 큐 적재"]
+    C --> D["BatchTaskProcessor"]
+    D --> E["RateLimiter.acquire\n요청 간격 제어"]
+    E --> F["NaverBlogScraper\n블로그 포스팅 수 크롤링 (Jsoup)"]
+    F -->|성공| G["Posting upsert\n(요일별 count)"]
+    G --> H["StatisticsUpdateEvent 발행"]
+    H --> I["StatisticsUpdateEventListener\n(AFTER_COMMIT)"]
+    I --> J["MonthlyPostingSummary upsert"]
+    F -->|네트워크/HTTP 오류| K["ErrorHandler\nPostingError 기록 후 재시도 큐 재적재"]
+    K -->|3회 초과| L["PostingDeadLetter로 이동"]
+    F -->|파싱 오류| M["재시도 없이 즉시 실패 처리"]
+```
+
+수집 현황(배치 상태, 에러/Dead Letter 목록, 통계)은 `MonitoringController`(`/api/postings/**`)를 통해 조회 및 재처리(retry)할 수 있다.
+
+### 4.4 데이터 모델
+
+전체 ERD는 [docs/ERD.md](docs/ERD.md)를 참고한다. 핵심 도메인(`BLOG_CATEGORY`, `MEMBER`, `POSTING`)과 배치/모니터링용 테이블(`BATCH_EXECUTION`, `POSTING_ERROR`, `POSTING_DEAD_LETTER`, `MONTHLY_POSTING_SUMMARY`)로 구분되어 있다.
+
+### 4.5 API 개요
+
+| 도메인 | 메서드 & 경로 | 설명 |
+|--------|--------------|------|
+| Member | `GET /members`, `GET /members/{nickname}` | 회원 목록/단건 조회 |
+| Member | `POST /members` | 회원 등록 |
+| Member | `PUT /members/{nickname}` | 회원 수정 |
+| Member | `DELETE /members/{nickname}` | 회원 삭제(soft delete) |
+| Member | `DELETE /members/{nickname}/permanent` | 회원 영구 삭제 |
+| Member | `PATCH /members/{nickname}/restore` | 삭제된 회원 복구 |
+| Category | `GET /categories`, `GET /categories/{code}` | 카테고리 목록/단건 조회 |
+| Category | `POST /categories`, `PUT /categories/{code}`, `DELETE /categories/{code}` | 카테고리 등록/수정/삭제 |
+| Posting | `GET /postings` | 포스팅 목록 조회 (기간/회원 검색) |
+| Posting | `POST /batch` | 수동 배치 실행 |
+| Monitoring | `GET /api/postings/batch/status` | 배치 실행 현황 조회 |
+| Monitoring | `GET /api/postings/errors`, `GET /api/postings/dead-letters` | 에러/Dead Letter 목록 조회 |
+| Monitoring | `POST /api/postings/errors/{id}/retry`, `POST /api/postings/dead-letters/{id}/retry` | 에러/Dead Letter 재처리 |
+| Monitoring | `GET /api/postings/statistics`, `GET /api/postings/weekly-statistics` | 기간별/주별 통계 조회 |
+| Monitoring | `GET /api/postings/monthly-ranking` | 월별 포스팅 랭킹 조회 |
+
+전체 스펙은 로컬 실행 후 Swagger UI(`/swagger-ui/index.html`)에서 확인한다.
 
 ## 5. 문서 및 API 명세
 - [요구사항 명세서](/docs/Requirements.md)
