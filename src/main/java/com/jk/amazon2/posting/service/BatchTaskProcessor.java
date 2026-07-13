@@ -78,12 +78,16 @@ public class BatchTaskProcessor {
             execution.incrementRetryCount();
             requeue(task, queue);
         } else {
-            switch (errorHandler.handleRetry(error)) {
-                case RETRYABLE -> {
-                    execution.incrementRetryCount();
-                    requeue(task, queue);
-                }
-                case DEAD_LETTERED -> execution.incrementFailedCount();
+            boolean retryable = switch (errorHandler.handleRetry(error)) {
+                case RETRYABLE -> true;
+                case DEAD_LETTERED -> false;
+            };
+
+            if (retryable) {
+                execution.incrementRetryCount();
+                requeue(task, queue);
+            } else {
+                execution.incrementFailedCount();
             }
         }
 
