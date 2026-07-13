@@ -65,9 +65,8 @@ public class BatchTaskProcessor {
     private void handleRetryableError(BatchService.PostingTask task, BlockingQueue<BatchService.PostingTask> queue,
                                       BatchExecution execution, ScrapingResult.Failure<Integer> failure) {
         PostingError error = postingErrorRepository
-                .findByMemberAndDate(task.memberId(), task.targetDate())
+                .findByMemberAndDateAndDayOfWeek(task.memberId(), task.targetDate(), task.dayOfWeek())
                 .stream()
-                .filter(err -> err.getDayOfWeek().equals(task.dayOfWeek()))
                 .findFirst()
                 .orElse(null);
 

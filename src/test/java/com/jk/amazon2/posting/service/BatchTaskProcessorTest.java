@@ -81,7 +81,7 @@ class BatchTaskProcessorTest {
 
         when(scraper.scrapePostingCount(task.memberNickname(), task.targetDate()))
                 .thenReturn(new ScrapingResult.Failure<>(ScrapingResult.FailureType.NETWORK_ERROR, "connection reset", null));
-        when(postingErrorRepository.findByMemberAndDate(MEMBER_ID, TARGET_DATE))
+        when(postingErrorRepository.findByMemberAndDateAndDayOfWeek(MEMBER_ID, TARGET_DATE, DAY_OF_WEEK))
                 .thenReturn(List.of());
 
         // when
@@ -105,7 +105,7 @@ class BatchTaskProcessorTest {
 
         when(scraper.scrapePostingCount(task.memberNickname(), task.targetDate()))
                 .thenReturn(new ScrapingResult.Failure<>(ScrapingResult.FailureType.HTTP_ERROR, "500", null));
-        when(postingErrorRepository.findByMemberAndDate(MEMBER_ID, TARGET_DATE))
+        when(postingErrorRepository.findByMemberAndDateAndDayOfWeek(MEMBER_ID, TARGET_DATE, DAY_OF_WEEK))
                 .thenReturn(List.of(existingError));
         when(errorHandler.handleRetry(existingError)).thenReturn(ErrorHandler.RetryOutcome.RETRYABLE);
 
@@ -130,7 +130,7 @@ class BatchTaskProcessorTest {
 
         when(scraper.scrapePostingCount(task.memberNickname(), task.targetDate()))
                 .thenReturn(new ScrapingResult.Failure<>(ScrapingResult.FailureType.NETWORK_ERROR, "timeout", null));
-        when(postingErrorRepository.findByMemberAndDate(MEMBER_ID, TARGET_DATE))
+        when(postingErrorRepository.findByMemberAndDateAndDayOfWeek(MEMBER_ID, TARGET_DATE, DAY_OF_WEEK))
                 .thenReturn(List.of(existingError));
         when(errorHandler.handleRetry(existingError)).thenReturn(ErrorHandler.RetryOutcome.DEAD_LETTERED);
 
@@ -154,7 +154,7 @@ class BatchTaskProcessorTest {
 
         when(scraper.scrapePostingCount(anyString(), eq(TARGET_DATE)))
                 .thenReturn(new ScrapingResult.Failure<>(ScrapingResult.FailureType.NETWORK_ERROR, "connection reset", null));
-        when(postingErrorRepository.findByMemberAndDate(eq(MEMBER_ID), eq(TARGET_DATE)))
+        when(postingErrorRepository.findByMemberAndDateAndDayOfWeek(eq(MEMBER_ID), eq(TARGET_DATE), eq(DAY_OF_WEEK)))
                 .thenAnswer(invocation -> new ArrayList<>(savedErrors));
         doAnswer(invocation -> {
             savedErrors.add(new PostingError(MEMBER_ID, TARGET_DATE, DAY_OF_WEEK, "err", 1));
