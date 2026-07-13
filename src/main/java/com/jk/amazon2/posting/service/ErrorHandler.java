@@ -25,6 +25,8 @@ public class ErrorHandler {
     private final PostingErrorRepository errorRepository;
     private final PostingDeadLetterRepository deadLetterRepository;
 
+    public enum RetryOutcome { RETRYABLE, DEAD_LETTERED }
+
     /**
      * 에러를 로깅하고 PostingError 엔티티로 저장
      *
@@ -55,15 +57,17 @@ public class ErrorHandler {
      * @param error 처리할 PostingError 엔티티
      */
     @Transactional
-    public void handleRetry(PostingError error) {
+    public RetryOutcome handleRetry(PostingError error) {
         error.incrementRetryCount();
 
         if (error.getRetryCount() >= MAX_RETRY_COUNT) {
             moveToDeadLetter(error);
             errorRepository.delete(error);
-        } else {
-            errorRepository.save(error);
+            return RetryOutcome.DEAD_LETTERED;
         }
+
+        errorRepository.save(error);
+        return RetryOutcome.RETRYABLE;
     }
 
     /**

@@ -20,6 +20,6 @@ public interface PostingErrorRepository extends JpaRepository<PostingError, Long
     @Query("SELECT pe FROM PostingError pe WHERE pe.retryCount < 3 ORDER BY pe.createdAt ASC")
     List<PostingError> findRetryableErrors();
 
-    @Query("SELECT pe FROM PostingError pe WHERE pe.memberId = :memberId AND pe.targetDate = :targetDate")
+    @Query("SELECT pe FROM PostingError pe WHERE pe.memberId = :memberId AND pe.targetDate = :targetDate ORDER BY pe.id ASC")
     List<PostingError> findByMemberAndDate(Long memberId, LocalDate targetDate);
 }

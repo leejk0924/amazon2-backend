@@ -64,11 +64,6 @@ public class BatchTaskProcessor {
 
     private void handleRetryableError(BatchService.PostingTask task, BlockingQueue<BatchService.PostingTask> queue,
                                       BatchExecution execution, ScrapingResult.Failure<Integer> failure) {
-        RuntimeException cause = failure.cause() != null
-                ? new RuntimeException(failure.message(), failure.cause())
-                : new RuntimeException(failure.message());
-        errorHandler.handleError(task.memberId(), task.targetDate(), task.dayOfWeek(), cause);
-
         PostingError error = postingErrorRepository
                 .findByMemberAndDate(task.memberId(), task.targetDate())
                 .stream()
@@ -76,21 +71,34 @@ public class BatchTaskProcessor {
                 .findFirst()
                 .orElse(null);
 
-        if (error != null && error.getRetryCount() < 3) {
+        if (error == null) {
+            RuntimeException cause = failure.cause() != null
+                    ? new RuntimeException(failure.message(), failure.cause())
+                    : new RuntimeException(failure.message());
+            errorHandler.handleError(task.memberId(), task.targetDate(), task.dayOfWeek(), cause);
             execution.incrementRetryCount();
-            try {
-                queue.put(task);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
+            requeue(task, queue);
+        } else {
+            switch (errorHandler.handleRetry(error)) {
+                case RETRYABLE -> {
+                    execution.incrementRetryCount();
+                    requeue(task, queue);
+                }
+                case DEAD_LETTERED -> execution.incrementFailedCount();
             }
-        } else if (error != null) {
-            execution.incrementFailedCount();
-            errorHandler.handleRetry(error);
         }
 
         batchExecutionRepository.save(execution);
         log.warn("[BATCH] Failed member={}, date={}, type={}, error={}",
                 task.memberId(), task.targetDate(), failure.type(), failure.message());
+    }
+
+    private void requeue(BatchService.PostingTask task, BlockingQueue<BatchService.PostingTask> queue) {
+        try {
+            queue.put(task);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void updatePostingForDay(Long memberId, LocalDate weekStart, String dayOfWeek, Integer count) {

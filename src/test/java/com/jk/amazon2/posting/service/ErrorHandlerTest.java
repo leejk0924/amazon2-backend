@@ -5,6 +5,7 @@ import com.jk.amazon2.posting.entity.PostingDeadLetter;
 import com.jk.amazon2.posting.repository.PostingErrorRepository;
 import com.jk.amazon2.posting.repository.PostingDeadLetterRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -91,5 +93,31 @@ class ErrorHandlerTest {
         errorHandler.handleRetry(error);
 
         verify(errorRepository, times(1)).delete(error);
+    }
+
+    @Test
+    @DisplayName("재시도 횟수가 MAX_RETRY_COUNT 미만이면 RETRYABLE을 반환한다")
+    void handleRetry_최대횟수미만이면_RETRYABLE반환() {
+        // given
+        PostingError error = new PostingError(TEST_MEMBER_ID, TEST_DATE, TEST_DAY_OF_WEEK, TEST_ERROR_MESSAGE, 1);
+
+        // when
+        ErrorHandler.RetryOutcome outcome = errorHandler.handleRetry(error);
+
+        // then
+        assertThat(outcome).isEqualTo(ErrorHandler.RetryOutcome.RETRYABLE);
+    }
+
+    @Test
+    @DisplayName("재시도 횟수가 MAX_RETRY_COUNT에 도달하면 DEAD_LETTERED를 반환한다")
+    void handleRetry_최대횟수도달하면_DEADLETTERED반환() {
+        // given
+        PostingError error = new PostingError(TEST_MEMBER_ID, TEST_DATE, TEST_DAY_OF_WEEK, TEST_ERROR_MESSAGE, 2);
+
+        // when
+        ErrorHandler.RetryOutcome outcome = errorHandler.handleRetry(error);
+
+        // then
+        assertThat(outcome).isEqualTo(ErrorHandler.RetryOutcome.DEAD_LETTERED);
     }
 }
