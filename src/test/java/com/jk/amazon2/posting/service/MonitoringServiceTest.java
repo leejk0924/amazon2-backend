@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -111,8 +112,8 @@ class MonitoringServiceTest {
     void getBatchCollectionTime_WithCompletedExecution_ReturnsCollectionTime() {
         // given
         LocalDate weekStartDate = LocalDate.of(2025, 6, 23);
-        java.time.LocalDateTime startedAt = java.time.LocalDateTime.of(2025, 6, 23, 3, 0, 5);
-        java.time.LocalDateTime completedAt = java.time.LocalDateTime.of(2025, 6, 23, 3, 4, 32);
+        LocalDateTime startedAt = LocalDateTime.of(2025, 6, 23, 3, 0, 5);
+        LocalDateTime completedAt = LocalDateTime.of(2025, 6, 23, 3, 4, 32);
 
         BatchExecution execution = mock(BatchExecution.class);
         given(execution.getStartedAt()).willReturn(startedAt);
