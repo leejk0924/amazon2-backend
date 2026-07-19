@@ -1,14 +1,18 @@
 package com.jk.amazon2.posting.service;
 
+import com.jk.amazon2.posting.dto.BatchCollectionTimeResponse;
 import com.jk.amazon2.posting.dto.BatchStatusResponse;
 import com.jk.amazon2.posting.dto.ErrorLogDto;
 import com.jk.amazon2.posting.entity.BatchExecution;
 import com.jk.amazon2.posting.entity.PostingDeadLetter;
 import com.jk.amazon2.posting.entity.PostingError;
+import com.jk.amazon2.posting.exception.PostingErrorCode;
+import com.jk.amazon2.posting.exception.PostingException;
 import com.jk.amazon2.posting.repository.BatchExecutionRepository;
 import com.jk.amazon2.posting.repository.PostingDeadLetterRepository;
 import com.jk.amazon2.posting.repository.PostingErrorRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -22,8 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 class MonitoringServiceTest {
@@ -93,6 +100,47 @@ class MonitoringServiceTest {
         assertNotNull(response);
         assertNull(response.lastExecution());
         assertEquals(0.0, response.currentStats().successRate());
+    }
+
+    // ============================================================
+    // getBatchCollectionTime() 테스트
+    // ============================================================
+
+    @DisplayName("해당 주차의 완료된 배치 실행 기록이 있으면 수집 시작/종료 시각을 반환한다")
+    @Test
+    void getBatchCollectionTime_WithCompletedExecution_ReturnsCollectionTime() {
+        // given
+        LocalDate weekStartDate = LocalDate.of(2025, 6, 23);
+        java.time.LocalDateTime startedAt = java.time.LocalDateTime.of(2025, 6, 23, 3, 0, 5);
+        java.time.LocalDateTime completedAt = java.time.LocalDateTime.of(2025, 6, 23, 3, 4, 32);
+
+        BatchExecution execution = mock(BatchExecution.class);
+        given(execution.getStartedAt()).willReturn(startedAt);
+        given(execution.getCompletedAt()).willReturn(completedAt);
+        given(batchExecutionRepository.findCompletedExecutionByWeek(weekStartDate))
+            .willReturn(Optional.of(execution));
+
+        // when
+        BatchCollectionTimeResponse response = monitoringService.getBatchCollectionTime(weekStartDate);
+
+        // then
+        assertThat(response.weekStartDate()).isEqualTo(weekStartDate);
+        assertThat(response.startedAt()).isEqualTo(startedAt);
+        assertThat(response.completedAt()).isEqualTo(completedAt);
+    }
+
+    @DisplayName("해당 주차의 완료된 배치 실행 기록이 없으면 예외가 발생한다")
+    @Test
+    void getBatchCollectionTime_NoCompletedExecution_ThrowsException() {
+        // given
+        LocalDate weekStartDate = LocalDate.of(2025, 6, 23);
+        given(batchExecutionRepository.findCompletedExecutionByWeek(weekStartDate))
+            .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> monitoringService.getBatchCollectionTime(weekStartDate))
+            .isInstanceOf(PostingException.class)
+            .hasFieldOrPropertyWithValue("errorCode", PostingErrorCode.BATCH_EXECUTION_NOT_FOUND);
     }
 
     // ============================================================

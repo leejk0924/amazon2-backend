@@ -1,5 +1,6 @@
 package com.jk.amazon2.posting.controller;
 
+import com.jk.amazon2.posting.dto.BatchCollectionTimeResponse;
 import com.jk.amazon2.posting.dto.BatchStatusResponse;
 import com.jk.amazon2.posting.dto.ErrorLogDto;
 import com.jk.amazon2.posting.dto.MonthlyRankingResponse;
@@ -22,6 +23,13 @@ public interface MonitoringApiSpec {
     @Operation(summary = "배치 실행 상태 조회", description = "가장 최근 배치 실행 결과를 반환합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     ResponseEntity<BatchStatusResponse> getBatchStatus();
+
+    @Operation(summary = "주차별 배치 수집 시간 조회", description = "해당 주차의 배치 수집 시작/종료 시각을 반환합니다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    @ApiResponse(responseCode = "404", description = "해당 주차의 배치 실행 기록 없음")
+    ResponseEntity<BatchCollectionTimeResponse> getBatchCollectionTime(
+            @Parameter(description = "주 시작일 (yyyy-MM-dd)") LocalDate weekStartDate
+    );
 
     @Operation(summary = "스크래핑 에러 목록 조회", description = "재시도 가능한 에러 목록을 페이징 조회합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
