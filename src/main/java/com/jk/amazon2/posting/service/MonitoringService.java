@@ -1,10 +1,13 @@
 package com.jk.amazon2.posting.service;
 
+import com.jk.amazon2.posting.dto.BatchCollectionTimeResponse;
 import com.jk.amazon2.posting.dto.BatchStatusResponse;
 import com.jk.amazon2.posting.dto.ErrorLogDto;
 import com.jk.amazon2.posting.entity.BatchExecution;
 import com.jk.amazon2.posting.entity.PostingDeadLetter;
 import com.jk.amazon2.posting.entity.PostingError;
+import com.jk.amazon2.posting.exception.PostingErrorCode;
+import com.jk.amazon2.posting.exception.PostingException;
 import com.jk.amazon2.posting.repository.BatchExecutionRepository;
 import com.jk.amazon2.posting.repository.PostingDeadLetterRepository;
 import com.jk.amazon2.posting.repository.PostingErrorRepository;
@@ -12,7 +15,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -57,6 +63,23 @@ public class MonitoringService {
         );
 
         return new BatchStatusResponse(lastExec, stats);
+    }
+
+    // 주차별 배치 수집 시간 조회
+    @Transactional(readOnly = true)
+    public BatchCollectionTimeResponse getBatchCollectionTime(LocalDate weekStartDate) {
+        if (weekStartDate.getDayOfWeek() != DayOfWeek.MONDAY) {
+            throw new PostingException(PostingErrorCode.INVALID_WEEK_START_DATE);
+        }
+
+        BatchExecution execution = batchExecutionRepository.findCompletedExecutionByWeek(weekStartDate)
+            .orElseThrow(() -> new PostingException(PostingErrorCode.BATCH_EXECUTION_NOT_FOUND));
+
+        return new BatchCollectionTimeResponse(
+            weekStartDate,
+            execution.getStartedAt(),
+            execution.getCompletedAt()
+        );
     }
 
     // 에러 로그 조회

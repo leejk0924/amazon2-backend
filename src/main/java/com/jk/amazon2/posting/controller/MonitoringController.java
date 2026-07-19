@@ -1,5 +1,6 @@
 package com.jk.amazon2.posting.controller;
 
+import com.jk.amazon2.posting.dto.BatchCollectionTimeResponse;
 import com.jk.amazon2.posting.dto.BatchStatusResponse;
 import com.jk.amazon2.posting.dto.ErrorLogDto;
 import com.jk.amazon2.posting.dto.MonthlyRankingResponse;
@@ -28,6 +29,14 @@ public class MonitoringController implements MonitoringApiSpec {
     @GetMapping("/batch/status")
     public ResponseEntity<BatchStatusResponse> getBatchStatus() {
         BatchStatusResponse response = monitoringService.getBatchStatus();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/batch/collection-time")
+    public ResponseEntity<BatchCollectionTimeResponse> getBatchCollectionTime(
+        @RequestParam LocalDate weekStartDate
+    ) {
+        BatchCollectionTimeResponse response = monitoringService.getBatchCollectionTime(weekStartDate);
         return ResponseEntity.ok(response);
     }
 
