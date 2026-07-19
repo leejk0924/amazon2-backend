@@ -15,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
@@ -64,7 +66,12 @@ public class MonitoringService {
     }
 
     // 주차별 배치 수집 시간 조회
+    @Transactional(readOnly = true)
     public BatchCollectionTimeResponse getBatchCollectionTime(LocalDate weekStartDate) {
+        if (weekStartDate.getDayOfWeek() != DayOfWeek.MONDAY) {
+            throw new PostingException(PostingErrorCode.INVALID_WEEK_START_DATE);
+        }
+
         BatchExecution execution = batchExecutionRepository.findCompletedExecutionByWeek(weekStartDate)
             .orElseThrow(() -> new PostingException(PostingErrorCode.BATCH_EXECUTION_NOT_FOUND));
 

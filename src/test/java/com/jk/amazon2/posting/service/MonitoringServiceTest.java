@@ -143,6 +143,20 @@ class MonitoringServiceTest {
             .hasFieldOrPropertyWithValue("errorCode", PostingErrorCode.BATCH_EXECUTION_NOT_FOUND);
     }
 
+    @DisplayName("주 시작일이 월요일이 아니면 예외가 발생한다")
+    @Test
+    void getBatchCollectionTime_NotMonday_ThrowsException() {
+        // given
+        LocalDate notMonday = LocalDate.of(2025, 6, 24);
+
+        // when & then
+        assertThatThrownBy(() -> monitoringService.getBatchCollectionTime(notMonday))
+            .isInstanceOf(PostingException.class)
+            .hasFieldOrPropertyWithValue("errorCode", PostingErrorCode.INVALID_WEEK_START_DATE);
+
+        verify(batchExecutionRepository, never()).findCompletedExecutionByWeek(any());
+    }
+
     // ============================================================
     // getErrors() 테스트
     // ============================================================

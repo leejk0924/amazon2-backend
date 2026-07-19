@@ -19,7 +19,7 @@ public interface BatchExecutionRepository extends JpaRepository<BatchExecution, 
     Optional<BatchExecution> findLatestExecution();
 
     @Query("SELECT be FROM BatchExecution be WHERE be.status = 'COMPLETED' " +
-        "AND be.startDate <= :weekStartDate AND be.endDate >= :weekStartDate " +
+        "AND be.startDate = :weekStartDate " +
         "ORDER BY be.startedAt DESC LIMIT 1")
     Optional<BatchExecution> findCompletedExecutionByWeek(@Param("weekStartDate") LocalDate weekStartDate);
 }

@@ -26,9 +26,10 @@ public interface MonitoringApiSpec {
 
     @Operation(summary = "주차별 배치 수집 시간 조회", description = "해당 주차의 배치 수집 시작/종료 시각을 반환합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
+    @ApiResponse(responseCode = "400", description = "주 시작일이 월요일이 아님")
     @ApiResponse(responseCode = "404", description = "해당 주차의 배치 실행 기록 없음")
     ResponseEntity<BatchCollectionTimeResponse> getBatchCollectionTime(
-            @Parameter(description = "주 시작일 (yyyy-MM-dd)") LocalDate weekStartDate
+            @Parameter(description = "주 시작일 (yyyy-MM-dd, 월요일)") LocalDate weekStartDate
     );
 
     @Operation(summary = "스크래핑 에러 목록 조회", description = "재시도 가능한 에러 목록을 페이징 조회합니다.")
